@@ -1,0 +1,588 @@
+[
+  {
+    "url": "https://docs.searxng.org/admin/installation-searxng.html",
+    "title": "Step by step installation \u2014 SearXNG Documentation (2025.9.12+687121d58)",
+    "content": "This setup: ... # SearXNG settings use_default_settings: true general: debug: false instance_name: \"SearXNG\" search: safe_search: 2 autocomplete: 'duckduckgo' formats: - html server: # Is overwritten by ${SEARXNG_SECRET} secret_key: \"ultrasecretkey\" limiter: true image_proxy: true # public ...",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "docs.searxng.org",
+      "/admin/installation-searxng.html",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "brave",
+      "duckduckgo"
+    ],
+    "positions": [
+      2,
+      2,
+      1,
+      1
+    ],
+    "score": 12.0,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://docs.searxng.org/admin/installation.html",
+    "title": "Installation \u2014 SearXNG Documentation (2025.9.14+23257bddc)",
+    "content": "Installation container Installation Script Step by step installation The Step by step installation is an excellent illustration of how a SearXNG instance is build up (see uWSGI Setup). If you do not have any special preferences, it's recommended to use the Installation container or the Installation Script.",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "docs.searxng.org",
+      "/admin/installation.html",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "brave",
+      "duckduckgo"
+    ],
+    "positions": [
+      1,
+      1,
+      2,
+      7
+    ],
+    "score": 10.571428571428571,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://docs.openwebui.com/tutorials/web-search/searxng/",
+    "title": "SearXNG - Open WebUI",
+    "content": "This guide provides instructions on how to set up web search capabilities in Open WebUI using SearXNG in Docker. SearXNG (Docker) \" SearXNG is a free internet metasearch engine which aggregates results from various search services and databases. Users are neither tracked nor profiled. \" 1. SearXNG Configuration To configure SearXNG optimally for use with Open WebUI, follow these steps: Step 1 ...",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "docs.openwebui.com",
+      "/tutorials/web-search/searxng/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "brave",
+      "duckduckgo"
+    ],
+    "positions": [
+      4,
+      5,
+      6,
+      2
+    ],
+    "score": 4.466666666666667,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://www.reddit.com/r/Searx/comments/18n842h/is_there_any_dummy_guide_on_how_to_set_up_your/",
+    "title": "r/Searx on Reddit: Is there any dummy guide on how to set up your own instance of SearX/SearXNG with little coding experience? Will I also be able to use it on android?",
+    "content": "Dec 20, 2023 ... Is there any dummy guide on how to set up your own instance of SearX/SearXNG with little coding experience? Will I also be able to use it on android?",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "www.reddit.com",
+      "/r/Searx/comments/18n842h/is_there_any_dummy_guide_on_how_to_set_up_your/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "brave"
+    ],
+    "positions": [
+      3,
+      3,
+      3
+    ],
+    "score": 3.0,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://github.com/searxng/searxng",
+    "title": "GitHub - searxng/searxng: SearXNG is a free internet metasearch engine ...",
+    "content": "Setup. To install SearXNG, see Installation guide. To fine-tune SearXNG, see Configuration guide. Further information on how-to can be found here.",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "github.com",
+      "/searxng/searxng",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "duckduckgo"
+    ],
+    "positions": [
+      5,
+      6,
+      3
+    ],
+    "score": 2.1,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://github.com/goshawk22/searxng-installation",
+    "title": "GitHub - goshawk22/searxng-installation: Notes on setting up SearXNG in the cloud as a public instance",
+    "content": "A guide for installing SearXNG - a privacy-respecting, hackable metasearch engine - in the cloud as a public instance that can be used by your friends and ...",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "github.com",
+      "/goshawk22/searxng-installation",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "brave"
+    ],
+    "positions": [
+      6,
+      8,
+      8
+    ],
+    "score": 1.25,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://www.tanyongsheng.com/note/setting-up-searxng-on-windows-localhost-your-private-customizable-search-engine/",
+    "title": "Setting Up SearXNG on Windows Localhost: Your Private, Customizable ...",
+    "content": "Mar 27, 2025 ... This comprehensive guide will walk you through setting up your own private search engine using Docker, giving you complete control over your search experience.",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "www.tanyongsheng.com",
+      "/note/setting-up-searxng-on-windows-localhost-your-private-customizable-search-engine/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google",
+      "duckduckgo"
+    ],
+    "positions": [
+      7,
+      9,
+      10
+    ],
+    "score": 1.061904761904762,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://dbtechreviews.com/2024/10/23/setting-up-searxng-your-private-search-engine-via-docker/",
+    "title": "Setting Up SearXNG: Your Private Search Engine via Docker - DB Tech Reviews",
+    "content": "One such tool is SearXNG, a versatile and privacy-respecting meta search engine. This article guides you through setting up your own SearXNG instance using Docker, providing a secure space for your web searches.",
+    "publishedDate": "2024-12-27T00:00:00",
+    "thumbnail": "",
+    "engine": "brave",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "dbtechreviews.com",
+      "/2024/10/23/setting-up-searxng-your-private-search-engine-via-docker/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave",
+      "duckduckgo"
+    ],
+    "positions": [
+      12,
+      5
+    ],
+    "score": 0.5666666666666667,
+    "category": "general",
+    "pubdate": "2024-12-27 00:00:00"
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=vKvNmotlq88",
+    "title": "SearXng: How to Set Up Your Private Search Engine! (AI APP ... - YouTube",
+    "content": "\ud83d\udd0d Discover the Power of searXNG! \ud83d\udd0d In this video, we explore searXNG, a free, privacy-focused meta search engine that doesn't track or profile users. Learn how to install searXNG locally on ...",
+    "publishedDate": null,
+    "engine": "startpage",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "www.youtube.com",
+      "/watch",
+      "",
+      "v=vKvNmotlq88",
+      ""
+    ],
+    "img_src": "",
+    "thumbnail": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "duckduckgo"
+    ],
+    "positions": [
+      7,
+      8
+    ],
+    "score": 0.5357142857142857,
+    "category": "general"
+  },
+  {
+    "url": "https://msty.ai/blog/setup-searxng-search",
+    "title": "Setup your own safe search engine using SearXNG - Msty",
+    "content": "Apr 24, 2025 ... Installation Steps \u00b7 1. Environment Setup \u00b7 2. Open Server Terminal \u00b7 3. Add Docker User \u00b7 4. Pull Docker \u00b7 5. Verify SearXNG Docker container\u00a0...",
+    "thumbnail": "",
+    "engine": "google",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "msty.ai",
+      "/blog/setup-searxng-search",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "startpage",
+      "google"
+    ],
+    "positions": [
+      8,
+      10
+    ],
+    "score": 0.45,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=UBLypfM9U-g",
+    "title": "SearXNG: Your Private Search Engine - Docker Tutorial - YouTube",
+    "content": "Oct 23, 2024 ... back your privacy with SearxNG! In this Docker tutorial, we'll set up a self-hosted SearxNG ... Learn how to easily install and configure SearxNG\u00a0...",
+    "publishedDate": null,
+    "engine": "startpage",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "www.youtube.com",
+      "/watch",
+      "",
+      "v=UBLypfM9U-g",
+      ""
+    ],
+    "img_src": "",
+    "thumbnail": "",
+    "priority": "",
+    "engines": [
+      "startpage"
+    ],
+    "positions": [
+      4
+    ],
+    "score": 0.25,
+    "category": "general"
+  },
+  {
+    "title": "Setup your own safe search engine using SearXNG - DEV Community",
+    "url": "https://dev.to/armiedema/setup-your-own-safe-search-engine-using-searxng-3428",
+    "content": "In this tutorial, we'll walk through how to set up and configure SearXNG, an open-source metasearch engine, for use in your own custom applications - and for use with Msty Studio. Getting Started SearXNG is a powerful, privacy-respecting search engine that aggregates results from multiple sources without tracking users. You can host it yourself to have full control over the behavior, sources ...",
+    "engine": "duckduckgo",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "dev.to",
+      "/armiedema/setup-your-own-safe-search-engine-using-searxng-3428",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "thumbnail": "",
+    "priority": "",
+    "engines": [
+      "duckduckgo"
+    ],
+    "positions": [
+      4
+    ],
+    "score": 0.25,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://github.com/searxng/searxng-docker",
+    "title": "GitHub - searxng/searxng-docker: The docker-compose files for setting up a SearXNG instance with docker.",
+    "content": "The docker-compose files for setting up a SearXNG instance with docker. - searxng/searxng-docker",
+    "publishedDate": null,
+    "thumbnail": "",
+    "engine": "brave",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "github.com",
+      "/searxng/searxng-docker",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave"
+    ],
+    "positions": [
+      5
+    ],
+    "score": 0.2,
+    "category": "general"
+  },
+  {
+    "title": "How to Self-Host SearXNG \u2014 Privacy-Focused Metasearch Engine",
+    "url": "https://www.bitdoze.com/searxng-self-host-privacy-search/",
+    "content": "Learn how to self-host SearXNG, a powerful privacy-focused metasearch engine that aggregates results from multiple search engines while keeping your searches private. Complete guide with Docker, Traefik, and Dokploy setup options.",
+    "engine": "duckduckgo",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "www.bitdoze.com",
+      "/searxng-self-host-privacy-search/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "thumbnail": "",
+    "priority": "",
+    "engines": [
+      "duckduckgo"
+    ],
+    "positions": [
+      6
+    ],
+    "score": 0.16666666666666666,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://www.blackhatworld.com/seo/tutorial-install-your-own-searxng-privacy-metasearch-engine.1517734/",
+    "title": "Tutorial - install your own SearXNG (privacy metasearch engine) | BlackHatWorld",
+    "content": "Hi guys In this tutorial i will show you how you can install easy SearXNG in 10 minutes. What is SearXNG? SearXNG (Next Generation) is an open source metasearch engine that supports over 138 search engines and preserves your privacy. https://docs.searxng.org/ Public instances...",
+    "publishedDate": "2023-07-30T00:00:00",
+    "thumbnail": "",
+    "engine": "brave",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "www.blackhatworld.com",
+      "/seo/tutorial-install-your-own-searxng-privacy-metasearch-engine.1517734/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave"
+    ],
+    "positions": [
+      7
+    ],
+    "score": 0.14285714285714285,
+    "category": "general",
+    "pubdate": "2023-07-30 00:00:00"
+  },
+  {
+    "url": "https://mariushosting.com/how-to-install-searxng-on-your-synology-nas/",
+    "title": "How to Install SearXNG on Your Synology NAS \u2013 Marius Hosting",
+    "content": "Step by step guide for installing SearXNG on your Synology NAS device.",
+    "publishedDate": "2025-01-18T00:00:00",
+    "thumbnail": "",
+    "engine": "brave",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "mariushosting.com",
+      "/how-to-install-searxng-on-your-synology-nas/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave"
+    ],
+    "positions": [
+      9
+    ],
+    "score": 0.1111111111111111,
+    "category": "general",
+    "pubdate": "2025-01-18 00:00:00"
+  },
+  {
+    "title": "Step by step installation \u2014 SearXNG Documentation (2023.12.11+8a4104b99)",
+    "url": "https://dokk.org/documentation/searxng/2023-12-11-8a4104b9/admin/installation-searxng/",
+    "content": "To check your SearXNG setup, optional enable debugging and start the webapp. SearXNG looks at the exported environment $SEARXNG_SETTINGS_PATH for a configuration file.",
+    "engine": "duckduckgo",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "dokk.org",
+      "/documentation/searxng/2023-12-11-8a4104b9/admin/installation-searxng/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "thumbnail": "",
+    "priority": "",
+    "engines": [
+      "duckduckgo"
+    ],
+    "positions": [
+      9
+    ],
+    "score": 0.1111111111111111,
+    "category": "general",
+    "publishedDate": null
+  },
+  {
+    "url": "https://searxng.org/",
+    "title": "Redirecting to https://docs.searxng.org/",
+    "content": "We cannot provide a description for this page right now",
+    "publishedDate": null,
+    "thumbnail": "",
+    "engine": "brave",
+    "template": "default.html",
+    "parsed_url": [
+      "https",
+      "searxng.org",
+      "/",
+      "",
+      "",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave"
+    ],
+    "positions": [
+      10
+    ],
+    "score": 0.1,
+    "category": "general"
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=vKvNmotlq88",
+    "title": "SearXng: How to Set Up Your Private Search Engine! (AI APP Integration) - YouTube",
+    "content": "\ud83d\udd0d Discover the Power of searXNG! \ud83d\udd0dIn this video, we explore searXNG, a free, privacy-focused meta search engine that doesn't track or profile users. Learn ...",
+    "publishedDate": "2024-06-24T00:00:00",
+    "thumbnail": "https://imgs.search.brave.com/arJylCHa6xZOs2stHjsbM37nmV_ZSPK-2Ad6ExJsebU/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9pLnl0/aW1nLmNvbS92aS92/S3ZObW90bHE4OC9t/YXhyZXNkZWZhdWx0/LmpwZw",
+    "iframe_src": "https://www.youtube-nocookie.com/embed/vKvNmotlq88",
+    "template": "videos.html",
+    "engine": "brave",
+    "parsed_url": [
+      "https",
+      "www.youtube.com",
+      "/watch",
+      "",
+      "v=vKvNmotlq88",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave"
+    ],
+    "positions": [
+      4
+    ],
+    "score": 0.25,
+    "category": "general",
+    "pubdate": "2024-06-24 00:00:00"
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=j6sfGmrD05k",
+    "title": "Your Private Search Engine in Minutes: SearXNG Docker Setup! - YouTube",
+    "content": "Looking to take control of your online searches and protect your privacy? In this video, I\u2019ll guide you step-by-step on how to self-host SearXNG, a powerful ...",
+    "publishedDate": null,
+    "thumbnail": "https://imgs.search.brave.com/OWFVgLV4y0dNnIyz9RgakXjFN-w0zqoKp_wogFpHcyg/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9pLnl0/aW1nLmNvbS92aS9q/NnNmR21yRDA1ay9t/YXhyZXNkZWZhdWx0/LmpwZw",
+    "iframe_src": "https://www.youtube-nocookie.com/embed/j6sfGmrD05k",
+    "template": "videos.html",
+    "engine": "brave",
+    "parsed_url": [
+      "https",
+      "www.youtube.com",
+      "/watch",
+      "",
+      "v=j6sfGmrD05k",
+      ""
+    ],
+    "img_src": "",
+    "priority": "",
+    "engines": [
+      "brave"
+    ],
+    "positions": [
+      13
+    ],
+    "score": 0.07692307692307693,
+    "category": "general"
+  }
+]

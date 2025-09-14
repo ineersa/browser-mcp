@@ -4,6 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.browser_backend: '%env(BROWSER_BACKEND)%'
+    app.backend_url: '%env(BACKEND_URL)%'
+    app.http_timeout: 20.0
 
 services:
     # default configuration for services in *this* file
@@ -15,6 +18,27 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    App\Service\Backend\BackendInterface:
+        public: true
+        factory: ['@App\Service\Backend\BackendFactory', 'create']
+        arguments:
+            - '%app.browser_backend%'
+            - '%app.backend_url%'
+
+    App\Service\BrowserState:
+        public: true
+
+    App\Service\SearchService:
+        public: true
+    App\Service\OpenService:
+        public: true
+    App\Service\FindService:
+        public: true
+    # Make ALL services in App\Tools\ public
+    App\Tools\:
+        resource: '../src/Tools'
+        public: true
 
     # PSR-16 cache: wrap a PSR-6 pool (ArrayAdapter) with Psr16Cache and alias to Psr\SimpleCache\CacheInterface
     cache.array_adapter:
@@ -31,7 +55,3 @@ services:
         class: Monolog\Formatter\JsonFormatter
         arguments:
             $includeStacktraces: true
-
-    App\Tools\PythonTool:
-        public: true
-        autowire: true

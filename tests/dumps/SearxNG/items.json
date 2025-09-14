@@ -1,0 +1,102 @@
+[
+  [
+    "Step by step installation \u2014 SearXNG Documentation (2025.9.12+687121d58)",
+    "https://docs.searxng.org/admin/installation-searxng.html",
+    "This setup: ... # SearXNG settings use_default_settings: true general: debug: false instance_name: \"SearXNG\" search: safe_search: 2 autocomplete: 'duckduckgo' formats: - html server: # Is overwritten by ${SEARXNG_SECRET} secret_key: \"ultrasecretkey\" limiter: true image_proxy: true # public ..."
+  ],
+  [
+    "Installation \u2014 SearXNG Documentation (2025.9.14+23257bddc)",
+    "https://docs.searxng.org/admin/installation.html",
+    "Installation container Installation Script Step by step installation The Step by step installation is an excellent illustration of how a SearXNG instance is build up (see uWSGI Setup). If you do not have any special preferences, it's recommended to use the Installation container or the Installation Script."
+  ],
+  [
+    "SearXNG - Open WebUI",
+    "https://docs.openwebui.com/tutorials/web-search/searxng/",
+    "This guide provides instructions on how to set up web search capabilities in Open WebUI using SearXNG in Docker. SearXNG (Docker) \" SearXNG is a free internet metasearch engine which aggregates results from various search services and databases. Users are neither tracked nor profiled. \" 1. SearXNG Configuration To configure SearXNG optimally for use with Open WebUI, follow these steps: Step 1 ..."
+  ],
+  [
+    "r/Searx on Reddit: Is there any dummy guide on how to set up your own instance of SearX/SearXNG with little coding experience? Will I also be able to use it on android?",
+    "https://www.reddit.com/r/Searx/comments/18n842h/is_there_any_dummy_guide_on_how_to_set_up_your/",
+    "Dec 20, 2023 ... Is there any dummy guide on how to set up your own instance of SearX/SearXNG with little coding experience? Will I also be able to use it on android?"
+  ],
+  [
+    "GitHub - searxng/searxng: SearXNG is a free internet metasearch engine ...",
+    "https://github.com/searxng/searxng",
+    "Setup. To install SearXNG, see Installation guide. To fine-tune SearXNG, see Configuration guide. Further information on how-to can be found here."
+  ],
+  [
+    "GitHub - goshawk22/searxng-installation: Notes on setting up SearXNG in the cloud as a public instance",
+    "https://github.com/goshawk22/searxng-installation",
+    "A guide for installing SearXNG - a privacy-respecting, hackable metasearch engine - in the cloud as a public instance that can be used by your friends and ..."
+  ],
+  [
+    "Setting Up SearXNG on Windows Localhost: Your Private, Customizable ...",
+    "https://www.tanyongsheng.com/note/setting-up-searxng-on-windows-localhost-your-private-customizable-search-engine/",
+    "Mar 27, 2025 ... This comprehensive guide will walk you through setting up your own private search engine using Docker, giving you complete control over your search experience."
+  ],
+  [
+    "Setting Up SearXNG: Your Private Search Engine via Docker - DB Tech Reviews",
+    "https://dbtechreviews.com/2024/10/23/setting-up-searxng-your-private-search-engine-via-docker/",
+    "One such tool is SearXNG, a versatile and privacy-respecting meta search engine. This article guides you through setting up your own SearXNG instance using Docker, providing a secure space for your web searches."
+  ],
+  [
+    "SearXng: How to Set Up Your Private Search Engine! (AI APP ... - YouTube",
+    "https://www.youtube.com/watch?v=vKvNmotlq88",
+    "\ud83d\udd0d Discover the Power of searXNG! \ud83d\udd0d In this video, we explore searXNG, a free, privacy-focused meta search engine that doesn't track or profile users. Learn how to install searXNG locally on ..."
+  ],
+  [
+    "Setup your own safe search engine using SearXNG - Msty",
+    "https://msty.ai/blog/setup-searxng-search",
+    "Apr 24, 2025 ... Installation Steps \u00b7 1. Environment Setup \u00b7 2. Open Server Terminal \u00b7 3. Add Docker User \u00b7 4. Pull Docker \u00b7 5. Verify SearXNG Docker container\u00a0..."
+  ],
+  [
+    "SearXNG: Your Private Search Engine - Docker Tutorial - YouTube",
+    "https://www.youtube.com/watch?v=UBLypfM9U-g",
+    "Oct 23, 2024 ... back your privacy with SearxNG! In this Docker tutorial, we'll set up a self-hosted SearxNG ... Learn how to easily install and configure SearxNG\u00a0..."
+  ],
+  [
+    "Setup your own safe search engine using SearXNG - DEV Community",
+    "https://dev.to/armiedema/setup-your-own-safe-search-engine-using-searxng-3428",
+    "In this tutorial, we'll walk through how to set up and configure SearXNG, an open-source metasearch engine, for use in your own custom applications - and for use with Msty Studio. Getting Started SearXNG is a powerful, privacy-respecting search engine that aggregates results from multiple sources without tracking users. You can host it yourself to have full control over the behavior, sources ..."
+  ],
+  [
+    "GitHub - searxng/searxng-docker: The docker-compose files for setting up a SearXNG instance with docker.",
+    "https://github.com/searxng/searxng-docker",
+    "The docker-compose files for setting up a SearXNG instance with docker. - searxng/searxng-docker"
+  ],
+  [
+    "How to Self-Host SearXNG \u2014 Privacy-Focused Metasearch Engine",
+    "https://www.bitdoze.com/searxng-self-host-privacy-search/",
+    "Learn how to self-host SearXNG, a powerful privacy-focused metasearch engine that aggregates results from multiple search engines while keeping your searches private. Complete guide with Docker, Traefik, and Dokploy setup options."
+  ],
+  [
+    "Tutorial - install your own SearXNG (privacy metasearch engine) | BlackHatWorld",
+    "https://www.blackhatworld.com/seo/tutorial-install-your-own-searxng-privacy-metasearch-engine.1517734/",
+    "Hi guys In this tutorial i will show you how you can install easy SearXNG in 10 minutes. What is SearXNG? SearXNG (Next Generation) is an open source metasearch engine that supports over 138 search engines and preserves your privacy. https://docs.searxng.org/ Public instances..."
+  ],
+  [
+    "How to Install SearXNG on Your Synology NAS \u2013 Marius Hosting",
+    "https://mariushosting.com/how-to-install-searxng-on-your-synology-nas/",
+    "Step by step guide for installing SearXNG on your Synology NAS device."
+  ],
+  [
+    "Step by step installation \u2014 SearXNG Documentation (2023.12.11+8a4104b99)",
+    "https://dokk.org/documentation/searxng/2023-12-11-8a4104b9/admin/installation-searxng/",
+    "To check your SearXNG setup, optional enable debugging and start the webapp. SearXNG looks at the exported environment $SEARXNG_SETTINGS_PATH for a configuration file."
+  ],
+  [
+    "Redirecting to https://docs.searxng.org/",
+    "https://searxng.org/",
+    "We cannot provide a description for this page right now"
+  ],
+  [
+    "SearXng: How to Set Up Your Private Search Engine! (AI APP Integration) - YouTube",
+    "https://www.youtube.com/watch?v=vKvNmotlq88",
+    "\ud83d\udd0d Discover the Power of searXNG! \ud83d\udd0dIn this video, we explore searXNG, a free, privacy-focused meta search engine that doesn't track or profile users. Learn ..."
+  ],
+  [
+    "Your Private Search Engine in Minutes: SearXNG Docker Setup! - YouTube",
+    "https://www.youtube.com/watch?v=j6sfGmrD05k",
+    "Looking to take control of your online searches and protect your privacy? In this video, I\u2019ll guide you step-by-step on how to self-host SearXNG, a powerful ..."
+  ]
+]

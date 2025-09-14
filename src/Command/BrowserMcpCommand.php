@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Tools\FindTool;
+use App\Tools\OpenTool;
 use App\Tools\SearchTool;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
@@ -17,7 +19,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: 'python-mcp',
+    name: 'browser-mcp',
     description: 'Add a short description for your command',
 )]
 class BrowserMcpCommand extends Command
@@ -62,6 +64,22 @@ DESC;
                     description: SearchTool::DESCRIPTION,
                     annotations: new ToolAnnotations(
                         title: SearchTool::TITLE,
+                    )
+                )
+                ->withTool(
+                    handler: OpenTool::class,
+                    name: OpenTool::NAME,
+                    description: OpenTool::DESCRIPTION,
+                    annotations: new ToolAnnotations(
+                        title: OpenTool::TITLE,
+                    )
+                )
+                ->withTool(
+                    handler: FindTool::class,
+                    name: FindTool::NAME,
+                    description: FindTool::DESCRIPTION,
+                    annotations: new ToolAnnotations(
+                        title: FindTool::TITLE,
                     )
                 )
                 ->build();

@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace App\Tools;
 
-use App\Service\BrowserService;
-
 final class FindTool
 {
-    public function __construct(
-        private readonly BrowserService $pythonService,
-    ) {
+    public const NAME = 'find';
+    public const TITLE = 'Find pattern in page';
+    public const DESCRIPTION = 'Finds exact matches of `pattern` in the current page, or the page given by `cursor`.';
+
+    public function __construct()
+    {
     }
 
     /**
-     * Entry point for browser tool.
-     *
      * @return array{result: string}
      */
-    public function __invoke(string $code): array
+    public function __invoke(string $pattern, int $cursor = -1): array
     {
         return [];
     }

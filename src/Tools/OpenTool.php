@@ -4,22 +4,27 @@ declare(strict_types=1);
 
 namespace App\Tools;
 
-use App\Service\BrowserService;
-
 final class OpenTool
 {
+    public const NAME = 'open';
+    public const TITLE = 'Open a link or page';
+    public const DESCRIPTION = 'Opens the link `id` from the page indicated by `cursor` starting at line number `loc`, showing `num_lines` lines. Valid link ids are displayed with the formatting: `【{id}†.*】`. If `cursor` is not provided, the most recent page is implied. If `id` is a string, it is treated as a fully qualified URL associated with `source`. If `loc` is not provided, the viewport will be positioned at the beginning of the document or centered on the most relevant passage, if available. Use this function without `id` to scroll to a new location of an opened page.';
+
     public function __construct(
-        private readonly BrowserService $pythonService,
     ) {
     }
 
     /**
-     * Entry point for browser tool.
-     *
      * @return array{result: string}
      */
-    public function __invoke(string $code): array
-    {
+    public function __invoke(
+        int|string $id = -1,
+        int $cursor = -1,
+        int $loc = -1,
+        int $numLines = -1,
+        bool $viewSource = false,
+        ?string $source = null,
+    ): array {
         return [];
     }
 }

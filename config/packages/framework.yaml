@@ -5,6 +5,13 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    http_client:
+        default_options:
+            timeout: '%app.http_timeout%'
+        retry_failed:
+            enabled: true
+            max_retries: 3
+
     #esi: true
     #fragments: true
 

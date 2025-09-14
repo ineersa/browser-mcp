@@ -35,6 +35,9 @@ class SearxNGBackend implements BackendInterface
         return $this->source;
     }
 
+    /**
+     * @throws BackendError
+     */
     public function search(string $query, int $topn): PageContents
     {
         $items = $this->requestSearch($query, $topn);
@@ -66,11 +69,8 @@ class SearxNGBackend implements BackendInterface
             }
             $title = (string) ($r['title'] ?? $u);
             $summary = (string) ($r['content'] ?? '');
-            $items[] = [
-                'title' => $title,
-                'url' => $u,
-                'summary' => $summary,
-            ];
+            // Normalize to a list [title, url, summary] to match fixtures
+            $items[] = [$title, $u, $summary];
         }
 
         return $items;
@@ -83,17 +83,20 @@ class SearxNGBackend implements BackendInterface
      */
     public function buildSearchHtml(array $items): string
     {
-        $lis = array_map(
-            fn ($it) => \sprintf(
+        $lis = [];
+        foreach ($items as $it) {
+            $title = (string) ($it[0] ?? '');
+            $url = (string) ($it[1] ?? '');
+            $summary = (string) ($it[2] ?? '');
+            $lis[] = \sprintf(
                 "<li><a href='%s'>%s</a> %s</li>",
-                htmlspecialchars($it['url'], \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
-                htmlspecialchars($it['title'], \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
-                htmlspecialchars($it['summary'], \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8')
-            ),
-            $items
-        );
+                htmlspecialchars($url, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+                htmlspecialchars($title, \ENT_NOQUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+                htmlspecialchars($summary, \ENT_NOQUOTES | \ENT_SUBSTITUTE, 'UTF-8')
+            );
+        }
 
-        return "<html><body>\n<h1>Search Results</h1>\n<ul>\n".implode("\n", $lis)."\n</ul>\n</body></html>\n";
+        return "\n<html><body>\n<h1>Search Results</h1>\n<ul>\n".implode('', $lis)."\n</ul>\n</body></html>\n        ";
     }
 
     public function fetch(string $url): PageContents

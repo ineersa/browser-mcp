@@ -24,7 +24,7 @@ final class SearxNGBackendTest extends TestCase
             ->getMock();
 
         $backend->method('fetchSearxResults')
-            ->willReturn($fixtures['results'] ?? []);
+            ->willReturn($fixtures);
 
         $items = $backend->requestSearch('query', 10);
 

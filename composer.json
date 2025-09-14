@@ -1,0 +1,93 @@
+{
+    "name": "ineersa/python-mcp",
+    "description": "GPT-OSS reference implementation of Python MCP server in PHP",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Illia Vasylevskyi",
+            "email": "ineersa@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.2",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "ext-fileinfo": "*",
+        "mcp/sdk": "dev-main@dev",
+        "symfony/cache": "7.3.*",
+        "symfony/console": "7.3.*",
+        "symfony/dotenv": "7.3.*",
+        "symfony/flex": "^2.8.2",
+        "symfony/framework-bundle": "7.3.*",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/process": "7.3.*",
+        "symfony/runtime": "7.3.*",
+        "symfony/yaml": "7.3.*"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "bump-after-update": true,
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "replace": {
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php72": "*",
+        "symfony/polyfill-php73": "*",
+        "symfony/polyfill-php74": "*",
+        "symfony/polyfill-php80": "*",
+        "symfony/polyfill-php81": "*",
+        "symfony/polyfill-php82": "*"
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ],
+        "post-autoload-dump": [
+            "@auto-scripts"
+        ],
+        "cs-fix": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php",
+        "phpstan": "vendor/bin/phpstan analyse -c phpstan.dist.neon",
+        "tests": "vendor/bin/phpunit --colors=always --testdox"
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.3.*"
+        }
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.87.2",
+        "phpstan/phpstan": "^2.1.23",
+        "phpunit/phpunit": "^12.3.10",
+        "symfony/maker-bundle": "^1.64",
+        "symfony/var-dumper": "7.3.*"
+    }
+}

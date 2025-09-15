@@ -8,12 +8,6 @@ framework:
     http_client:
         default_options:
             timeout: '%app.http_timeout%'
-        retry_failed:
-            enabled: true
-            max_retries: 3
-
-    #esi: true
-    #fragments: true
 
 when@test:
     framework:

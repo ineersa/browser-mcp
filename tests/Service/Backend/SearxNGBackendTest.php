@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\Backend;
 
 use App\Service\Backend\SearxNGBackend;
+use App\Service\Exception\BackendError;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -41,6 +42,40 @@ final class SearxNGBackendTest extends TestCase
         $html = $backend->buildSearchHtml($items);
 
         $this->assertSame($expectedHtml, $html);
+    }
+
+    /**
+     * @throws BackendError
+     */
+    public function testSearchPageContentsMatchesPythonFixture(): void
+    {
+        $fixture = $this->loadJson('page_contents_search.json');
+        $expected = $fixture['page_contents'] ?? null;
+        $this->assertIsArray($expected, 'Invalid fixture: missing page_contents');
+
+        // Prepare a backend that returns the fixture HTML from Python
+        $client = $this->createMock(HttpClientInterface::class);
+        $backend = $this->getMockBuilder(SearxNGBackend::class)
+            ->setConstructorArgs(['http://example.test', 'web', $client])
+            ->onlyMethods(['requestSearch', 'buildSearchHtml'])
+            ->getMock();
+
+        // Avoid hitting network and bypass HTML construction; use fixture directly
+        $backend->method('requestSearch')->willReturn([]);
+        $backend->method('buildSearchHtml')->willReturn((string) ($fixture['html'] ?? ''));
+
+        $query = (string) ($fixture['title'] ?? '');
+        $page = $backend->search($query, 10);
+
+        // Compare key fields with the Python dump
+        $this->assertSame((string) ($fixture['url'] ?? ''), $page->url, 'url mismatch');
+        $this->assertSame($query, $page->title, 'title mismatch');
+
+        // Text can be long; assert exact match to ensure parity
+        $this->assertSame((string) ($expected['text'] ?? ''), $page->text, 'text mismatch');
+
+        // URLs mapping should match exactly (string keys 0..n)
+        $this->assertSame((array) ($expected['urls'] ?? []), $page->urls, 'urls mapping mismatch');
     }
 
     private function getFixturesPath(): string

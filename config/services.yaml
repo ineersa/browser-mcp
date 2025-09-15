@@ -6,7 +6,7 @@
 parameters:
     app.browser_backend: '%env(BROWSER_BACKEND)%'
     app.backend_url: '%env(BACKEND_URL)%'
-    app.http_timeout: 20.0
+    app.http_timeout: 30.0
 
 services:
     # default configuration for services in *this* file
@@ -55,3 +55,19 @@ services:
         class: Monolog\Formatter\JsonFormatter
         arguments:
             $includeStacktraces: true
+
+    http_client.retry_strategy:
+        class: Symfony\Component\HttpClient\Retry\GenericRetryStrategy
+        arguments:
+            - [423, 425, 429, 500, 502, 503, 504]
+            - 200
+            - 2.0
+            - 2000
+            - 0.1
+
+    http_client.retryable:
+        class: Symfony\Component\HttpClient\RetryableHttpClient
+        decorates: 'http_client'
+        arguments:
+            - '@http_client.retryable.inner'
+            - '@http_client.retry_strategy'

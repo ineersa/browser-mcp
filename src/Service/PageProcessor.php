@@ -43,7 +43,21 @@ final class PageProcessor
 
         $cleanHtml = $dom->saveHTML() ?: '';
         $text = self::htmlToText($cleanHtml);
-        // Move anchors through whitespace: not strictly necessary in this port
+        // Preserve Markdown-like bullet prefix used for <li> items while normalizing spaces
+        $text = (string) preg_replace('/^\s+\*\s/m', '<<BULLET>> ', $text);
+        // Move anchors to the right through whitespace to avoid extra spaces
+        // Ensure a single space follows an anchor token when immediately adjoining text
+        $text = (string) preg_replace('/】(?=\S)/u', '】 ', $text);
+        // Normalize non-breaking spaces to regular spaces
+        $text = str_replace("\u{00A0}", ' ', $text);
+        // Collapse runs of spaces/tabs but keep newlines intact
+        $text = (string) preg_replace('/[^\S\r\n]+/', ' ', $text);
+        // Trim trailing spaces at line ends
+        $text = (string) preg_replace('/[ \t]+$/m', '', $text);
+        // Restore bullet prefix
+        $text = str_replace('<<BULLET>> ', '  * ', $text);
+        // Ensure a blank line after headings like '# Title' for readability/parity
+        $text = (string) preg_replace('/^(# .*?)\n(?!\n)/m', "$1\n\n", $text);
         $text = self::removeEmptyLines($text);
         $text = self::collapseExtraNewlines($text);
 
@@ -172,7 +186,7 @@ final class PageProcessor
         $html = preg_replace('/<h4[^>]*>/i', '#### ', $html) ?? $html;
         $html = preg_replace('/<h5[^>]*>/i', '##### ', $html) ?? $html;
         $html = preg_replace('/<h6[^>]*>/i', '###### ', $html) ?? $html;
-        $html = preg_replace('/<\/h[1-6]\s*>/i', "\n", $html) ?? $html;
+        $html = preg_replace('/<\/h[1-6]\s*>/i', "\n\n", $html) ?? $html;
 
         // - Convert list items to bullets to match python html2text behavior
         $html = preg_replace('/<li[^>]*>/i', '  * ', $html) ?? $html;
@@ -196,6 +210,13 @@ final class PageProcessor
     private static function collapseExtraNewlines(string $text): string
     {
         return (string) preg_replace("/\n(\s*\n)+/", "\n\n", $text);
+    }
+
+    private static function moveAnchorsThroughWhitespace(string $text): string
+    {
+        // Swap sequences like "【...】\s+" to "\s+【...】"
+        // This mirrors the Python behavior to prevent anchors from introducing extra spaces
+        return (string) preg_replace('/(【[^】]+】)(\s+)/u', '$2$1', $text);
     }
 
     private static function replaceSpecialChars(string $text): string

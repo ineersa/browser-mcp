@@ -7,6 +7,10 @@ parameters:
     app.browser_backend: '%env(BROWSER_BACKEND)%'
     app.backend_url: '%env(BACKEND_URL)%'
     app.http_timeout: 30.0
+    # SearchService tunables (override via env)
+    app.search.max_results: '%env(int:SEARCH_MAX_RESULTS)%'
+    app.search.view_tokens: '%env(int:SEARCH_VIEW_TOKENS)%'
+    app.search.encoding_name: '%env(string:SEARCH_ENCODING_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -31,6 +35,10 @@ services:
 
     App\Service\SearchService:
         public: true
+        arguments:
+            $maxSearchResults: '%app.search.max_results%'
+            $viewTokens: '%app.search.view_tokens%'
+            $encodingName: '%app.search.encoding_name%'
     App\Service\OpenService:
         public: true
     App\Service\FindService:

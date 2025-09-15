@@ -29,7 +29,8 @@
         "symfony/monolog-bundle": "^3.10",
         "symfony/process": "7.3.*",
         "symfony/runtime": "7.3.*",
-        "symfony/yaml": "7.3.*"
+        "symfony/yaml": "7.3.*",
+        "yethee/tiktoken": "^0.11.1"
     },
     "config": {
         "allow-plugins": {

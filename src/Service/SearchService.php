@@ -12,10 +12,10 @@ final class SearchService
 {
     public function __construct(
         private readonly BackendInterface $backend,
-        private readonly BrowserState $state,
-        private int $maxSearchResults = 20,
-        private int $viewTokens = 1024,
-        private string $encodingName = 'o200k_base',
+        private readonly BrowserState     $state,
+        private readonly int              $maxSearchResults = 20,
+        private readonly int              $viewTokens = 1024,
+        private readonly string           $encodingName = 'o200k_base',
     ) {
     }
 
@@ -29,6 +29,7 @@ final class SearchService
         }
         $this->state->addPage($page);
         try {
+            // Compute end location using Utilities::getEndLoc (numLines=-1)
             return $this->showPage(0, -1);
         } catch (ToolUsageError $e) {
             $this->state->popPageStack();
@@ -44,6 +45,9 @@ final class SearchService
         $page = $this->state->getPage();
         $cursor = $this->state->getCurrentCursor();
         $lines = Utilities::wrapLines($page->text);
+        while (!empty($lines) && '' === $lines[\count($lines) - 1]) {
+            array_pop($lines);
+        }
         $totalLines = \count($lines);
         if ($loc >= $totalLines) {
             throw new ToolUsageError(\sprintf('Invalid location parameter: `%d`. Cannot exceed page maximum of %d.', $loc, $totalLines - 1));

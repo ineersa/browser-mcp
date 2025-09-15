@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
+use Yethee\Tiktoken\EncoderProvider;
 
 final readonly class Utilities
 {
@@ -44,24 +45,109 @@ final readonly class Utilities
     }
 
     /**
-     * Conservative line wrapping that preserves empty lines and does not drop whitespace.
+     * Python textwrap-like wrapping to mirror SimpleBrowserTool.wrap_lines:
+     * replace_whitespace=False, drop_whitespace=False, break_long_words=True, break_on_hyphens=True.
+     * Preserves empty lines.
      */
     public static function wrapLines(string $text, int $width = 80): array
     {
-        $result = [];
+        $out = [];
         foreach (explode("\n", $text) as $line) {
             if ('' === $line) {
-                $result[] = '';
+                $out[] = '';
                 continue;
             }
-            // wordwrap preserves spaces when cut=false
-            $wrapped = wordwrap($line, $width);
-            foreach (explode("\n", $wrapped) as $w) {
-                $result[] = $w;
+
+            $tokens = preg_split('/(\s+)/u', $line, -1, \PREG_SPLIT_DELIM_CAPTURE | \PREG_SPLIT_NO_EMPTY);
+            if (!\is_array($tokens)) {
+                $out[] = $line;
+                continue;
             }
+
+            $current = '';
+            $i = 0;
+            $n = \count($tokens);
+            while ($i < $n) {
+                $t = (string) $tokens[$i];
+                $candidate = $current.$t;
+                if (mb_strlen($candidate) <= $width) {
+                    $current = $candidate;
+                    ++$i;
+                    continue;
+                }
+
+                if ('' !== $current) {
+                    // Try to split the token at a hyphen so that the left part fits into the remaining space
+                    $remaining = $width - mb_strlen($current);
+                    if ($remaining > 0) {
+                        $sliceFit = mb_substr($t, 0, $remaining);
+                        $hpos = self::mb_strrpos($sliceFit, '-');
+                        if (false !== $hpos) {
+                            $head = mb_substr($t, 0, $hpos + 1);
+                            $tail = mb_substr($t, $hpos + 1);
+                            $out[] = $current.$head;
+                            $current = '';
+                            if ('' !== $tail) {
+                                $tokens[$i] = $tail;
+                            } else {
+                                ++$i;
+                            }
+                            continue;
+                        }
+                    }
+                    // Otherwise, flush the current line and re-evaluate this token on a new line
+                    $out[] = $current;
+                    $current = '';
+                    continue;
+                }
+
+                // current is empty and token itself exceeds width
+                if (1 === preg_match('/^\s+$/u', $t)) {
+                    // break long whitespace tokens across lines
+                    $out[] = mb_substr($t, 0, $width);
+                    $rest = mb_substr($t, $width);
+                    if ('' !== $rest) {
+                        $tokens[$i] = $rest;
+                        $n = \count($tokens);
+                    } else {
+                        ++$i;
+                    }
+                    continue;
+                }
+
+                // Break long words; prefer hyphen breaks inside the width
+                $slice = mb_substr($t, 0, $width);
+                $pos = self::mb_strrpos($slice, '-');
+                $breakAt = (false === $pos) ? $width : ($pos + 1);
+                $out[] = mb_substr($t, 0, $breakAt);
+                $rest = mb_substr($t, $breakAt);
+                if ('' !== $rest) {
+                    $tokens[$i] = $rest;
+                } else {
+                    ++$i;
+                }
+            }
+
+            $out[] = $current;
         }
 
-        return $result;
+        return $out;
+    }
+
+    private static function mb_strrpos(string $haystack, string $needle): int|false
+    {
+        $pos = false;
+        $offset = 0;
+        while (true) {
+            $p = mb_strpos($haystack, $needle, $offset);
+            if (false === $p) {
+                break;
+            }
+            $pos = $p;
+            $offset = $p + 1;
+        }
+
+        return $pos;
     }
 
     public static function stripLinks(string $text): string
@@ -78,24 +164,37 @@ final readonly class Utilities
     }
 
     /**
-     * Approximate token-based window using character counts.
+     * Compute token-based end location using tiktoken-php to mirror Python behavior.
      */
     public static function getEndLoc(int $loc, int $numLines, int $totalLines, array $lines, int $viewTokens, string $encodingName): int
     {
         if ($numLines <= 0) {
             $txt = self::joinLines(\array_slice($lines, $loc), true, $loc);
             if (mb_strlen($txt) > $viewTokens) {
-                $count = 0;
-                $numLines = 0;
-                foreach ($lines as $idx => $line) {
-                    if ($idx < $loc) {
-                        continue;
+                try {
+                    $provider = new EncoderProvider();
+                    $encoder = $provider->get($encodingName);
+                    // Tokenize the text (we can pass the whole string; provider caches vocab)
+                    $tokens = $encoder->encode($txt);
+                    if (\count($tokens) > $viewTokens) {
+                        // Build char-offsets per token by decoding single-token chunks
+                        $tok2idx = [0];
+                        $sum = 0;
+                        $limit = min(\count($tokens), $viewTokens + 1);
+                        for ($i = 0; $i < $limit; ++$i) {
+                            $piece = $encoder->decode([$tokens[$i]]);
+                            $sum += mb_strlen($piece);
+                            $tok2idx[] = $sum;
+                        }
+                        $endIdx = $tok2idx[$viewTokens] ?? $sum;
+                        $sub = mb_substr($txt, 0, $endIdx);
+                        $numLines = substr_count($sub, "\n") + 1; // round up
+                    } else {
+                        $numLines = $totalLines;
                     }
-                    $count += mb_strlen($line) + 1; // newline
-                    ++$numLines;
-                    if ($count >= $viewTokens) {
-                        break;
-                    }
+                } catch (\Throwable $e) {
+                    // Fallback: if tiktoken fails (e.g., no vocab cache), show full content
+                    $numLines = $totalLines;
                 }
             } else {
                 $numLines = $totalLines;

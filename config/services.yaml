@@ -37,6 +37,9 @@ services:
         public: true
         arguments:
             $maxSearchResults: '%app.search.max_results%'
+    App\Service\PageDisplayService:
+        public: true
+        arguments:
             $viewTokens: '%app.search.view_tokens%'
             $encodingName: '%app.search.encoding_name%'
     App\Service\OpenService:

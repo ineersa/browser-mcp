@@ -7,6 +7,7 @@ namespace App\Tests\Service;
 use App\Service\Backend\BackendInterface;
 use App\Service\BrowserState;
 use App\Service\DTO\PageContents;
+use App\Service\PageDisplayService;
 use App\Service\SearchService;
 use App\Service\Utilities;
 use PHPUnit\Framework\TestCase;
@@ -83,7 +84,8 @@ final class SearchServiceTest extends TestCase
         $backend->method('search')->willReturn($pageDto);
 
         $state = new BrowserState();
-        $service = new SearchService($backend, $state);
+        $pageDisplay = new PageDisplayService();
+        $service = new SearchService($backend, $state, 20, $pageDisplay);
 
         $query = (string) ($page['title'] ?? '');
         $result = $service($query, 10);

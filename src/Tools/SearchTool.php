@@ -10,9 +10,9 @@ use App\Service\SearchService;
 
 final class SearchTool
 {
-    public const NAME = 'search';
-    public const TITLE = 'Search for information';
-    public const DESCRIPTION = 'Searches for information related to `query` and displays `topn` results.';
+    public const string NAME = 'search';
+    public const string TITLE = 'Search for information';
+    public const string DESCRIPTION = 'Searches for information related to `query` and displays `topn` results.';
 
     public function __construct(
         private readonly SearchService $searchService,

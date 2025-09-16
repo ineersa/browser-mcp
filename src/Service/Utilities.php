@@ -134,22 +134,6 @@ final readonly class Utilities
         return $out;
     }
 
-    private static function mb_strrpos(string $haystack, string $needle): int|false
-    {
-        $pos = false;
-        $offset = 0;
-        while (true) {
-            $p = mb_strpos($haystack, $needle, $offset);
-            if (false === $p) {
-                break;
-            }
-            $pos = $p;
-            $offset = $p + 1;
-        }
-
-        return $pos;
-    }
-
     public static function stripLinks(string $text): string
     {
         $partialInitial = '/^[^【】]*】/u';
@@ -264,5 +248,21 @@ final readonly class Utilities
             urls: $urlsMap,
             snippets: $snippets,
         );
+    }
+
+    private static function mb_strrpos(string $haystack, string $needle): int|false
+    {
+        $pos = false;
+        $offset = 0;
+        while (true) {
+            $p = mb_strpos($haystack, $needle, $offset);
+            if (false === $p) {
+                break;
+            }
+            $pos = $p;
+            $offset = $p + 1;
+        }
+
+        return $pos;
     }
 }

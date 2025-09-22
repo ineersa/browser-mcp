@@ -19,12 +19,11 @@ final class OpenService
     ) {
     }
 
-    public function __invoke(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1, bool $viewSource = false, ?string $source = null): string
+    public function __invoke(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1, bool $viewSource = false): string
     {
         $currPage = null;
         $stayOnCurrentPage = false;
         $directUrlOpen = false;
-        $url = '';
         $snippet = null;
 
         if (\is_string($id)) {
@@ -76,11 +75,6 @@ final class OpenService
         }
     }
 
-    public function open(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1, bool $viewSource = false, ?string $source = null): string
-    {
-        return $this($id, $cursor, $loc, $numLines, $viewSource, $source);
-    }
-
     private function openUrl(string $url, bool $directUrlOpen): PageContents
     {
         if (!$directUrlOpen) {
@@ -92,10 +86,8 @@ final class OpenService
         try {
             return $this->backend->fetch($url);
         } catch (\Throwable $e) {
-            $msg = Utilities::maybeTruncate($e->getMessage() ?? '', 1024);
+            $msg = Utilities::maybeTruncate($e->getMessage() ?? '');
             throw new BackendError(\sprintf('Error fetching URL `%s`: %s', Utilities::maybeTruncate($url, 256), $msg), previous: $e);
         }
     }
-
-    // showPage logic moved to PageDisplayService
 }

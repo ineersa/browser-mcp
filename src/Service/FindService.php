@@ -20,8 +20,8 @@ final class FindService
         if (null !== $page->snippets) {
             throw new ToolUsageError('Cannot run `find` on search results page or find results page');
         }
-        $pc = Utilities::runFindInPage(mb_strtolower((string) $pattern), $page);
-        $this->state->addPage($pc);
+        $pageContent = Utilities::runFindInPage(mb_strtolower($pattern), $page);
+        $this->state->addPage($pageContent);
 
         try {
             return $this->pageDisplay->showPage($this->state, 0, -1);

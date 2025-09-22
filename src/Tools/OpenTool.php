@@ -27,10 +27,9 @@ final class OpenTool
         int $loc = -1,
         int $numLines = -1,
         bool $viewSource = false,
-        ?string $source = null,
     ): array {
         try {
-            $result = $this->openService->__invoke($id, $cursor, $loc, $numLines, $viewSource, $source);
+            $result = $this->openService->__invoke($id, $cursor, $loc, $numLines, $viewSource);
         } catch (ToolUsageError $exception) {
             $result = $exception->getMessage();
         }

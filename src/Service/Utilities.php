@@ -208,8 +208,8 @@ final readonly class Utilities
      */
     public static function runFindInPage(string $pattern, PageContents $page, int $maxResults = 50, int $numShowLines = 4): PageContents
     {
-        $lines = self::wrapLines($page->text, 80);
-        $txt = self::joinLines($lines, false);
+        $lines = self::wrapLines($page->text);
+        $txt = self::joinLines($lines);
         $withoutLinks = self::stripLinks($txt);
         $lines = explode("\n", $withoutLinks);
 

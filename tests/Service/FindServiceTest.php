@@ -38,17 +38,20 @@ final class FindServiceTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     private function loadJson(string $filename): array
     {
         $path = __DIR__.'/../dumps/SearxNG/'.$filename;
         $raw = file_get_contents($path);
         if (false === $raw) {
-            self::fail('Failed to read fixture '.$filename);
+            $this->fail('Failed to read fixture '.$filename);
         }
 
         $decoded = json_decode($raw, true);
         if (!\is_array($decoded)) {
-            self::fail('Fixture is not valid JSON: '.$filename);
+            $this->fail('Fixture is not valid JSON: '.$filename);
         }
 
         return $decoded;

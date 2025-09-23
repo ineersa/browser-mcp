@@ -6,7 +6,6 @@ namespace App\Service;
 
 use App\Service\DTO\PageContents;
 use App\Service\Exception\ToolUsageError;
-use JsonSerializable;
 
 final class BrowserState
 {

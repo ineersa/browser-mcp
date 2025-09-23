@@ -14,7 +14,7 @@ final class OpenService
 {
     public function __construct(
         private readonly BackendInterface $backend,
-        private readonly BrowserState     $state,
+        private readonly BrowserState $state,
         private readonly PageDisplayService $pageDisplay,
     ) {
     }
@@ -80,7 +80,7 @@ final class OpenService
         try {
             return $this->backend->fetch($url);
         } catch (\Throwable $e) {
-            $msg = Utilities::maybeTruncate($e->getMessage() ?? '');
+            $msg = Utilities::maybeTruncate($e->getMessage());
             throw new BackendError(\sprintf('Error fetching URL `%s`: %s', Utilities::maybeTruncate($url, 256), $msg), previous: $e);
         }
     }

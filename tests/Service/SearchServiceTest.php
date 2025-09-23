@@ -97,6 +97,9 @@ final class SearchServiceTest extends TestCase
         return __DIR__.'/../dumps/SearxNG';
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     private function loadJson(string $filename): array
     {
         $path = $this->getFixturesPath().'/'.$filename;

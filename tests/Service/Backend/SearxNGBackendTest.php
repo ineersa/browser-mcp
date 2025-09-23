@@ -15,7 +15,7 @@ final class SearxNGBackendTest extends TestCase
     public function testRequestSearchBuildsItemsFromResultsFixture(): void
     {
         $fixtures = $this->loadJson('results.json');
-        $expectedItems = $this->loadJson('items.json');
+        $expectedItems = $this->normalizeItemsFixture($this->loadJson('items.json')); // @phpstan-ignore-line
 
         // Create a partial mock overriding fetchSearxResults
         $client = $this->createMock(HttpClientInterface::class);
@@ -28,13 +28,14 @@ final class SearxNGBackendTest extends TestCase
             ->willReturn($fixtures);
 
         $items = $backend->requestSearch('query', 10);
+        $normalized = $this->normalizeItemsFixture($items);
 
-        $this->assertSame($expectedItems, $items);
+        $this->assertSame($expectedItems, $normalized);
     }
 
     public function testBuildSearchHtmlMatchesFixture(): void
     {
-        $items = $this->loadJson('items.json');
+        $items = $this->normalizeItemsFixture($this->loadJson('items.json')); // @phpstan-ignore-line
         $expectedHtml = file_get_contents($this->getFixturesPath().'/html.html');
         $this->assertNotFalse($expectedHtml, 'Failed to read html.html');
 
@@ -78,11 +79,33 @@ final class SearxNGBackendTest extends TestCase
         $this->assertSame((array) ($expected['urls'] ?? []), $page->urls, 'urls mapping mismatch');
     }
 
+    /**
+     * @param array<int, array<string|int, string>> $raw
+     *
+     * @return list<array{title:string,url:string,summary:string}>
+     */
+    private function normalizeItemsFixture(array $raw): array
+    {
+        $normalized = [];
+        foreach ($raw as $item) {
+            $normalized[] = [
+                'title' => (string) ($item['title'] ?? ($item[0] ?? '')),
+                'url' => (string) ($item['url'] ?? ($item[1] ?? '')),
+                'summary' => (string) ($item['summary'] ?? ($item[2] ?? '')),
+            ];
+        }
+
+        return $normalized;
+    }
+
     private function getFixturesPath(): string
     {
         return __DIR__.'/../../dumps/SearxNG';
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     private function loadJson(string $filename): array
     {
         $path = $this->getFixturesPath().'/'.$filename;

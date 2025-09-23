@@ -9,7 +9,7 @@ use App\Service\Exception\ToolUsageError;
 final class FindService
 {
     public function __construct(
-        private readonly BrowserState      $state,
+        private readonly BrowserState $state,
         private readonly PageDisplayService $pageDisplay,
     ) {
     }

@@ -14,8 +14,6 @@ use App\Service\PageDisplayService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class OpenServiceTest extends TestCase
 {
@@ -23,32 +21,37 @@ final class OpenServiceTest extends TestCase
     {
         $expectedUrl = 'https://symfony.com/doc/current/scheduler.html';
         $html = file_get_contents(__DIR__.'/../dumps/SearxNG/Scheduler (Symfony Docs).html');
-        self::assertNotFalse($html, 'Failed to read HTML fixture');
+        $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
         $state = new BrowserState();
+        $searchUrls = ['0' => $expectedUrl];
+        $searchSnippets = [
+            '0' => new Extract(
+                url: $expectedUrl,
+                text: 'Scheduler (Symfony Docs)',
+                title: '#0',
+                lineIdx: null,
+            ),
+        ];
         $searchPage = new PageContents(
             url: '',
             text: "# Search Results\n\n  * ",
             title: 'Search Results',
-            urls: ['0' => $expectedUrl],
-            snippets: [
-                '0' => new Extract(
-                    url: $expectedUrl,
-                    text: 'Scheduler (Symfony Docs)',
-                    title: '#0',
-                    lineIdx: null,
-                ),
-            ],
+            urls: $searchUrls, // @phpstan-ignore-line
+            snippets: $searchSnippets, // @phpstan-ignore-line
         );
         $state->addPage($searchPage);
         // Simulate previously opened pages so the new page lands at cursor 3, matching the Python fixture.
-        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev page 1', title: 'Prev 1', urls: []));
-        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev page 2', title: 'Prev 2', urls: []));
+        /** @var array<string,string> $emptyUrls */
+        $emptyUrls = [];
+        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev page 1', title: 'Prev 1', urls: $emptyUrls));
+        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev page 2', title: 'Prev 2', urls: $emptyUrls));
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($expectedUrl, $html) {
             if ('GET' !== $method || $url !== $expectedUrl) {
                 throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
             }
+
             return new MockResponse($html);
         });
         $backend = new SearxNGBackend('https://search.example', $httpClient);
@@ -92,27 +95,30 @@ final class OpenServiceTest extends TestCase
     {
         $url = 'https://symfony.com/doc/current/scheduler.html';
         $html = file_get_contents(__DIR__.'/../dumps/SearxNG/Scheduler (Symfony Docs).html');
-        self::assertNotFalse($html, 'Failed to read HTML fixture');
+        $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
         $state = new BrowserState();
+        /** @var array<string,string> $searchUrls */
+        $searchUrls = [];
         $searchPage = new PageContents(
             url: '',
             text: '# Search Results',
             title: 'Search Results',
-            urls: [],
+            urls: $searchUrls,
         );
         $state->addPage($searchPage);
-        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev page 1', title: 'Prev 1', urls: []));
-        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev page 2', title: 'Prev 2', urls: []));
+        /** @var array<string,string> $emptyUrls */
+        $emptyUrls = [];
+        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev page 1', title: 'Prev 1', urls: $emptyUrls));
+        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev page 2', title: 'Prev 2', urls: $emptyUrls));
 
-        $httpClient = $this->createMock(HttpClientInterface::class);
-        $response = $this->createMock(ResponseInterface::class);
-        $response->method('getContent')->willReturn($html);
-        $httpClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', $url, $this->anything())
-            ->willReturn($response);
+        $httpClient = new MockHttpClient(function (string $method, string $requestUrl, array $options) use ($url, $html) {
+            if ('GET' !== $method || $requestUrl !== $url) {
+                throw new \RuntimeException('Unexpected request: '.$method.' '.$requestUrl);
+            }
+
+            return new MockResponse($html);
+        });
 
         $backend = new SearxNGBackend('https://search.example', $httpClient);
 
@@ -134,11 +140,19 @@ final class OpenServiceTest extends TestCase
     {
         $snippets = $this->makeExtracts($data['snippets'] ?? null);
 
+        /** @var array<string,string> $urls */
+        $urls = [];
+        if (isset($data['urls']) && \is_array($data['urls'])) {
+            foreach ($data['urls'] as $key => $value) {
+                $urls[(string) $key] = (string) $value;
+            }
+        }
+
         return new PageContents(
             url: (string) ($data['url'] ?? ''),
             text: (string) ($data['text'] ?? ''),
             title: (string) ($data['title'] ?? ''),
-            urls: (array) ($data['urls'] ?? []),
+            urls: $urls,
             snippets: $snippets,
             errorMessage: isset($data['errorMessage']) ? (string) $data['errorMessage'] : null,
         );
@@ -146,6 +160,7 @@ final class OpenServiceTest extends TestCase
 
     /**
      * @param array<string, array<string, mixed>>|null $raw
+     *
      * @return array<string, Extract>|null
      */
     private function makeExtracts(?array $raw): ?array
@@ -167,17 +182,20 @@ final class OpenServiceTest extends TestCase
         return $result;
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     private function loadJson(string $filename): array
     {
         $path = __DIR__.'/../dumps/SearxNG/'.$filename;
         $raw = file_get_contents($path);
         if (false === $raw) {
-            self::fail('Failed to read fixture '.$filename);
+            $this->fail('Failed to read fixture '.$filename);
         }
 
         $decoded = json_decode($raw, true);
         if (!\is_array($decoded)) {
-            self::fail('Fixture is not valid JSON: '.$filename);
+            $this->fail('Fixture is not valid JSON: '.$filename);
         }
 
         return $decoded;

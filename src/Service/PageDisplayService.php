@@ -39,4 +39,3 @@ final class PageDisplayService
         return Utilities::makeDisplay($page, $cursor, $body, $scrollbar);
     }
 }
-

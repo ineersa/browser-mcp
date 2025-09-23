@@ -109,7 +109,7 @@ final class PageProcessor
             }
             $text = self::mergeWhitespace($a->textContent ?? '');
             $text = str_replace('†', '‡', $text);
-            if ('' === trim(preg_replace('/【\@([^】]+)】/u', '', $text) ?? '')) {
+            if ('' === trim(preg_replace('/【@([^】]+)】/u', '', $text) ?? '')) {
                 continue; // likely an image-only link
             }
             if (str_starts_with($href, '#')) {
@@ -210,13 +210,6 @@ final class PageProcessor
     private static function collapseExtraNewlines(string $text): string
     {
         return (string) preg_replace("/\n(\s*\n)+/", "\n\n", $text);
-    }
-
-    private static function moveAnchorsThroughWhitespace(string $text): string
-    {
-        // Swap sequences like "【...】\s+" to "\s+【...】"
-        // This mirrors the Python behavior to prevent anchors from introducing extra spaces
-        return (string) preg_replace('/(【[^】]+】)(\s+)/u', '$2$1', $text);
     }
 
     private static function replaceSpecialChars(string $text): string

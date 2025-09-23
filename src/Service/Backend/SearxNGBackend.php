@@ -60,7 +60,11 @@ class SearxNGBackend implements BackendInterface
             $title = (string) ($r['title'] ?? $u);
             $summary = (string) ($r['content'] ?? '');
             // Normalize to a list [title, url, summary] to match fixtures
-            $items[] = [$title, $u, $summary];
+            $items[] = [
+                'title' => $title,
+                'url' => $u,
+                'summary' => $summary,
+            ];
         }
 
         return $items;
@@ -75,9 +79,9 @@ class SearxNGBackend implements BackendInterface
     {
         $lis = [];
         foreach ($items as $it) {
-            $title = (string) ($it[0] ?? '');
-            $url = (string) ($it[1] ?? '');
-            $summary = (string) ($it[2] ?? '');
+            $title = (string) $it['title'];
+            $url = (string) $it['url'];
+            $summary = (string) $it['summary'];
             $lis[] = \sprintf(
                 "<li><a href='%s'>%s</a> %s</li>",
                 htmlspecialchars($url, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
@@ -105,6 +109,7 @@ class SearxNGBackend implements BackendInterface
      * Fetch raw SearxNG results array using Symfony HttpClient with query parameters.
      *
      * @return list<array<string,mixed>>
+     *
      * @throws BackendError
      */
     protected function fetchSearxResults(string $query, int $topn): array

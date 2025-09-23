@@ -6,3 +6,5 @@ parameters:
     tmpDir: var/phpstan
     excludePaths:
         - tests/bootstrap.php
+    parallel:
+        maximumNumberOfProcesses: 1

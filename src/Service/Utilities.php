@@ -31,6 +31,9 @@ final readonly class Utilities
         return $html;
     }
 
+    /**
+     * @param string[] $lines
+     */
     public static function joinLines(array $lines, bool $addLineNumbers = false, int $offset = 0): string
     {
         if ($addLineNumbers) {
@@ -49,6 +52,8 @@ final readonly class Utilities
      * Python textwrap-like wrapping to mirror SimpleBrowserTool.wrap_lines:
      * replace_whitespace=False, drop_whitespace=False, break_long_words=True, break_on_hyphens=True.
      * Preserves empty lines.
+     *
+     * @return string[]
      */
     public static function wrapLines(string $text, int $width = 80): array
     {
@@ -142,14 +147,16 @@ final readonly class Utilities
         $full = '/【\d+†(?P<content>[^†】]+)(?:†[^†】]+)?】/u';
 
         $text = (string) preg_replace($partialInitial, '', $text);
-        $text = (string) preg_replace_callback($partialFinal, fn ($m) => $m['content'] ?? '', $text);
-        $text = (string) preg_replace_callback($full, fn ($m) => $m['content'] ?? '', $text);
+        $text = (string) preg_replace_callback($partialFinal, fn ($m) => $m['content'], $text);
+        $text = (string) preg_replace_callback($full, fn ($m) => $m['content'], $text);
 
         return $text;
     }
 
     /**
      * Compute token-based end location using tiktoken-php to mirror Python behavior.
+     *
+     * @param string[] $lines
      */
     public static function getEndLoc(int $loc, int $numLines, int $totalLines, array $lines, int $viewTokens, string $encodingName): int
     {

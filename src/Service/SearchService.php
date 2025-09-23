@@ -12,7 +12,7 @@ final class SearchService
 {
     public function __construct(
         private readonly BackendInterface $backend,
-        private readonly BrowserState     $state,
+        private readonly BrowserState $state,
         private readonly PageDisplayService $pageDisplay,
     ) {
     }

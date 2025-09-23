@@ -19,6 +19,7 @@
         "ext-fileinfo": "*",
         "ext-iconv": "*",
         "ext-libxml": "*",
+        "html2text/html2text": "^4.3",
         "mcp/sdk": "dev-main@dev",
         "symfony/cache": "7.3.*",
         "symfony/console": "7.3.*",

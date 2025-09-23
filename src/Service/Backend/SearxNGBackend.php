@@ -16,23 +16,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SearxNGBackend implements BackendInterface
 {
-    /**
-     * @var string Description of the backend source
-     */
-    private string $source;
     private string $searxNGUrl;
     private HttpClientInterface $client;
 
-    public function __construct(string $searxNGUrl, string $source, HttpClientInterface $httpClient)
+    public function __construct(string $searxNGUrl, HttpClientInterface $httpClient)
     {
         $this->searxNGUrl = rtrim($searxNGUrl, '/');
-        $this->source = $source;
         $this->client = $httpClient;
-    }
-
-    public function getSource(): string
-    {
-        return $this->source;
     }
 
     /**
@@ -101,10 +91,6 @@ class SearxNGBackend implements BackendInterface
 
     public function fetch(string $url): PageContents
     {
-        $isViewSource = str_starts_with($url, self::VIEW_SOURCE_PREFIX);
-        if ($isViewSource) {
-            $url = substr($url, \strlen(self::VIEW_SOURCE_PREFIX));
-        }
         $html = $this->httpGet($url);
 
         return PageProcessor::processHtml(

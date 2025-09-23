@@ -13,7 +13,6 @@ final class SearchService
     public function __construct(
         private readonly BackendInterface $backend,
         private readonly BrowserState     $state,
-        private readonly int              $maxSearchResults = 20,
         private readonly PageDisplayService $pageDisplay,
     ) {
     }
@@ -22,14 +21,15 @@ final class SearchService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(string $query, int $topn = 10, ?string $source = null): string
+    public function __invoke(string $query, int $topn = 10): string
     {
         try {
-            $page = $this->backend->search($query, $this->maxSearchResults);
+            $page = $this->backend->search($query, $topn);
         } catch (\Throwable $e) {
             $msg = Utilities::maybeTruncate($e->getMessage());
             throw new BackendError(\sprintf('Error during search for `%s`: %s', $query, $msg), previous: $e);
         }
+        $this->state->reset();
         $this->state->addPage($page);
         try {
             // Compute end location using Utilities::getEndLoc (numLines=-1)

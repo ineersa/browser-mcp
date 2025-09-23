@@ -20,7 +20,7 @@ final class SearxNGBackendTest extends TestCase
         // Create a partial mock overriding fetchSearxResults
         $client = $this->createMock(HttpClientInterface::class);
         $backend = $this->getMockBuilder(SearxNGBackend::class)
-            ->setConstructorArgs(['http://example.test', 'web', $client])
+            ->setConstructorArgs(['http://example.test', $client])
             ->onlyMethods(['fetchSearxResults'])
             ->getMock();
 
@@ -38,7 +38,7 @@ final class SearxNGBackendTest extends TestCase
         $expectedHtml = file_get_contents($this->getFixturesPath().'/html.html');
         $this->assertNotFalse($expectedHtml, 'Failed to read html.html');
 
-        $backend = new SearxNGBackend('http://example.test', 'web', HttpClient::create());
+        $backend = new SearxNGBackend('http://example.test', HttpClient::create());
         $html = $backend->buildSearchHtml($items);
 
         $this->assertSame($expectedHtml, $html);
@@ -56,7 +56,7 @@ final class SearxNGBackendTest extends TestCase
         // Prepare a backend that returns the fixture HTML from Python
         $client = $this->createMock(HttpClientInterface::class);
         $backend = $this->getMockBuilder(SearxNGBackend::class)
-            ->setConstructorArgs(['http://example.test', 'web', $client])
+            ->setConstructorArgs(['http://example.test', $client])
             ->onlyMethods(['requestSearch', 'buildSearchHtml'])
             ->getMock();
 

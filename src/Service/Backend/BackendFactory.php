@@ -15,7 +15,7 @@ final class BackendFactory
     public function create(string $driver, string $backendUrl): BackendInterface
     {
         return match ($driver) {
-            'searxng' => new SearxNGBackend($backendUrl, 'web', $this->httpClient),
+            'searxng' => new SearxNGBackend($backendUrl, $this->httpClient),
             default => throw new \UnhandledMatchError('Unknown backend'),
         };
     }

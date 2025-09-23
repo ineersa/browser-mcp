@@ -11,6 +11,7 @@ use Yethee\Tiktoken\EncoderProvider;
 final readonly class Utilities
 {
     private const FIND_PAGE_LINK_FORMAT = '# 【%s†%s】';
+    private const FALLBACK_CHARS_PER_TOKEN = 3.37;
 
     public static function maybeTruncate(string $text, int $numChars = 1024): string
     {
@@ -177,8 +178,8 @@ final readonly class Utilities
                         $numLines = $totalLines;
                     }
                 } catch (\Throwable $e) {
-                    // Fallback: if tiktoken fails (e.g., no vocab cache), show full content
-                    $numLines = $totalLines;
+                    // Fallback: estimate using a chars/token heuristic when we cannot load vocab data.
+                    $numLines = self::estimateNumLinesFallback($txt, $totalLines, $viewTokens);
                 }
             } else {
                 $numLines = $totalLines;
@@ -200,7 +201,7 @@ final readonly class Utilities
         $result = $header;
         $result .= $body;
 
-        return \sprintf('[%d] %s', $cursor, $result);
+        return \sprintf('[CURSOR:#%d] %s', $cursor, $result);
     }
 
     /**
@@ -248,6 +249,18 @@ final readonly class Utilities
             urls: $urlsMap,
             snippets: $snippets,
         );
+    }
+
+    private static function estimateNumLinesFallback(string $text, int $totalLines, int $viewTokens): int
+    {
+        $maxChars = (int) ceil($viewTokens * self::FALLBACK_CHARS_PER_TOKEN);
+        if (mb_strlen($text) <= $maxChars) {
+            return $totalLines;
+        }
+
+        $sub = mb_substr($text, 0, $maxChars);
+
+        return min(substr_count($sub, "\n") + 1, $totalLines);
     }
 
     private static function mb_strrpos(string $haystack, string $needle): int|false

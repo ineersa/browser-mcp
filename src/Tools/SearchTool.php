@@ -28,7 +28,7 @@ final class SearchTool
         ?string $source = null,
     ): array {
         try {
-            $result = $this->searchService->__invoke($query, $topn, $source);
+            $result = $this->searchService->__invoke($query, $topn);
         } catch (ToolUsageError|BackendError $exception) {
             $result = $exception->getMessage();
         }

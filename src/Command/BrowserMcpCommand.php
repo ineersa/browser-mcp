@@ -43,11 +43,10 @@ class BrowserMcpCommand extends Command
         try {
             $serverDescription = <<<DESC
 Tool for browsing.
-The `cursor` appears in brackets before each browsing display: `[{cursor}]`.
+The `cursor` appears in brackets before each browsing display: `[CURSOR:#{cursor}]`.
 Cite information from the tool using the following format:
 `【{cursor}†L{line_start}(-L{line_end})?】`, for example: `【6†L9-L11】` or `【8†L3】`.
 Do not quote more than 10 words directly from the tool output.
-sources=web
 DESC;
             // Build server configuration
             $server = Server::make()

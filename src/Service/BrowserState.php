@@ -15,6 +15,12 @@ final class BrowserState
     /** @var list<string> */
     private array $pageStack = [];
 
+    public function reset(): void
+    {
+        $this->pages = [];
+        $this->pageStack = [];
+    }
+
     public function getCurrentCursor(): int
     {
         return \count($this->pageStack) - 1;

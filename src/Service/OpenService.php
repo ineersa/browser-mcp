@@ -19,7 +19,7 @@ final class OpenService
     ) {
     }
 
-    public function __invoke(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1, bool $viewSource = false): string
+    public function __invoke(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1): string
     {
         $currPage = null;
         $stayOnCurrentPage = false;
@@ -38,16 +38,9 @@ final class OpenService
                 }
                 $snippet = $currPage->snippets[(string) $id] ?? null;
             } else {
-                if (!$viewSource) {
-                    $stayOnCurrentPage = true;
-                }
+                $stayOnCurrentPage = true;
                 $url = $currPage->url;
             }
-        }
-
-        if ($viewSource) {
-            $url = BackendInterface::VIEW_SOURCE_PREFIX.$url;
-            $snippet = null;
         }
 
         if ($stayOnCurrentPage) {
@@ -55,9 +48,8 @@ final class OpenService
             \assert($newPage instanceof PageContents);
         } else {
             $newPage = $this->openUrl($url, $directUrlOpen);
+            $this->state->addPage($newPage);
         }
-
-        $this->state->addPage($newPage);
 
         if ($loc < 0) {
             if ($snippet instanceof Extract && null !== $snippet->lineIdx) {
@@ -70,7 +62,9 @@ final class OpenService
         try {
             return $this->pageDisplay->showPage($this->state, $loc, $numLines);
         } catch (ToolUsageError $e) {
-            $this->state->popPageStack();
+            if (!$stayOnCurrentPage) {
+                $this->state->popPageStack();
+            }
             throw $e;
         }
     }

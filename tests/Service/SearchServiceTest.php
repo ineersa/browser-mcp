@@ -80,12 +80,11 @@ final class SearchServiceTest extends TestCase
 
         // Mock backend->search() to return the fixture page directly
         $backend = $this->createMock(BackendInterface::class);
-        $backend->method('getSource')->willReturn('web');
         $backend->method('search')->willReturn($pageDto);
 
         $state = new BrowserState();
         $pageDisplay = new PageDisplayService();
-        $service = new SearchService($backend, $state, 20, $pageDisplay);
+        $service = new SearchService($backend, $state, $pageDisplay);
 
         $query = (string) ($page['title'] ?? '');
         $result = $service($query, 10);

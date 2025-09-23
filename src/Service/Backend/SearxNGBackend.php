@@ -144,7 +144,6 @@ class SearxNGBackend implements BackendInterface
         try {
             $response = $this->client->request('GET', $url, [
                 'max_redirects' => 10,
-                'normalize_headers' => true,
             ]);
 
             // getContent(true) returns content even on 3xx but throws on >=400; we want exceptions for retry

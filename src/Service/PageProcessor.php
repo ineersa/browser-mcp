@@ -199,8 +199,50 @@ final class PageProcessor
         $text = (string) preg_replace('/(【@[^】]+】)(\s+)/u', '$2$1', $text);
         $text = self::removeEmptyLines($text);
         $text = self::collapseExtraNewlines($text);
+        $text = self::normalizeTrailingWhitespace($text);
+        $text = self::unescapeMarkdownArtifacts($text);
 
         return trim($text);
+    }
+
+    private static function normalizeTrailingWhitespace(string $text): string
+    {
+        $lines = explode("\n", $text);
+        $lastIdx = \count($lines) - 1;
+        for ($i = 0; $i <= $lastIdx; ++$i) {
+            if (!preg_match('/[ \t]+$/', $lines[$i])) {
+                continue;
+            }
+
+            $trimmed = rtrim($lines[$i], " \t");
+            if (str_ends_with($trimmed, '>')) {
+                continue;
+            }
+
+            $currentIndent = strspn($lines[$i], " \t");
+            $nextIndent = null;
+            for ($j = $i + 1; $j <= $lastIdx; ++$j) {
+                if ('' === $lines[$j]) {
+                    continue;
+                }
+                $nextIndent = strspn($lines[$j], " \t");
+                break;
+            }
+
+            if (null !== $nextIndent && $nextIndent > $currentIndent) {
+                continue;
+            }
+
+            $lines[$i] = rtrim($lines[$i], " \t");
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private static function unescapeMarkdownArtifacts(string $text): string
+    {
+        // html2text escapes ordered-list markers (e.g. "1.") to keep Markdown literal; undo for parity
+        return (string) preg_replace('/(?<=\d)\\\./', '.', $text);
     }
 
     private static function replaceSpecialChars(string $text): string
@@ -210,6 +252,7 @@ final class PageProcessor
             '】' => '〗',
             '◼' => '◾',
             "\u{200B}" => '', // zero width space
+            "\u{00A0}" => ' ',
         ];
 
         return strtr($text, $replacements);

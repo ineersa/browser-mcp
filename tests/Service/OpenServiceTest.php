@@ -19,7 +19,7 @@ final class OpenServiceTest extends TestCase
 {
     public function testOpenFollowsLinkAndAddsNewPageToState(): void
     {
-        $expectedUrl = 'https://symfony.com/doc/current/scheduler.html';
+        $expectedUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
         $html = file_get_contents(__DIR__ . '/../dumps/SearxNG/open_page.html');
         $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
@@ -28,7 +28,7 @@ final class OpenServiceTest extends TestCase
         $searchSnippets = [
             '0' => new Extract(
                 url: $expectedUrl,
-                text: 'Scheduler (Symfony Docs)',
+                text: 'HTML5 Test Page fixture',
                 title: '#0',
                 lineIdx: null,
             ),
@@ -41,11 +41,7 @@ final class OpenServiceTest extends TestCase
             snippets: $searchSnippets, // @phpstan-ignore-line
         );
         $state->addPage($searchPage);
-        // Simulate previously opened pages so the new page lands at cursor 3, matching the Python fixture.
-        /** @var array<string,string> $emptyUrls */
-        $emptyUrls = [];
-        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev page 1', title: 'Prev 1', urls: $emptyUrls));
-        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev page 2', title: 'Prev 2', urls: $emptyUrls));
+        // Keep the stack minimal so the opened page lands at cursor 1 like the Python fixture.
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($expectedUrl, $html) {
             if ('GET' !== $method || $url !== $expectedUrl) {
@@ -61,7 +57,7 @@ final class OpenServiceTest extends TestCase
 
         $result = $service->__invoke(0, 0);
 
-        $this->assertSame(3, $state->getCurrentCursor(), 'New page should set the cursor to match Python fixture.');
+        $this->assertSame(1, $state->getCurrentCursor(), 'New page should set the cursor to match Python fixture.');
         $currentPage = $state->getPage();
         $this->assertSame($expectedUrl, $currentPage->url, 'Open should navigate to the link target.');
         $this->assertSame('', $state->getPage(0)->url, 'Search page should remain at cursor 0.');
@@ -93,7 +89,7 @@ final class OpenServiceTest extends TestCase
 
     public function testOpenHandlesDirectUrlString(): void
     {
-        $url = 'https://symfony.com/doc/current/scheduler.html';
+        $url = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
         $html = file_get_contents(__DIR__ . '/../dumps/SearxNG/open_page.html');
         $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
@@ -107,10 +103,6 @@ final class OpenServiceTest extends TestCase
             urls: $searchUrls,
         );
         $state->addPage($searchPage);
-        /** @var array<string,string> $emptyUrls */
-        $emptyUrls = [];
-        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev page 1', title: 'Prev 1', urls: $emptyUrls));
-        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev page 2', title: 'Prev 2', urls: $emptyUrls));
 
         $httpClient = new MockHttpClient(function (string $method, string $requestUrl, array $options) use ($url, $html) {
             if ('GET' !== $method || $requestUrl !== $url) {
@@ -130,7 +122,7 @@ final class OpenServiceTest extends TestCase
         $expected = (string) ($this->loadJson('open_page_response.json')['result'] ?? '');
         $this->assertSame($expected, $result);
         $this->assertSame($url, $state->getPage()->url);
-        $this->assertSame(3, $state->getCurrentCursor());
+        $this->assertSame(1, $state->getCurrentCursor());
     }
 
     /**

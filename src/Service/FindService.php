@@ -14,13 +14,33 @@ final class FindService
     ) {
     }
 
-    public function __invoke(string $pattern, int $cursor = -1): string
+    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): string
     {
+        if (null !== $pattern && null !== $regex) {
+            throw new ToolUsageError('Provide either `pattern` or `regex`, not both.');
+        }
+
+        if (null === $pattern || '' === $pattern) {
+            $pattern = null;
+        }
+
+        if (null === $regex || '' === $regex) {
+            $regex = null;
+        }
+
+        if (null === $pattern && null === $regex) {
+            throw new ToolUsageError('Provide a non-empty `pattern` or `regex` to search for.');
+        }
+
         $page = $this->state->getPage($cursor);
         if (null !== $page->snippets) {
             throw new ToolUsageError('Cannot run `find` on search results page or find results page');
         }
-        $pageContent = Utilities::runFindInPage(mb_strtolower($pattern), $page);
+        $pageContent = Utilities::runFindInPage(
+            page: $page,
+            pattern: $pattern,
+            regex: $regex,
+        );
         $this->state->addPage($pageContent);
 
         try {

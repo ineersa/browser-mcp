@@ -41,7 +41,8 @@ $open = $container->get(OpenService::class);
 echo $open(0); // open first search result
 
 $find = $container->get(FindService::class);
-echo $find('benchmark');
+echo $find(pattern: 'benchmark');
+echo $find(regex: '/bench(mark|press)/i');
 ```
 
 ## Development

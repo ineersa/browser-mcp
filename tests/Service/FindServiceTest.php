@@ -6,6 +6,7 @@ namespace App\Tests\Service;
 
 use App\Service\BrowserState;
 use App\Service\DTO\PageContents;
+use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
 use App\Service\PageDisplayService;
 use PHPUnit\Framework\TestCase;
@@ -32,10 +33,30 @@ final class FindServiceTest extends TestCase
         $pageDisplay = new PageDisplayService();
         $service = new FindService($state, $pageDisplay);
 
-        $result = $service->__invoke('configure');
+        $result = $service->__invoke(pattern: 'configure');
 
         $expected = (string) ($this->loadJson('find_result.json')['result'] ?? '');
         $this->assertSame($expected, $result);
+    }
+
+    public function testFindRequiresPatternOrRegex(): void
+    {
+        $state = new BrowserState();
+        $pageDisplay = new PageDisplayService();
+        $service = new FindService($state, $pageDisplay);
+
+        $this->expectException(ToolUsageError::class);
+        $service->__invoke();
+    }
+
+    public function testFindRejectsPatternAndRegexTogether(): void
+    {
+        $state = new BrowserState();
+        $pageDisplay = new PageDisplayService();
+        $service = new FindService($state, $pageDisplay);
+
+        $this->expectException(ToolUsageError::class);
+        $service->__invoke(pattern: 'foo', regex: '/foo/');
     }
 
     /**

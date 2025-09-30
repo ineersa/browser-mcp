@@ -12,6 +12,9 @@ final readonly class Utilities
 {
     private const FIND_PAGE_LINK_FORMAT = '# 【%s†%s】';
     private const FALLBACK_CHARS_PER_TOKEN = 3.37;
+    // Tighter PCRE limits for regex-based find to avoid runaway backtracking.
+    private const FIND_REGEX_BACKTRACK_LIMIT = 100000;
+    private const FIND_REGEX_RECURSION_LIMIT = 1000;
 
     public static function maybeTruncate(string $text, int $numChars = 1024): string
     {
@@ -212,14 +215,27 @@ final readonly class Utilities
     }
 
     /**
-     * Build a find results PageContents by scanning the page text for a pattern.
+     * Build a find results PageContents by scanning the page text for either an exact pattern or a regex match.
      */
-    public static function runFindInPage(string $pattern, PageContents $page, int $maxResults = 50, int $numShowLines = 4): PageContents
+    public static function runFindInPage(
+        PageContents $page,
+        ?string $pattern = null,
+        ?string $regex = null,
+        int $maxResults = 50,
+        int $numShowLines = 4
+    ): PageContents
     {
         $lines = self::wrapLines($page->text);
         $txt = self::joinLines($lines);
         $withoutLinks = self::stripLinks($txt);
         $lines = explode("\n", $withoutLinks);
+
+        $isRegexSearch = null !== $regex;
+        $query = $isRegexSearch ? (string) $regex : (string) $pattern;
+
+        $regexPattern = $isRegexSearch ? $query : null;
+        $needle = $isRegexSearch ? null : mb_strtolower($query);
+        $regexError = null;
 
         $resultChunks = [];
         $snippets = [];
@@ -227,7 +243,17 @@ final readonly class Utilities
         $matchIdx = 0;
         while ($lineIdx < \count($lines)) {
             $line = $lines[$lineIdx];
-            if (!str_contains(mb_strtolower($line), $pattern)) {
+            $matched = false;
+            if (null !== $regexPattern) {
+                $matched = self::regexMatches($regexPattern, $line, $regexError);
+                if (null !== $regexError) {
+                    break;
+                }
+            } elseif (null !== $needle) {
+                $matched = str_contains(mb_strtolower($line), $needle);
+            }
+
+            if (!$matched) {
                 ++$lineIdx;
                 continue;
             }
@@ -247,15 +273,77 @@ final readonly class Utilities
             $urlsMap[(string) $i] = $page->url;
         }
 
-        $displayText = !empty($resultChunks) ? implode("\n\n", $resultChunks) : \sprintf('No `find` results for pattern: `%s`', $pattern);
+        if (null !== $regexError) {
+            $displayText = \sprintf('Regex error for regex `%s`: %s', $query, $regexError);
+            $resultChunks = [];
+            $urlsMap = [];
+            $snippets = [];
+        } elseif (!empty($resultChunks)) {
+            $displayText = implode("\n\n", $resultChunks);
+        } else {
+            $displayText = \sprintf('No `find` results for %s: `%s`', $isRegexSearch ? 'regex' : 'pattern', $query);
+        }
 
         return new PageContents(
-            url: $page->url.'/find?pattern='.rawurlencode($pattern),
+            url: $page->url.'/find?'.($isRegexSearch ? 'regex=' : 'pattern=').rawurlencode($query),
             text: $displayText,
-            title: \sprintf('Find results for text: `%s` in `%s`', $pattern, $page->title),
+            title: \sprintf('Find results for %s: `%s` in `%s`', $isRegexSearch ? 'regex' : 'text', $query, $page->title),
             urls: $urlsMap,
             snippets: $snippets,
         );
+    }
+
+    private static function regexMatches(string $pattern, string $subject, ?string &$error = null): bool
+    {
+        $error = null;
+        $result = self::withPcreLimits(static function () use ($pattern, $subject, &$error) {
+            $match = @preg_match($pattern, $subject);
+            if (false === $match) {
+                $error = self::describePregError(preg_last_error());
+                return false;
+            }
+
+            return 1 === $match;
+        });
+
+        return (bool) $result;
+    }
+
+    private static function withPcreLimits(callable $callback): mixed
+    {
+        $backtrack = ini_get('pcre.backtrack_limit');
+        $recursion = ini_get('pcre.recursion_limit');
+
+        try {
+            ini_set('pcre.backtrack_limit', (string) self::FIND_REGEX_BACKTRACK_LIMIT);
+            ini_set('pcre.recursion_limit', (string) self::FIND_REGEX_RECURSION_LIMIT);
+
+            return $callback();
+        } finally {
+            if (false !== $backtrack) {
+                ini_set('pcre.backtrack_limit', (string) $backtrack);
+            } else {
+                ini_restore('pcre.backtrack_limit');
+            }
+
+            if (false !== $recursion) {
+                ini_set('pcre.recursion_limit', (string) $recursion);
+            } else {
+                ini_restore('pcre.recursion_limit');
+            }
+        }
+    }
+
+    private static function describePregError(int $code): string
+    {
+        return match ($code) {
+            \PREG_BACKTRACK_LIMIT_ERROR => 'PCRE backtrack limit reached',
+            \PREG_RECURSION_LIMIT_ERROR => 'PCRE recursion limit reached',
+            \PREG_BAD_UTF8_ERROR, \PREG_BAD_UTF8_OFFSET_ERROR => 'Invalid UTF-8 data in subject',
+            \PREG_INTERNAL_ERROR => 'Invalid regex pattern or internal PCRE error',
+            \PREG_JIT_STACKLIMIT_ERROR => 'PCRE JIT stack limit reached',
+            default => 'Unknown PCRE error (code '.$code.')',
+        };
     }
 
     private static function estimateNumLinesFallback(string $text, int $totalLines, int $viewTokens): int

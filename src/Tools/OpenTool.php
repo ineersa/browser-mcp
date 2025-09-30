@@ -26,7 +26,6 @@ final class OpenTool
         int $cursor = -1,
         int $loc = -1,
         int $numLines = -1,
-        bool $viewSource = false,
     ): array {
         try {
             $result = $this->openService->__invoke($id, $cursor, $loc, $numLines);

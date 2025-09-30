@@ -11,7 +11,7 @@ final class FindTool
 {
     public const string NAME = 'find';
     public const string TITLE = 'Find pattern in page';
-    public const string DESCRIPTION = 'Finds exact matches of `pattern` in the current page, or the page given by `cursor`.';
+    public const string DESCRIPTION = 'Finds exact matches of `pattern` in the current page, or the page given by `cursor`. Provide `regex` to run a regex match instead.';
 
     public function __construct(
         private readonly FindService $findService,
@@ -21,10 +21,10 @@ final class FindTool
     /**
      * @return array{result: string}
      */
-    public function __invoke(string $pattern, int $cursor = -1): array
+    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): array
     {
         try {
-            $result = $this->findService->__invoke($pattern, $cursor);
+            $result = $this->findService->__invoke(pattern: $pattern, regex: $regex, cursor: $cursor);
         } catch (ToolUsageError $exception) {
             $result = $exception->getMessage();
         }

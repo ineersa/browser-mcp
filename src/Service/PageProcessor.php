@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Service\DTO\PageContents;
+use Ineersa\PhpHtml2text\Config;
+use Ineersa\PhpHtml2text\HTML2Markdown;
 
 final class PageProcessor
 {
     private const HTML_SUP_RE = '/<sup( [^>]*)?>([\w\-]+)<\/sup>/u';
     private const HTML_SUB_RE = '/<sub( [^>]*)?>([\w\-]+)<\/sub>/u';
+    private const HTML_TAGS_SEQUENCE_RE = '/(?<=\w)((<[^>]*>)+)(?=\w)/u';
 
     /** Create a PageContents from HTML. */
     public static function processHtml(string $html, string $url, ?string $title, bool $displayUrls = false): PageContents
@@ -18,6 +21,7 @@ final class PageProcessor
         $html = self::replaceSpecialChars($html);
         $html = (string) preg_replace(self::HTML_SUP_RE, '^{\\2}', $html);
         $html = (string) preg_replace(self::HTML_SUB_RE, '_{\\2}', $html);
+        $html = (string) preg_replace(self::HTML_TAGS_SEQUENCE_RE, ' \1', $html);
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $prev = libxml_use_internal_errors(true);
@@ -28,7 +32,7 @@ final class PageProcessor
 
         if (!$loaded) {
             // Fallback: strip tags if HTML is invalid
-            $text = self::htmlToText($html);
+            $text = self::normalizeText(self::htmlToText($html));
             $finalTitle = $title ?? ('' !== $url ? self::getDomain($url) : '');
 
             return new PageContents(url: $url, text: ($displayUrls ? "\nURL: $url\n" : '').$text, title: $finalTitle, urls: []);
@@ -42,24 +46,7 @@ final class PageProcessor
         self::removeMath($dom, $xpath);
 
         $cleanHtml = $dom->saveHTML() ?: '';
-        $text = self::htmlToText($cleanHtml);
-        // Preserve Markdown-like bullet prefix used for <li> items while normalizing spaces
-        $text = (string) preg_replace('/^\s+\*\s/m', '<<BULLET>> ', $text);
-        // Move anchors to the right through whitespace to avoid extra spaces
-        // Ensure a single space follows an anchor token when immediately adjoining text
-        $text = (string) preg_replace('/】(?=\S)/u', '】 ', $text);
-        // Normalize non-breaking spaces to regular spaces
-        $text = str_replace("\u{00A0}", ' ', $text);
-        // Collapse runs of spaces/tabs but keep newlines intact
-        $text = (string) preg_replace('/[^\S\r\n]+/', ' ', $text);
-        // Trim trailing spaces at line ends
-        $text = (string) preg_replace('/[ \t]+$/m', '', $text);
-        // Restore bullet prefix
-        $text = str_replace('<<BULLET>> ', '  * ', $text);
-        // Ensure a blank line after headings like '# Title' for readability/parity
-        $text = (string) preg_replace('/^(# .*?)\n(?!\n)/m', "$1\n\n", $text);
-        $text = self::removeEmptyLines($text);
-        $text = self::collapseExtraNewlines($text);
+        $text = self::normalizeText(self::htmlToText($cleanHtml));
 
         $top = $displayUrls ? "\nURL: $url\n" : '';
 
@@ -178,26 +165,21 @@ final class PageProcessor
 
     private static function htmlToText(string $html): string
     {
-        // Basic normalization before stripping tags
-        // - Convert headings to markdown-style prefixes like '#', '##', etc.
-        $html = preg_replace('/<h1[^>]*>/i', '# ', $html) ?? $html;
-        $html = preg_replace('/<h2[^>]*>/i', '## ', $html) ?? $html;
-        $html = preg_replace('/<h3[^>]*>/i', '### ', $html) ?? $html;
-        $html = preg_replace('/<h4[^>]*>/i', '#### ', $html) ?? $html;
-        $html = preg_replace('/<h5[^>]*>/i', '##### ', $html) ?? $html;
-        $html = preg_replace('/<h6[^>]*>/i', '###### ', $html) ?? $html;
-        $html = preg_replace('/<\/h[1-6]\s*>/i', "\n\n", $html) ?? $html;
+        $config = new Config(
+            unicodeSnob: true,
+            bodyWidth: 0,
+            ignoreAnchors: true,
+            ignoreImages: true,
+            ignoreTables: true,
+            ignoreEmphasis: true,
+        );
 
-        // - Convert list items to bullets to match python html2text behavior
-        $html = preg_replace('/<li[^>]*>/i', '  * ', $html) ?? $html;
-
-        // Insert newlines for block-level boundaries
-        $patterns = [
-            '/<\s*br\s*\/?\s*>/i' => "\n",
-            '/<\/(p|div|li|ul|ol|tr|table|blockquote|pre)\s*>/i' => "\n",
-        ];
-        $html = preg_replace(array_keys($patterns), array_values($patterns), $html) ?? $html;
-        $text = html_entity_decode(strip_tags($html), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+        try {
+            $converter = new HTML2Markdown($config);
+            $text = $converter->convert(Utilities::ensureUtf8($html));
+        } catch (\Throwable) {
+            $text = strip_tags($html);
+        }
 
         return trim($text);
     }
@@ -210,6 +192,15 @@ final class PageProcessor
     private static function collapseExtraNewlines(string $text): string
     {
         return (string) preg_replace("/\n(\s*\n)+/", "\n\n", $text);
+    }
+
+    private static function normalizeText(string $text): string
+    {
+        $text = (string) preg_replace('/(【@[^】]+】)(\s+)/u', '$2$1', $text);
+        $text = self::removeEmptyLines($text);
+        $text = self::collapseExtraNewlines($text);
+
+        return trim($text);
     }
 
     private static function replaceSpecialChars(string $text): string

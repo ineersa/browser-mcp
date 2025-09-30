@@ -20,7 +20,7 @@ final class OpenServiceTest extends TestCase
     public function testOpenFollowsLinkAndAddsNewPageToState(): void
     {
         $expectedUrl = 'https://symfony.com/doc/current/scheduler.html';
-        $html = file_get_contents(__DIR__.'/../dumps/SearxNG/Scheduler (Symfony Docs).html');
+        $html = file_get_contents(__DIR__ . '/../dumps/SearxNG/open_page.html');
         $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
         $state = new BrowserState();
@@ -94,7 +94,7 @@ final class OpenServiceTest extends TestCase
     public function testOpenHandlesDirectUrlString(): void
     {
         $url = 'https://symfony.com/doc/current/scheduler.html';
-        $html = file_get_contents(__DIR__.'/../dumps/SearxNG/Scheduler (Symfony Docs).html');
+        $html = file_get_contents(__DIR__ . '/../dumps/SearxNG/open_page.html');
         $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
         $state = new BrowserState();

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ce4a26ec16b8044a44acc9fdb779874f",
+    "content-hash": "fb89ccecf4f3dc9010245015cec72fb6",
     "packages": [
         {
             "name": "doctrine/deprecations",
@@ -91,6 +91,54 @@
                 "source": "https://github.com/mtibben/html2text/tree/4.3.2"
             },
             "time": "2024-08-20T02:43:29+00:00"
+        },
+        {
+            "name": "ineersa/php-html2text",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ineersa/php-html2text.git",
+                "reference": "12bd2dcacab1b8479b1ec4fc28c7a56cdd8ab9f7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ineersa/php-html2text/zipball/12bd2dcacab1b8479b1ec4fc28c7a56cdd8ab9f7",
+                "reference": "12bd2dcacab1b8479b1ec4fc28c7a56cdd8ab9f7",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-libxml": "*",
+                "php": ">=8.4",
+                "symfony/string": "^7.3"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.87.2",
+                "phpstan/phpstan": "^2.1.28",
+                "phpunit/phpunit": "^12.3.13"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Ineersa\\PhpHtml2text\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Illia Vasylevskyi",
+                    "email": "ineersa@gmail.com"
+                }
+            ],
+            "description": "`html2text` converts a page of HTML into clean, easy-to-read plain ASCII text. Better yet, that ASCII also happens to be valid Markdown (a text-to-HTML format).",
+            "support": {
+                "issues": "https://github.com/ineersa/php-html2text/issues",
+                "source": "https://github.com/ineersa/php-html2text/tree/v1.0.0"
+            },
+            "time": "2025-09-30T00:00:50+00:00"
         },
         {
             "name": "mcp/sdk",

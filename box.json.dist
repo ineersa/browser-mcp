@@ -1,7 +1,7 @@
 {
-    "output": "dist/python-mcp.phar",
+    "output": "dist/browser-mcp.phar",
 
-    "main": "bin/python-mcp",
+    "main": "bin/browser-mcp",
 
     "directories": [
         "bin",

@@ -1,4 +1,4 @@
-name: python-mcp
+name: browser-mcp
 sapi:
     - cli
     - micro

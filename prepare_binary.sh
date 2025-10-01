@@ -3,10 +3,10 @@ set -euo pipefail
 PROJECT_DIR="$PWD"
 
 # Export the project to get rid of .git/, etc
-rm -Rf /tmp/python-mcp
-mkdir /tmp/python-mcp
-cp -a "$PROJECT_DIR"/. /tmp/python-mcp/
-cd /tmp/python-mcp
+rm -Rf /tmp/browser-mcp
+mkdir /tmp/browser-mcp
+cp -a "$PROJECT_DIR"/. /tmp/browser-mcp/
+cd /tmp/browser-mcp
 rm -Rf ./dist
 
 box compile
@@ -19,6 +19,6 @@ docker rm static-app-tmp
 
 cp -r ./dist "${PROJECT_DIR}"
 
-rm -Rf /tmp/python-mcp
+rm -Rf /tmp/browser-mcp
 
 

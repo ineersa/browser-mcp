@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Service\DTO\PageContents;
-use Ineersa\PhpHtml2text\Config;
-use Ineersa\PhpHtml2text\HTML2Markdown;
+use Ineersa\Html2text\Config;
+use Ineersa\Html2text\HTML2Markdown;
 
 final class PageProcessor
 {

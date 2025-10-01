@@ -199,7 +199,6 @@ final class BrowserMcpCommandTest extends TestCase
             \dirname(__DIR__, 2),
             [
                 'APP_ENV' => 'test',
-                'APP_DEBUG' => '1',
             ],
             null,
             5.0

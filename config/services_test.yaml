@@ -1,0 +1,6 @@
+services:
+    App\Tests\Fixtures\Http\SearxFixtureHttpClient: ~
+
+    App\Service\Backend\BackendFactory:
+        arguments:
+            $httpClient: '@App\Tests\Fixtures\Http\SearxFixtureHttpClient'

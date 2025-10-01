@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2fac4ea44b9b48b7d6ceb72779726bc9",
+    "content-hash": "cf3e6a346f78a03d31d817d2c7f7cfc2",
     "packages": [
         {
             "name": "doctrine/deprecations",
@@ -55,17 +55,17 @@
             "time": "2025-04-07T20:06:18+00:00"
         },
         {
-            "name": "ineersa/php-html2text",
+            "name": "ineersa/html2text",
             "version": "v1.0.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/ineersa/php-html2text.git",
-                "reference": "12bd2dcacab1b8479b1ec4fc28c7a56cdd8ab9f7"
+                "url": "https://github.com/ineersa/html2text.git",
+                "reference": "1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ineersa/php-html2text/zipball/12bd2dcacab1b8479b1ec4fc28c7a56cdd8ab9f7",
-                "reference": "12bd2dcacab1b8479b1ec4fc28c7a56cdd8ab9f7",
+                "url": "https://api.github.com/repos/ineersa/html2text/zipball/1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f",
+                "reference": "1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f",
                 "shasum": ""
             },
             "require": {
@@ -82,7 +82,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Ineersa\\PhpHtml2text\\": "src/"
+                    "Ineersa\\Html2text\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -97,10 +97,10 @@
             ],
             "description": "`html2text` converts a page of HTML into clean, easy-to-read plain ASCII text. Better yet, that ASCII also happens to be valid Markdown (a text-to-HTML format).",
             "support": {
-                "issues": "https://github.com/ineersa/php-html2text/issues",
-                "source": "https://github.com/ineersa/php-html2text/tree/v1.0.0"
+                "issues": "https://github.com/ineersa/html2text/issues",
+                "source": "https://github.com/ineersa/html2text/tree/v1.0.0"
             },
-            "time": "2025-09-30T00:00:50+00:00"
+            "time": "2025-10-01T14:13:03+00:00"
         },
         {
             "name": "mcp/sdk",

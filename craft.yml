@@ -10,6 +10,9 @@ extensions:
     - xml
     - phar
     - fileinfo
+    - dom
+    - curl
+    - libxml
 libs:
     - brotli
     - libavif

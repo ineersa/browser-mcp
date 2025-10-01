@@ -1,12 +1,6 @@
 FROM dunglas/frankenphp:static-builder
 
-RUN apk add --no-cache php84-iconv
-
-RUN apk add --no-cache php84-fileinfo
-
-RUN apk add --no-cache php84-curl
-
-RUN apk add --no-cache php84-dom
+RUN apk add --no-cache php84-iconv, php84-fileinfo, php84-curl, php84-dom, php84-libxml
 
 WORKDIR /go/src/app/dist/static-php-cli
 RUN git pull || true

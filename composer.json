@@ -1,6 +1,6 @@
 {
-    "name": "ineersa/python-mcp",
-    "description": "GPT-OSS reference implementation of Python MCP server in PHP",
+    "name": "ineersa/browser-mcp",
+    "description": "PHP/Symfony implementation of a simple browser MCP server with a pluggable backend",
     "type": "project",
     "license": "MIT",
     "authors": [
@@ -19,7 +19,7 @@
         "ext-fileinfo": "*",
         "ext-iconv": "*",
         "ext-libxml": "*",
-        "ineersa/php-html2text": "^1.0",
+        "ineersa/html2text": "^1.0",
         "mcp/sdk": "dev-main@dev",
         "symfony/cache": "7.3.*",
         "symfony/console": "7.3.*",

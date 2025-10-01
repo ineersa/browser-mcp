@@ -12,6 +12,9 @@ use Symfony\Component\Process\Process;
 
 final class BrowserMcpCommandTest extends TestCase
 {
+    /**
+     * @throws \JsonException
+     */
     public function testToolsListContainsRegisteredTools(): void
     {
         $responses = $this->runServer([
@@ -42,6 +45,9 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertToolMetadata($tools);
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function testSearchToolCallReturnsFixtureDisplay(): void
     {
         $responses = $this->runServer([
@@ -80,6 +86,83 @@ final class BrowserMcpCommandTest extends TestCase
     }
 
     /**
+     * @throws \JsonException
+     */
+    public function testOpenToolCallReturnsFixtureDisplay(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('search', ['query' => 'SearxNG setup']),
+            $this->callToolRequest('open', ['id' => $this->openPageUrl()], 3),
+        ]);
+
+        $this->assertCount(3, $responses, 'Expected initialize, search, and open responses.');
+
+        $callResponse = $responses[2];
+
+        $this->assertSame(3, $callResponse['id']);
+        $this->assertArrayHasKey('result', $callResponse);
+
+        $content = $callResponse['result']['content'] ?? [];
+        $this->assertIsArray($content, 'tools/call response should include content array.');
+        $this->assertNotEmpty($content, 'tools/call response content is empty.');
+
+        $payload = (string) ($content[0]['text'] ?? '');
+        $this->assertNotSame('', $payload, 'Open tool payload should not be empty.');
+
+        try {
+            $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            $this->fail('Open tool payload is not valid JSON: '.$exception->getMessage());
+        }
+
+        $actualResult = (string) ($decoded['result'] ?? '');
+        $this->assertNotSame('', $actualResult, 'Open tool result string is empty.');
+
+        $expectedResult = $this->loadFixture('open_page_response')['result'] ?? '';
+        $this->assertEquals($expectedResult, $actualResult);
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testFindToolCallReturnsFixtureDisplay(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('search', ['query' => 'SearxNG setup']),
+            $this->callToolRequest('open', ['id' => $this->openPageUrl()], 3),
+            $this->callToolRequest('find', ['pattern' => 'Datetime'], 4),
+        ]);
+
+        $this->assertCount(4, $responses, 'Expected initialize, search, open, and find responses.');
+
+        $callResponse = $responses[3];
+
+        $this->assertSame(4, $callResponse['id']);
+        $this->assertArrayHasKey('result', $callResponse);
+
+        $content = $callResponse['result']['content'] ?? [];
+        $this->assertIsArray($content, 'tools/call response should include content array.');
+        $this->assertNotEmpty($content, 'tools/call response content is empty.');
+
+        $payload = (string) ($content[0]['text'] ?? '');
+        $this->assertNotSame('', $payload, 'Find tool payload should not be empty.');
+
+        try {
+            $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            $this->fail('Find tool payload is not valid JSON: '.$exception->getMessage());
+        }
+
+        $actualResult = (string) ($decoded['result'] ?? '');
+        $this->assertNotSame('', $actualResult, 'Find tool result string is empty.');
+
+        $expectedResult = $this->loadFixture('find_open_page_response')['result'] ?? '';
+        $this->assertEquals($expectedResult, $actualResult);
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $tools
      */
     private function assertToolMetadata(array $tools): void
@@ -106,6 +189,8 @@ final class BrowserMcpCommandTest extends TestCase
      * @param list<string> $messages
      *
      * @return list<array<string, mixed>>
+     *
+     * @throws \JsonException
      */
     private function runServer(array $messages): array
     {
@@ -142,12 +227,14 @@ final class BrowserMcpCommandTest extends TestCase
 
     /**
      * @param array<string, mixed> $arguments
+     *
+     * @throws \JsonException
      */
-    private function callToolRequest(string $name, array $arguments): string
+    private function callToolRequest(string $name, array $arguments, int $id = 2): string
     {
         $payload = json_encode([
             'jsonrpc' => '2.0',
-            'id' => 2,
+            'id' => $id,
             'method' => 'tools/call',
             'params' => [
                 'name' => $name,
@@ -171,5 +258,10 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertIsArray($decoded, 'Fixture '.$name.' is not valid JSON.');
 
         return $decoded;
+    }
+
+    private function openPageUrl(): string
+    {
+        return 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
     }
 }

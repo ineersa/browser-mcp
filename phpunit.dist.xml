@@ -34,8 +34,8 @@
 
         <exclude>
             <directory>src/Tools</directory>
+            <directory>src/Command</directory>
             <file>src/Kernel.php</file>
-            <file>src/Command/LogsCommand.php</file>
         </exclude>
 
         <deprecationTrigger>

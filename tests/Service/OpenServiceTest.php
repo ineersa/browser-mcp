@@ -9,6 +9,7 @@ use App\Service\Backend\SearxNGBackend;
 use App\Service\BrowserState;
 use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
+use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
 use App\Service\PageDisplayService;
@@ -133,8 +134,8 @@ final class OpenServiceTest extends TestCase
             url: '',
             text: '# Search Results',
             title: 'Search Results',
-            urls: ['0' => 'https://example.com/detail'],
-            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)],
+            urls: ['0' => 'https://example.com/detail'], // @phpstan-ignore-line
+            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)], // @phpstan-ignore-line
         );
         $state->addPage($searchPage);
 
@@ -153,6 +154,10 @@ final class OpenServiceTest extends TestCase
         }
     }
 
+    /**
+     * @throws BackendError
+     * @throws ToolUsageError
+     */
     public function testOpenRestoresStateWhenDisplayFails(): void
     {
         $state = new BrowserState();
@@ -160,7 +165,7 @@ final class OpenServiceTest extends TestCase
             url: '',
             text: '# Search Results',
             title: 'Search Results',
-            urls: ['0' => 'https://example.com/article'],
+            urls: ['0' => 'https://example.com/article'], // @phpstan-ignore-line
         );
         $state->addPage($searchPage);
 

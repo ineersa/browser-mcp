@@ -25,7 +25,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class BrowserMcpCommand extends Command
 {
     public function __construct(
-        private readonly LoggerInterface    $logger,
+        private readonly LoggerInterface $logger,
         private readonly ContainerInterface $container,
     ) {
         parent::__construct();

@@ -67,8 +67,8 @@ final class FindServiceTest extends TestCase
             url: 'https://example.com/results',
             text: 'Search results',
             title: 'Search results',
-            urls: ['0' => 'https://example.com/detail'],
-            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)],
+            urls: ['0' => 'https://example.com/detail'], // @phpstan-ignore-line
+            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)], // @phpstan-ignore-line
         );
         $state->addPage($searchPage);
 

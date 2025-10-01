@@ -93,6 +93,9 @@ class SearxNGBackend implements BackendInterface
         return "\n<html><body>\n<h1>Search Results</h1>\n<ul>\n".implode('', $lis)."\n</ul>\n</body></html>\n        ";
     }
 
+    /**
+     * @throws BackendError
+     */
     public function fetch(string $url): PageContents
     {
         $html = $this->httpGet($url);
@@ -139,6 +142,9 @@ class SearxNGBackend implements BackendInterface
         return \array_slice($results, 0, $topn);
     }
 
+    /**
+     * @throws BackendError
+     */
     private function httpGet(string $url): string
     {
         try {
@@ -146,7 +152,6 @@ class SearxNGBackend implements BackendInterface
                 'max_redirects' => 10,
             ]);
 
-            // getContent(true) returns content even on 3xx but throws on >=400; we want exceptions for retry
             return $response->getContent();
         } catch (ClientExceptionInterface|ServerExceptionInterface|RedirectionExceptionInterface|TransportExceptionInterface $e) {
             throw new BackendError(\sprintf('HTTP error for %s: %s', $url, Utilities::maybeTruncate($e->getMessage(), 500)), previous: $e);

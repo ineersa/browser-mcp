@@ -6,14 +6,18 @@ namespace App\Service;
 
 use App\Service\Exception\ToolUsageError;
 
-final class FindService
+final readonly class FindService
 {
     public function __construct(
-        private readonly BrowserState $state,
-        private readonly PageDisplayService $pageDisplay,
+        private BrowserState $state,
+        private PageDisplayService $pageDisplay,
+        private int $findContextLines = 4,
     ) {
     }
 
+    /**
+     * @throws ToolUsageError
+     */
     public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): string
     {
         if (null !== $pattern && null !== $regex) {
@@ -40,6 +44,7 @@ final class FindService
             page: $page,
             pattern: $pattern,
             regex: $regex,
+            numShowLines: $this->findContextLines,
         );
         $this->state->addPage($pageContent);
 

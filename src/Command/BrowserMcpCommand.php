@@ -25,8 +25,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 class BrowserMcpCommand extends Command
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
+        private readonly LoggerInterface    $logger,
+        private readonly ContainerInterface $container,
     ) {
         parent::__construct();
     }
@@ -47,17 +47,18 @@ The `cursor` appears in brackets before each browsing display: `[CURSOR:#{cursor
 Cite information from the tool using the following format:
 `【{cursor}†L{line_start}(-L{line_end})?】`, for example: `【6†L9-L11】` or `【8†L3】`.
 Do not quote more than 10 words directly from the tool output.
+Each search request resets stack and cursor goers to `0`, search response is always at cursor `0`.
 DESC;
             // Build server configuration
-            $server = Server::make()
-                ->withServerInfo(
+            $server = Server::builder()
+                ->setServerInfo(
                     name: 'browser',
                     version: '0.0.1',
                     description: $serverDescription
                 )
-                ->withLogger($this->logger)
-                ->withContainer($this->container)
-                ->withTool(
+                ->setLogger($this->logger)
+                ->setContainer($this->container)
+                ->addTool(
                     handler: SearchTool::class,
                     name: SearchTool::NAME,
                     description: SearchTool::DESCRIPTION,
@@ -65,7 +66,7 @@ DESC;
                         title: SearchTool::TITLE,
                     )
                 )
-                ->withTool(
+                ->addTool(
                     handler: OpenTool::class,
                     name: OpenTool::NAME,
                     description: OpenTool::DESCRIPTION,
@@ -73,7 +74,7 @@ DESC;
                         title: OpenTool::TITLE,
                     )
                 )
-                ->withTool(
+                ->addTool(
                     handler: FindTool::class,
                     name: FindTool::NAME,
                     description: FindTool::DESCRIPTION,
@@ -88,6 +89,7 @@ DESC;
             );
 
             $server->connect($transport);
+            $transport->listen();
         } catch (\Throwable $e) {
             $this->logger->error($e->getMessage(), [
                 'trace' => $e->getTrace(),

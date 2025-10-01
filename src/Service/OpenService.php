@@ -10,15 +10,19 @@ use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 
-final class OpenService
+final readonly class OpenService
 {
     public function __construct(
-        private readonly BackendInterface $backend,
-        private readonly BrowserState $state,
-        private readonly PageDisplayService $pageDisplay,
+        private BackendInterface $backend,
+        private BrowserState $state,
+        private PageDisplayService $pageDisplay,
     ) {
     }
 
+    /**
+     * @throws BackendError
+     * @throws ToolUsageError
+     */
     public function __invoke(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1): string
     {
         $currPage = null;
@@ -34,7 +38,7 @@ final class OpenService
             if ($id >= 0) {
                 $url = $currPage->urls[(string) $id] ?? '';
                 if ('' === $url) {
-                    throw new ToolUsageError(\sprintf('Invalid link id `%s`.', (string) $id));
+                    throw new ToolUsageError(\sprintf('Invalid link id `%s`.', $id));
                 }
                 $snippet = $currPage->snippets[(string) $id] ?? null;
             } else {

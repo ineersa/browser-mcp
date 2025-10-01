@@ -7,6 +7,7 @@ namespace App\Tests\Service;
 use App\Service\Backend\BackendInterface;
 use App\Service\BrowserState;
 use App\Service\DTO\PageContents;
+use App\Service\Exception\ToolUsageError;
 use App\Service\PageDisplayService;
 use App\Service\SearchService;
 use App\Service\Utilities;
@@ -90,6 +91,44 @@ final class SearchServiceTest extends TestCase
         $result = $service($query, 10);
 
         $this->assertSame($expectedResult, $result, 'Final makeDisplay string mismatch');
+    }
+
+    public function testInvokeRestoresStateWhenDisplayFails(): void
+    {
+        $initialPage = new PageContents(
+            url: 'https://example.com/old',
+            text: 'Old page',
+            title: 'Old page',
+            urls: [],
+        );
+
+        $state = new BrowserState();
+        $state->addPage($initialPage);
+
+        $resultPage = new PageContents(
+            url: 'https://example.com/search',
+            text: "Result line 1\nResult line 2",
+            title: 'Results',
+            urls: [],
+        );
+
+        $backend = $this->createMock(BackendInterface::class);
+        $backend->expects($this->once())->method('search')->willReturn($resultPage);
+
+        $pageDisplay = $this->createMock(PageDisplayService::class);
+        $pageDisplay->expects($this->once())
+            ->method('showPage')
+            ->willThrowException(new ToolUsageError('display failed'));
+
+        $service = new SearchService($backend, $state, $pageDisplay);
+
+        try {
+            $service('__test__');
+            $this->fail('SearchService should rethrow ToolUsageError from PageDisplayService');
+        } catch (ToolUsageError $e) {
+            $this->assertSame('display failed', $e->getMessage());
+            $this->assertSame(-1, $state->getCurrentCursor(), 'State stack should be emptied when display fails');
+        }
     }
 
     private function getFixturesPath(): string

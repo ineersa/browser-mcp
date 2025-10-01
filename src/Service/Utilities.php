@@ -222,9 +222,8 @@ final readonly class Utilities
         ?string $pattern = null,
         ?string $regex = null,
         int $maxResults = 50,
-        int $numShowLines = 4
-    ): PageContents
-    {
+        int $numShowLines = 4,
+    ): PageContents {
         $lines = self::wrapLines($page->text);
         $txt = self::joinLines($lines);
         $withoutLinks = self::stripLinks($txt);
@@ -300,6 +299,7 @@ final readonly class Utilities
             $match = @preg_match($pattern, $subject);
             if (false === $match) {
                 $error = self::describePregError(preg_last_error());
+
                 return false;
             }
 
@@ -311,8 +311,8 @@ final readonly class Utilities
 
     private static function withPcreLimits(callable $callback): mixed
     {
-        $backtrack = ini_get('pcre.backtrack_limit');
-        $recursion = ini_get('pcre.recursion_limit');
+        $backtrack = \ini_get('pcre.backtrack_limit');
+        $recursion = \ini_get('pcre.recursion_limit');
 
         try {
             ini_set('pcre.backtrack_limit', (string) self::FIND_REGEX_BACKTRACK_LIMIT);

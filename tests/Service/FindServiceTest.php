@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Service\BrowserState;
+use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
@@ -57,6 +58,53 @@ final class FindServiceTest extends TestCase
 
         $this->expectException(ToolUsageError::class);
         $service->__invoke(pattern: 'foo', regex: '/foo/');
+    }
+
+    public function testFindRejectsPageWithSnippets(): void
+    {
+        $state = new BrowserState();
+        $searchPage = new PageContents(
+            url: 'https://example.com/results',
+            text: 'Search results',
+            title: 'Search results',
+            urls: ['0' => 'https://example.com/detail'],
+            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)],
+        );
+        $state->addPage($searchPage);
+
+        $service = new FindService($state, new PageDisplayService());
+
+        $this->expectException(ToolUsageError::class);
+        $this->expectExceptionMessage('Cannot run `find` on search results page or find results page');
+        $service->__invoke(pattern: 'anything');
+    }
+
+    public function testFindRestoresStateWhenDisplayFails(): void
+    {
+        $page = new PageContents(
+            url: 'https://example.com/article',
+            text: "First line\nMatch example\nLast line",
+            title: 'Article',
+            urls: [],
+        );
+        $state = new BrowserState();
+        $state->addPage($page);
+
+        $pageDisplay = $this->createMock(PageDisplayService::class);
+        $pageDisplay->expects($this->once())
+            ->method('showPage')
+            ->willThrowException(new ToolUsageError('cannot render find results'));
+
+        $service = new FindService($state, $pageDisplay);
+
+        try {
+            $service->__invoke(pattern: 'match');
+            $this->fail('FindService should rethrow ToolUsageError from PageDisplayService');
+        } catch (ToolUsageError $e) {
+            $this->assertSame('cannot render find results', $e->getMessage());
+            $this->assertSame(0, $state->getCurrentCursor(), 'Find results page should be removed after failure');
+            $this->assertSame($page->url, $state->getPage()->url);
+        }
     }
 
     /**

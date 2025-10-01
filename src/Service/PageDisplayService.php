@@ -6,7 +6,7 @@ namespace App\Service;
 
 use App\Service\Exception\ToolUsageError;
 
-final class PageDisplayService
+readonly class PageDisplayService
 {
     public function __construct(
         private int $viewTokens = 1024,

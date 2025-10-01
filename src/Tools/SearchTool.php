@@ -25,7 +25,6 @@ final class SearchTool
     public function __invoke(
         string $query,
         int $topn = 10,
-        ?string $source = null,
     ): array {
         try {
             $result = $this->searchService->__invoke($query, $topn);

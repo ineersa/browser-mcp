@@ -170,8 +170,8 @@ final class PageProcessor
             bodyWidth: 0,
             ignoreAnchors: true,
             ignoreImages: true,
-            ignoreTables: true,
             ignoreEmphasis: true,
+            ignoreTables: true,
         );
 
         try {

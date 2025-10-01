@@ -8,12 +8,12 @@ use App\Service\Backend\BackendInterface;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 
-final class SearchService
+final readonly class SearchService
 {
     public function __construct(
-        private readonly BackendInterface $backend,
-        private readonly BrowserState $state,
-        private readonly PageDisplayService $pageDisplay,
+        private BackendInterface $backend,
+        private BrowserState $state,
+        private PageDisplayService $pageDisplay,
     ) {
     }
 

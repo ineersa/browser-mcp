@@ -43,13 +43,13 @@ when@prod:
         handlers:
             main:
                 type: fingers_crossed
-                action_level: error
+                action_level: "%env(string:LOG_LEVEL)%"
                 handler: nested
-                buffer_size: 50
+                buffer_size: 10
                 channels: [ "!event", "!deprecation", "!doctrine"]
             nested:
                 type: rotating_file
-                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                path: "%env(string:APP_LOG_DIR)%/%kernel.environment%.log"
                 level: "%env(string:LOG_LEVEL)%"
                 max_files: 1
                 formatter: monolog.formatter.json_with_stacktraces

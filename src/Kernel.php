@@ -15,4 +15,17 @@ class Kernel extends BaseKernel
     {
         return __DIR__.'/../';
     }
+
+    public function getLogDir(): string
+    {
+        $dir = $_SERVER['APP_LOG_DIR']
+            ?? $_ENV['APP_LOG_DIR']
+            ?? getenv('APP_LOG_DIR');
+
+        if ($dir) {
+            return rtrim($dir, '/');
+        }
+
+        return parent::getLogDir();
+    }
 }

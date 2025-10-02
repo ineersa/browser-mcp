@@ -30,6 +30,9 @@ class SearxNGBackend implements BackendInterface
      */
     public function search(string $query, int $topn): PageContents
     {
+        if ($topn > 10) {
+            $topn = 10;
+        }
         $items = $this->requestSearch($query, $topn);
         $html = $this->buildSearchHtml($items);
 

@@ -5,29 +5,62 @@ It provides three invokable services for search, open, and find, plus HTML→pla
 
 As a base [GPT-OSS repository browser-mcp](https://github.com/openai/gpt-oss?tab=readme-ov-file#browser) was used with some tweaks and upgrades.
 
-## Setup
-- Requirements: PHP 8.4+, Composer
-- Install: `composer install`
+## Installing and running MCP
+To generate binary run `./prepare_binary.sh`, it should work on Linux.
 
-## Configuration
-- `BROWSER_BACKEND` controls the backend driver. Default: `searx`.
-  - Example: `BROWSER_BACKEND=searx`
-- `SEARXNG_URL` points to your SearxNG instance. Default: `http://server:8088`.
-  - Example: `SEARXNG_URL=https://searx.example.com`
+To build binary, you have to install [box-project/box](https://github.com/box-project/box/blob/main/doc/installation.md#composer)
+to generate PHAR.
 
-These are wired via `config/services.yaml` using a factory that provides `App\Service\Backend\BackendInterface`.
+Thanks to amazing projects like [Static PHP](https://static-php.dev/en/) and [FrankenPHP](https://frankenphp.dev/docs/embed/) we are able to run PHP applications as a single binary now.
 
-You can set env vars in a local `.env` or export them in your shell before running.
+The easiest way is to just download binary from releases for your platform.
 
-## Usage
+## Env variables
+```dotenv
+### Set log level, default INFO, with log action level ERROR
+LOG_LEVEL=info
+# Where to store logs
+APP_LOG_DIR="/tmp/mcp/python-mcp/log"
+# Backend to use
+BROWSER_BACKEND=searxng
+# Backend URL
+BACKEND_URL=http://server:8088
+# Amount of tokens to return in page view
+SEARCH_VIEW_TOKENS=1024
+# Encoding to calculate tokens (TikToken)
+SEARCH_ENCODING_NAME=o200k_base
+# Lines to return near found results
+FIND_CONTEXT_LINES=4
+```
 
-### Run the MCP server
-- Default command: `php bin/browser-mcp`
-- Or via console: `php bin/console browser-mcp`
-
+## MCP config:
+**STDIO** is only supported transport for now, just add entry to `mcp.json` with a path to binary
+```json
+{
+    "command": "./dist/browser-mcp",
+    "args": [],
+    "env": {
+        "APP_LOG_DIR": "/tmp/.symfony/browser-mcp/log"
+    }
+}
+```
+You can also use `browser-mcp.phar` PHAR file.
 The server exposes tools: `browser.search`, `browser.open`, `browser.find`.
 
+If you want to use other transports use some wrapper for now, for example, [MCPO](https://github.com/open-webui/mcpo)
+
+```bash
+uvx mcpo --port 8000 -- ~/dist/browser-mcp
+```
+
 ## Development
+If you need to modify or want to run/debug a server locally, you should:
+- `git clone` repository
+- run `composer install`
+- `./bin/browser-mcp` contains server, while `./bin/console` holds Symfony console
+
+To debug server you should use `npx @modelcontextprotocol/inspector`
+
 - Lint/format: `composer cs-fix`
 - Static analysis: `composer phpstan`
 - Tests: `composer tests`

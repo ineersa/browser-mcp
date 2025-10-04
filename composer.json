@@ -9,7 +9,13 @@
             "email": "ineersa@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/ineersa/php-sdk"
+        }
+    ],
+    "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
         "php": ">=8.4",

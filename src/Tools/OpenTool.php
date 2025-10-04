@@ -27,13 +27,12 @@ final class OpenTool
         int $cursor = -1,
         int $loc = -1,
         int $numLines = -1,
-    ): array {
+    ): string {
         try {
             $result = $this->openService->__invoke($id, $cursor, $loc, $numLines);
+            return $result;
         } catch (ToolUsageError|BackendError $exception) {
-            $result = $exception->getMessage();
+            return "Result: error\n Error Message: " . $exception->getMessage() . "\n Hint: " . $exception->getHint();
         }
-
-        return ['result' => $result];
     }
 }

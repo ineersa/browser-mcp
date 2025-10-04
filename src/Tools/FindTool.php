@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tools;
 
+use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
 
@@ -21,14 +22,13 @@ final class FindTool
     /**
      * @return array{result: string}
      */
-    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): array
+    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): string
     {
         try {
             $result = $this->findService->__invoke(pattern: $pattern, regex: $regex, cursor: $cursor);
-        } catch (ToolUsageError $exception) {
-            $result = $exception->getMessage();
+            return $result;
+        } catch (ToolUsageError|BackendError $exception) {
+            return "Result: error\n Error Message: " . $exception->getMessage() . "\n Hint: " . $exception->getHint();
         }
-
-        return ['result' => $result];
     }
 }

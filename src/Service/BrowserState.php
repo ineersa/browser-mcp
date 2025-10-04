@@ -37,7 +37,7 @@ final class BrowserState
     public function getPage(int $cursor = -1): PageContents
     {
         if ($this->getCurrentCursor() < 0) {
-            throw new ToolUsageError('No pages to access!');
+            throw new ToolUsageError('No pages to access!')->setHint('Please use search first');
         }
         if (-1 === $cursor || $cursor === $this->getCurrentCursor()) {
             return $this->pages[$this->pageStack[$this->getCurrentCursor()]];

@@ -25,13 +25,12 @@ final class SearchTool
     public function __invoke(
         string $query,
         int $topn = 10,
-    ): array {
+    ): string {
         try {
             $result = $this->searchService->__invoke($query, $topn);
+            return $result;
         } catch (ToolUsageError|BackendError $exception) {
-            $result = $exception->getMessage();
+            return "Result: error\n Error Message: " . $exception->getMessage() . "\n Hint: " . $exception->getHint();
         }
-
-        return ['result' => $result];
     }
 }

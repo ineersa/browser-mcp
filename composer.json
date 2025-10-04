@@ -26,7 +26,7 @@
         "ext-iconv": "*",
         "ext-libxml": "*",
         "ineersa/html2text": "^1.0",
-        "mcp/sdk": "dev-main@dev",
+        "mcp/sdk": "dev-structured-content-return@dev",
         "symfony/cache": "7.3.*",
         "symfony/console": "7.3.*",
         "symfony/dotenv": "7.3.*",

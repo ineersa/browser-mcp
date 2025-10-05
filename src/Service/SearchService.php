@@ -23,6 +23,14 @@ final readonly class SearchService
      */
     public function __invoke(string $query, int $topn = 10): string
     {
+        if (empty($query)) {
+            throw new ToolUsageError('query cannot be empty')->setHint('Provide query to search');
+        }
+
+        if ($topn < 1 || $topn > 10) {
+            throw new ToolUsageError("topn can't be less than 1 and more than 10")->setHint('Provide topn in range 1-10');
+        }
+
         try {
             $page = $this->backend->search($query, $topn);
         } catch (\Throwable $e) {

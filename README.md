@@ -65,6 +65,12 @@ To debug server you should use `npx @modelcontextprotocol/inspector`
 - Static analysis: `composer phpstan`
 - Tests: `composer tests`
 
+Debug
+```bash
+php -d xdebug.mode=debug -d xdebug.client_host=127.0.0.1 -d xdebug.client_port=9003 -d xdebug.start_with_request=yes /home/ineersa/mcp-servers/browser-mcp/bin/browser-mcp
+```
+
+
 ## Notes
 - Exa backend is not implemented, only SearxNG available.
 - State is shared via `App\\Service\\BrowserState`, state resets each `search` tool call

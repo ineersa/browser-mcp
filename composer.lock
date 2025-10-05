@@ -108,12 +108,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ineersa/php-sdk.git",
-                "reference": "345b94dfbbf124daed3f98e52e9c02c09af023e0"
+                "reference": "fe8d981ea087a6efd8f3a8464c8fb23fb190d97b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ineersa/php-sdk/zipball/345b94dfbbf124daed3f98e52e9c02c09af023e0",
-                "reference": "345b94dfbbf124daed3f98e52e9c02c09af023e0",
+                "url": "https://api.github.com/repos/ineersa/php-sdk/zipball/fe8d981ea087a6efd8f3a8464c8fb23fb190d97b",
+                "reference": "fe8d981ea087a6efd8f3a8464c8fb23fb190d97b",
                 "shasum": ""
             },
             "require": {
@@ -182,9 +182,9 @@
             ],
             "description": "Model Context Protocol SDK for Client and Server applications in PHP",
             "support": {
-                "source": "https://github.com/ineersa/php-sdk/tree/main"
+                "source": "https://github.com/ineersa/php-sdk/tree/structured-content-return"
             },
-            "time": "2025-10-04T17:45:40+00:00"
+            "time": "2025-10-04T22:56:45+00:00"
         },
         {
             "name": "monolog/monolog",

@@ -15,7 +15,7 @@ final class SearchTool
 {
     public const string NAME = 'search';
     public const string TITLE = 'Search for information';
-    public const string DESCRIPTION = 'Searches for information related to `query` and displays `topn` results.';
+    public const string DESCRIPTION = 'Runs a web search for `query` and lists up to `topn` results. The response begins with `[PAGE_ID:{page_id}]`; use that `page_id` when calling other tools. Each search hit exposes a `link_id` inside its citation marker `【{link_id}†…】`. Cite passages with `【{link_id}†L{line_start}(-L{line_end})?】` and avoid quoting more than 10 words.';
 
     public function __construct(
         private readonly SearchService $searchService,

@@ -1,3 +1,3 @@
 {
-    "result": "[CURSOR:#2] Find results for text: `Datetime` in `https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html` (https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html/find?pattern=Datetime)\n**viewing lines [0 - 3] of 3**\n\nL0: # \u30100\u2020match at L388\u3011\nL1: Datetime input\nL2: \nL3: Datetime-local input"
+    "result": "[PAGE_ID:p_a002] Find results for text: `Datetime` in `https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html` (https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html/find?pattern=Datetime)\n**viewing lines [0 - 3] of 3**\n\nL0: # \u30100\u2020match at L388\u3011\nL1: Datetime input\nL2: \nL3: Datetime-local input"
 }

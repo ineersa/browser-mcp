@@ -84,7 +84,7 @@ final class BrowserMcpCommandTest extends TestCase
         $responses = $this->runServer([
             $this->initializeRequest(),
             $this->callToolRequest('search', ['query' => 'SearxNG setup']),
-            $this->callToolRequest('open', ['id' => $this->openPageUrl()], 3),
+            $this->callToolRequest('open', ['linkId' => $this->openPageUrl()], 3),
         ]);
 
         $this->assertCount(3, $responses, 'Expected initialize, search, and open responses.');
@@ -113,7 +113,7 @@ final class BrowserMcpCommandTest extends TestCase
         $responses = $this->runServer([
             $this->initializeRequest(),
             $this->callToolRequest('search', ['query' => 'SearxNG setup']),
-            $this->callToolRequest('open', ['id' => $this->openPageUrl()], 3),
+            $this->callToolRequest('open', ['linkId' => $this->openPageUrl()], 3),
             $this->callToolRequest('find', ['pattern' => 'Datetime'], 4),
         ]);
 

@@ -127,7 +127,7 @@ final class SearchServiceTest extends TestCase
             $this->fail('SearchService should rethrow ToolUsageError from PageDisplayService');
         } catch (ToolUsageError $e) {
             $this->assertSame('display failed', $e->getMessage());
-            $this->assertSame(-1, $state->getCurrentCursor(), 'State stack should be emptied when display fails');
+            $this->assertTrue($state->isEmpty(), 'State stack should be emptied when display fails');
         }
     }
 

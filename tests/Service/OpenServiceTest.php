@@ -42,8 +42,8 @@ final class OpenServiceTest extends TestCase
             urls: $searchUrls, // @phpstan-ignore-line
             snippets: $searchSnippets, // @phpstan-ignore-line
         );
-        $state->addPage($searchPage);
-        // Keep the stack minimal so the opened page lands at cursor 1 like the Python fixture.
+        $searchPageId = $state->addPage($searchPage);
+        // Keep the stack minimal so the opened page receives the next sequential page_id.
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($expectedUrl, $html) {
             if ('GET' !== $method || $url !== $expectedUrl) {
@@ -57,12 +57,13 @@ final class OpenServiceTest extends TestCase
         $pageDisplay = new PageDisplayService();
         $service = new OpenService($backend, $state, $pageDisplay);
 
-        $result = $service->__invoke(0, 0);
+        $result = $service->__invoke(0, $searchPageId);
 
-        $this->assertSame(1, $state->getCurrentCursor(), 'New page should set the cursor to match Python fixture.');
+        $currentPageId = $state->getCurrentPageId();
+        $this->assertNotSame($searchPageId, $currentPageId, 'New page should set the current page to the opened document.');
         $currentPage = $state->getPage();
         $this->assertSame($expectedUrl, $currentPage->url, 'Open should navigate to the link target.');
-        $this->assertSame('', $state->getPage(0)->url, 'Search page should remain at cursor 0.');
+        $this->assertSame('', $state->getPage($searchPageId)->url, 'Search page should remain accessible via its page_id.');
         $expectedResponse = (string) ($this->loadJson('open_page_response.json')['result'] ?? '');
         $this->assertSame($expectedResponse, $result, 'Rendered response should match Python fixture.');
     }
@@ -73,7 +74,7 @@ final class OpenServiceTest extends TestCase
         $page = $this->makePageContents($fixture['new_page'] ?? []);
 
         $state = new BrowserState();
-        $state->addPage($page);
+        $pageId = $state->addPage($page);
 
         $backend = $this->createMock(BackendInterface::class);
         $backend->expects($this->never())->method('fetch');
@@ -82,9 +83,9 @@ final class OpenServiceTest extends TestCase
         $service = new OpenService($backend, $state, $pageDisplay);
 
         $loc = 42;
-        $output = $service->__invoke(-1, 0, $loc, 10);
+        $output = $service->__invoke(-1, $pageId, $loc, 10);
 
-        $this->assertSame(0, $state->getCurrentCursor(), 'Scroll should not create a new page entry.');
+        $this->assertSame($pageId, $state->getCurrentPageId(), 'Scroll should not create a new page entry.');
         $this->assertSame($page, $state->getPage(), 'Current page should remain the original page instance.');
         $this->assertStringContainsString('viewing lines ['.$loc.' -', $output);
     }
@@ -104,7 +105,7 @@ final class OpenServiceTest extends TestCase
             title: 'Search Results',
             urls: $searchUrls,
         );
-        $state->addPage($searchPage);
+        $searchPageId = $state->addPage($searchPage);
 
         $httpClient = new MockHttpClient(function (string $method, string $requestUrl, array $options) use ($url, $html) {
             if ('GET' !== $method || $requestUrl !== $url) {
@@ -124,7 +125,7 @@ final class OpenServiceTest extends TestCase
         $expected = (string) ($this->loadJson('open_page_response.json')['result'] ?? '');
         $this->assertSame($expected, $result);
         $this->assertSame($url, $state->getPage()->url);
-        $this->assertSame(1, $state->getCurrentCursor());
+        $this->assertNotSame($searchPageId, $state->getCurrentPageId());
     }
 
     public function testOpenRejectsInvalidLinkId(): void
@@ -137,7 +138,7 @@ final class OpenServiceTest extends TestCase
             urls: ['0' => 'https://example.com/detail'], // @phpstan-ignore-line
             snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)], // @phpstan-ignore-line
         );
-        $state->addPage($searchPage);
+        $searchPageId = $state->addPage($searchPage);
 
         $backend = $this->createMock(BackendInterface::class);
         $backend->expects($this->never())->method('fetch');
@@ -145,11 +146,11 @@ final class OpenServiceTest extends TestCase
         $service = new OpenService($backend, $state, new PageDisplayService());
 
         try {
-            $service->__invoke(1, 0);
+            $service->__invoke(1, $searchPageId);
             $this->fail('OpenService should throw for missing link id');
         } catch (ToolUsageError $e) {
-            $this->assertSame('Invalid link id `1`.', $e->getMessage());
-            $this->assertSame(0, $state->getCurrentCursor(), 'State should remain on the search page');
+            $this->assertSame('Invalid link_id `1`.', $e->getMessage());
+            $this->assertSame($searchPageId, $state->getCurrentPageId(), 'State should remain on the search page');
             $this->assertSame($searchPage->url, $state->getPage()->url);
         }
     }
@@ -167,7 +168,7 @@ final class OpenServiceTest extends TestCase
             title: 'Search Results',
             urls: ['0' => 'https://example.com/article'], // @phpstan-ignore-line
         );
-        $state->addPage($searchPage);
+        $searchPageId = $state->addPage($searchPage);
 
         $articleUrl = 'https://example.com/article';
         $articlePage = new PageContents(
@@ -188,11 +189,11 @@ final class OpenServiceTest extends TestCase
         $service = new OpenService($backend, $state, $pageDisplay);
 
         try {
-            $service->__invoke(0, 0);
+            $service->__invoke(0, $searchPageId);
             $this->fail('OpenService should rethrow ToolUsageError from PageDisplayService');
         } catch (ToolUsageError $e) {
             $this->assertSame('cannot display article', $e->getMessage());
-            $this->assertSame(0, $state->getCurrentCursor(), 'State cursor should return to the search page');
+            $this->assertSame($searchPageId, $state->getCurrentPageId(), 'State should return to the search page');
             $this->assertSame($searchPage->url, $state->getPage()->url, 'Search page should remain current after failure');
         }
     }

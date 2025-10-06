@@ -19,10 +19,10 @@ readonly class PageDisplayService
      *
      * @throws ToolUsageError
      */
-    public function showPage(BrowserState $state, int $loc = 0, int $numLines = -1): string
+    public function showPage(BrowserState $state, int $loc = 0, int $numLines = -1, ?string $pageId = null): string
     {
-        $page = $state->getPage();
-        $cursor = $state->getCurrentCursor();
+        $resolvedPageId = $pageId ?? $state->getCurrentPageId();
+        $page = $state->getPage($resolvedPageId);
         $lines = Utilities::wrapLines($page->text);
         while (!empty($lines) && '' === $lines[\count($lines) - 1]) {
             array_pop($lines);
@@ -36,6 +36,6 @@ readonly class PageDisplayService
         $body = Utilities::joinLines($linesToShow, true, $loc);
         $scrollbar = \sprintf('viewing lines [%d - %d] of %d', $loc, $endLoc - 1, $totalLines - 1);
 
-        return Utilities::makeDisplay($page, $cursor, $body, $scrollbar);
+        return Utilities::makeDisplay($page, $resolvedPageId, $body, $scrollbar);
     }
 }

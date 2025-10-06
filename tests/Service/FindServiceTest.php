@@ -88,7 +88,7 @@ final class FindServiceTest extends TestCase
             urls: [],
         );
         $state = new BrowserState();
-        $state->addPage($page);
+        $pageId = $state->addPage($page);
 
         $pageDisplay = $this->createMock(PageDisplayService::class);
         $pageDisplay->expects($this->once())
@@ -102,7 +102,7 @@ final class FindServiceTest extends TestCase
             $this->fail('FindService should rethrow ToolUsageError from PageDisplayService');
         } catch (ToolUsageError $e) {
             $this->assertSame('cannot render find results', $e->getMessage());
-            $this->assertSame(0, $state->getCurrentCursor(), 'Find results page should be removed after failure');
+            $this->assertSame($pageId, $state->getCurrentPageId(), 'Find results page should be removed after failure');
             $this->assertSame($page->url, $state->getPage()->url);
         }
     }

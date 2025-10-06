@@ -23,24 +23,25 @@ final readonly class OpenService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(int|string $id = -1, int $cursor = -1, int $loc = -1, int $numLines = -1): string
+    public function __invoke(int|string $linkId = -1, ?string $pageId = null, int $loc = -1, int $numLines = -1): string
     {
         $currPage = null;
         $stayOnCurrentPage = false;
         $directUrlOpen = false;
         $snippet = null;
 
-        if (\is_string($id)) {
-            $url = $id;
+        if (\is_string($linkId)) {
+            $url = $linkId;
             $directUrlOpen = true;
         } else {
-            $currPage = $this->state->getPage($cursor);
-            if ($id >= 0) {
-                $url = $currPage->urls[(string) $id] ?? '';
+            $currPage = $this->state->getPage($pageId);
+            if ($linkId >= 0) {
+                $url = $currPage->urls[(string) $linkId] ?? '';
                 if ('' === $url) {
-                    throw new ToolUsageError(\sprintf('Invalid link id `%s`.', $id));
+                    throw new ToolUsageError(\sprintf('Invalid link_id `%s`.', $linkId))
+                        ->setHint('Use a `link_id` from the citations in the latest tool response.');
                 }
-                $snippet = $currPage->snippets[(string) $id] ?? null;
+                $snippet = $currPage->snippets[(string) $linkId] ?? null;
             } else {
                 $stayOnCurrentPage = true;
                 $url = $currPage->url;

@@ -14,7 +14,7 @@ final class OpenTool
 {
     public const string NAME = 'open';
     public const string TITLE = 'Open a link or page';
-    public const string DESCRIPTION = 'Opens the link `id` from the page indicated by `cursor` starting at line number `loc`, showing `num_lines` lines. Valid link `id` displayed with the formatting: `【{id}†.*】`. The `cursor` appears in brackets before each browsing display: `[CURSOR:#{cursor}]`. If `cursor` is not provided, the most recent page is implied. If `id` is a string, it is treated as a fully qualified URL. If `loc` is not provided, the viewport will be positioned at the beginning of the document or centered on the most relevant passage, if available. Use this function without `id` to scroll to a new location of an opened page.';
+    public const string DESCRIPTION = 'Opens the `link_id` from the page indicated by `page_id`, starting at line number `loc` and showing `num_lines` lines. Valid `link_id` values are displayed inside references such as `【{link_id}†…】`. If `page_id` is omitted, the most recently viewed page is used. Provide a fully-qualified URL as `link_id` to open it directly. Omitting `link_id` scrolls the current page. The tool response is prefixed with `[PAGE_ID:{page_id}]` and includes the viewport range. Cite with `【{link_id}†L{line_start}(-L{line_end})?】`.';
 
     public function __construct(
         private readonly OpenService $openService,
@@ -22,13 +22,13 @@ final class OpenTool
     }
 
     public function __invoke(
-        int|string $id = -1,
-        int $cursor = -1,
+        int|string $linkId = -1,
+        ?string $pageId = null,
         int $loc = -1,
         int $numLines = -1,
     ): CallToolResult {
         try {
-            $result = $this->openService->__invoke($id, $cursor, $loc, $numLines);
+            $result = $this->openService->__invoke($linkId, $pageId, $loc, $numLines);
 
             $content = new TextContent($result);
 

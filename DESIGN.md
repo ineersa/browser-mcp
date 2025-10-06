@@ -608,7 +608,7 @@ final class OpenResultTool
 
 ## Rendering Guidance (`render`)
 
-Keep it compact and stable. Avoid UI banners like `[CURSOR:#0]`. Example:
+Keep it compact and stable. Avoid UI banners like `[PAGE_ID:p_a000]`. Example:
 
 ```
 Results (cursor c_9b2f0a)

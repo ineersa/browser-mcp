@@ -199,7 +199,7 @@ final readonly class Utilities
         return min($loc + $numLines, $totalLines);
     }
 
-    public static function makeDisplay(PageContents $page, int $cursor, string $body, string $scrollbar): string
+    public static function makeDisplay(PageContents $page, string $pageId, string $body, string $scrollbar): string
     {
         $domain = self::maybeTruncate(urldecode($page->url), 256);
         $header = $page->title;
@@ -211,7 +211,7 @@ final readonly class Utilities
         $result = $header;
         $result .= $body;
 
-        return \sprintf('[CURSOR:#%d] %s', $cursor, $result);
+        return \sprintf('[PAGE_ID:%s] %s', $pageId, $result);
     }
 
     /**
@@ -274,7 +274,6 @@ final readonly class Utilities
 
         if (null !== $regexError) {
             $displayText = \sprintf('Regex error for regex `%s`: %s', $query, $regexError);
-            $resultChunks = [];
             $urlsMap = [];
             $snippets = [];
         } elseif (!empty($resultChunks)) {

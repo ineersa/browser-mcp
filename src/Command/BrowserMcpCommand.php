@@ -41,20 +41,12 @@ class BrowserMcpCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $serverDescription = <<<DESC
-Tool for browsing.
-The `cursor` appears in brackets before each browsing display: `[CURSOR:#{cursor}]`.
-Cite information from the tool using the following format:
-`【{cursor}†L{line_start}(-L{line_end})?】`, for example: `【6†L9-L11】` or `【8†L3】`.
-Do not quote more than 10 words directly from the tool output.
-Each search request resets stack and cursor goers to `0`, search response is always at cursor `0`.
-DESC;
             // Build server configuration
             $server = Server::builder()
                 ->setServerInfo(
                     name: 'browser',
                     version: '0.0.1',
-                    description: $serverDescription
+                    description: 'Provides MCP tools for searching, opening, and finding information within web documents.'
                 )
                 ->setLogger($this->logger)
                 ->setContainer($this->container)

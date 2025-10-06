@@ -18,7 +18,7 @@ final readonly class FindService
     /**
      * @throws ToolUsageError
      */
-    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): string
+    public function __invoke(?string $pattern = null, ?string $regex = null, ?string $pageId = null): string
     {
         if (null !== $pattern && null !== $regex) {
             throw new ToolUsageError('Provide either `pattern` or `regex`, not both.');
@@ -36,7 +36,7 @@ final readonly class FindService
             throw new ToolUsageError('Provide a non-empty `pattern` or `regex` to search for.');
         }
 
-        $page = $this->state->getPage($cursor);
+        $page = $this->state->getPage($pageId);
         if (null !== $page->snippets) {
             throw new ToolUsageError('Cannot run `find` on search results page or find results page');
         }

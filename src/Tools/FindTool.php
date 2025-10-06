@@ -7,6 +7,8 @@ namespace App\Tools;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
+use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Result\CallToolResult;
 
 final class FindTool
 {
@@ -19,16 +21,18 @@ final class FindTool
     ) {
     }
 
-    /**
-     * @return array{result: string}
-     */
-    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): string
+    public function __invoke(?string $pattern = null, ?string $regex = null, int $cursor = -1): CallToolResult
     {
         try {
             $result = $this->findService->__invoke(pattern: $pattern, regex: $regex, cursor: $cursor);
-            return $result;
+
+            $content = new TextContent($result);
+            return new CallToolResult([$content], null, false);
         } catch (ToolUsageError|BackendError $exception) {
-            return "Result: error\n Error Message: " . $exception->getMessage() . "\n Hint: " . $exception->getHint();
+            $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
+            $content = new TextContent(text: $result);
+
+            return new CallToolResult([$content], null, true);
         }
     }
 }

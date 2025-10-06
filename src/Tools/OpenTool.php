@@ -7,6 +7,8 @@ namespace App\Tools;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
+use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Result\CallToolResult;
 
 final class OpenTool
 {
@@ -19,20 +21,23 @@ final class OpenTool
     ) {
     }
 
-    /**
-     * @return array{result: string}
-     */
     public function __invoke(
         int|string $id = -1,
         int $cursor = -1,
         int $loc = -1,
         int $numLines = -1,
-    ): string {
+    ): CallToolResult {
         try {
             $result = $this->openService->__invoke($id, $cursor, $loc, $numLines);
-            return $result;
+
+            $content = new TextContent($result);
+
+            return new CallToolResult([$content], null, false);
         } catch (ToolUsageError|BackendError $exception) {
-            return "Result: error\n Error Message: " . $exception->getMessage() . "\n Hint: " . $exception->getHint();
+            $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
+            $content = new TextContent(text: $result);
+
+            return new CallToolResult([$content], null, true);
         }
     }
 }

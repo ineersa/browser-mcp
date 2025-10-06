@@ -43,7 +43,9 @@ final class BrowserState
             return $this->pages[$this->pageStack[$this->getCurrentCursor()]];
         }
         if (!\array_key_exists($cursor, $this->pageStack)) {
-            throw new ToolUsageError(\sprintf('Cursor `%d` is out of range. Available cursor indices: [0 - %d].', $cursor, $this->getCurrentCursor()));
+            throw new ToolUsageError(
+                \sprintf('Cursor `%d` is out of range. Available cursor indices: [0 - %d].', $cursor, $this->getCurrentCursor())
+            )->setHint('Please correct cursor value from [CURSOR:#] on search page results');
         }
         $pageUrl = $this->pageStack[$cursor];
 

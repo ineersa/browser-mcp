@@ -22,33 +22,20 @@ final class SearchTool
     ) {
     }
 
-    /**
-     * @return array
-     */
     public function __invoke(
         string $query,
-        int $topn = 10,
+        int $topn = 5,
     ): CallToolResult {
         try {
             $result = $this->searchService->__invoke($query, $topn);
             $content = new TextContent($result);
-            $structured = new StructuredContent(
-                [
-                    'result' => $result,
-                ]
-            );
 
-            return new CallToolResult([$content], $structured, false);
+            return new CallToolResult([$content], null, false);
         } catch (ToolUsageError|BackendError $exception) {
             $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
-            $content = new TextContent(text: $result, isError: true);
-            $structured = new StructuredContent(
-                [
-                    'result' => $result,
-                ]
-            );
+            $content = new TextContent(text: $result);
 
-            return new CallToolResult([$content], $structured, true);
+            return new CallToolResult([$content], null, true);
         }
     }
 }

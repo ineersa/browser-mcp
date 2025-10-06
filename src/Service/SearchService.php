@@ -21,7 +21,7 @@ final readonly class SearchService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(string $query, int $topn = 10): string
+    public function __invoke(string $query, int $topn = 5): string
     {
         if (empty($query)) {
             throw new ToolUsageError('query cannot be empty')->setHint('Provide query to search');

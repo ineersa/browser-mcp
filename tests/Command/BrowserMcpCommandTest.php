@@ -72,17 +72,8 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($first['text'] ?? '');
         $this->assertNotSame('', $payload, 'Search tool payload should not be empty.');
 
-        try {
-            $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $exception) {
-            $this->fail('Search tool payload is not valid JSON: '.$exception->getMessage());
-        }
-
-        $actualResult = (string) ($decoded['result'] ?? '');
-        $this->assertNotSame('', $actualResult, 'Search tool result string is empty.');
-
         $expectedResult = $this->loadFixture('search_tool_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $actualResult);
+        $this->assertEquals($expectedResult, $payload);
     }
 
     /**
@@ -110,17 +101,8 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($content[0]['text'] ?? '');
         $this->assertNotSame('', $payload, 'Open tool payload should not be empty.');
 
-        try {
-            $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $exception) {
-            $this->fail('Open tool payload is not valid JSON: '.$exception->getMessage());
-        }
-
-        $actualResult = (string) ($decoded['result'] ?? '');
-        $this->assertNotSame('', $actualResult, 'Open tool result string is empty.');
-
         $expectedResult = $this->loadFixture('open_page_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $actualResult);
+        $this->assertEquals($expectedResult, $payload);
     }
 
     /**
@@ -149,17 +131,8 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($content[0]['text'] ?? '');
         $this->assertNotSame('', $payload, 'Find tool payload should not be empty.');
 
-        try {
-            $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $exception) {
-            $this->fail('Find tool payload is not valid JSON: '.$exception->getMessage());
-        }
-
-        $actualResult = (string) ($decoded['result'] ?? '');
-        $this->assertNotSame('', $actualResult, 'Find tool result string is empty.');
-
         $expectedResult = $this->loadFixture('find_open_page_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $actualResult);
+        $this->assertEquals($expectedResult, $payload);
     }
 
     /**

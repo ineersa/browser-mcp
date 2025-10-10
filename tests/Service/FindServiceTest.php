@@ -34,13 +34,13 @@ final class FindServiceTest extends TestCase
         $pageDisplay = new PageDisplayService();
         $service = new FindService($state, $pageDisplay);
 
-        $result = $service->__invoke(pattern: 'configure');
+        $result = $service->__invoke(regex: '/configure/i');
 
         $expected = (string) ($this->loadJson('find_result.json')['result'] ?? '');
         $this->assertSame($expected, $result);
     }
 
-    public function testFindRequiresPatternOrRegex(): void
+    public function testFindRequiresRegex(): void
     {
         $state = new BrowserState();
         $pageDisplay = new PageDisplayService();
@@ -48,16 +48,6 @@ final class FindServiceTest extends TestCase
 
         $this->expectException(ToolUsageError::class);
         $service->__invoke();
-    }
-
-    public function testFindRejectsPatternAndRegexTogether(): void
-    {
-        $state = new BrowserState();
-        $pageDisplay = new PageDisplayService();
-        $service = new FindService($state, $pageDisplay);
-
-        $this->expectException(ToolUsageError::class);
-        $service->__invoke(pattern: 'foo', regex: '/foo/');
     }
 
     public function testFindRejectsPageWithSnippets(): void
@@ -76,7 +66,7 @@ final class FindServiceTest extends TestCase
 
         $this->expectException(ToolUsageError::class);
         $this->expectExceptionMessage('Cannot run `find` on search results page or find results page');
-        $service->__invoke(pattern: 'anything');
+        $service->__invoke(regex: 'anything');
     }
 
     public function testFindRestoresStateWhenDisplayFails(): void
@@ -98,7 +88,7 @@ final class FindServiceTest extends TestCase
         $service = new FindService($state, $pageDisplay);
 
         try {
-            $service->__invoke(pattern: 'match');
+            $service->__invoke(regex: 'match');
             $this->fail('FindService should rethrow ToolUsageError from PageDisplayService');
         } catch (ToolUsageError $e) {
             $this->assertSame('cannot render find results', $e->getMessage());

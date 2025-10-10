@@ -18,9 +18,9 @@ final class UtilitiesTest extends TestCase
             title: 'Example',
         );
 
-        $result = Utilities::runFindInPage(page: $page, pattern: 'BETA', maxResults: 1, numShowLines: 1);
+        $result = Utilities::runFindInPage(page: $page, regex: '/BETA/i', maxResults: 1, numShowLines: 1);
 
-        $this->assertSame('Find results for text: `BETA` in `Example`', $result->title);
+        $this->assertSame('Find results for regex: `/BETA/i` in `Example`', $result->title);
         $this->assertStringContainsString('Beta', $result->text);
         $this->assertArrayHasKey('0', $result->urls);
         $this->assertSame('https://example.com', $result->urls['0']); // @phpstan-ignore-line

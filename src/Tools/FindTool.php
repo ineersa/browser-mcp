@@ -14,17 +14,17 @@ final class FindTool
 {
     public const string NAME = 'find';
     public const string TITLE = 'Find pattern in page';
-    public const string DESCRIPTION = 'Finds exact matches of `pattern` (or a `regex`) within the page identified by `page_id`. If `page_id` is omitted, the most recently viewed page is used. The response is a new virtual page prefixed with its own `[PAGE_ID:{page_id}]`. Cite results with the `link_id` shown in each snippet reference.';
+    public const string DESCRIPTION = 'Finds regex matches within the page identified by `page_id`. If `page_id` is omitted, the most recently viewed page is used. The response is a new virtual page prefixed with its own `[PAGE_ID:{page_id}]`. Cite results with the `link_id` shown in each snippet reference.';
 
     public function __construct(
         private readonly FindService $findService,
     ) {
     }
 
-    public function __invoke(?string $pattern = null, ?string $regex = null, ?string $pageId = null): CallToolResult
+    public function __invoke(?string $regex = null, ?string $pageId = null): CallToolResult
     {
         try {
-            $result = $this->findService->__invoke(pattern: $pattern, regex: $regex, pageId: $pageId);
+            $result = $this->findService->__invoke(regex: $regex, pageId: $pageId);
 
             $content = new TextContent($result);
 

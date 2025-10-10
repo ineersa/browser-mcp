@@ -18,22 +18,10 @@ final readonly class FindService
     /**
      * @throws ToolUsageError
      */
-    public function __invoke(?string $pattern = null, ?string $regex = null, ?string $pageId = null): string
+    public function __invoke(?string $regex = null, ?string $pageId = null): string
     {
-        if (null !== $pattern && null !== $regex) {
-            throw new ToolUsageError('Provide either `pattern` or `regex`, not both.');
-        }
-
-        if (null === $pattern || '' === $pattern) {
-            $pattern = null;
-        }
-
         if (null === $regex || '' === $regex) {
-            $regex = null;
-        }
-
-        if (null === $pattern && null === $regex) {
-            throw new ToolUsageError('Provide a non-empty `pattern` or `regex` to search for.');
+            throw new ToolUsageError('Provide a non-empty `regex` to search for.');
         }
 
         $page = $this->state->getPage($pageId);
@@ -42,7 +30,6 @@ final readonly class FindService
         }
         $pageContent = Utilities::runFindInPage(
             page: $page,
-            pattern: $pattern,
             regex: $regex,
             numShowLines: $this->findContextLines,
         );

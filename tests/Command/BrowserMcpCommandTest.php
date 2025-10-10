@@ -114,7 +114,7 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('search', ['query' => 'Test open page']),
             $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => 'p_a000'], 3),
-            $this->callToolRequest('find', ['pattern' => 'Datetime'], 4),
+            $this->callToolRequest('find', ['regex' => '/Datetime/i'], 4),
         ]);
 
         $this->assertCount(4, $responses, 'Expected initialize, search, open, and find responses.');

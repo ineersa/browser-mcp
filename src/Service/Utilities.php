@@ -215,11 +215,10 @@ final readonly class Utilities
     }
 
     /**
-     * Build a find results PageContents by scanning the page text for either an exact pattern or a regex match.
+     * Build a find results PageContents by scanning the page text for regex matches.
      */
     public static function runFindInPage(
         PageContents $page,
-        ?string $pattern = null,
         ?string $regex = null,
         int $maxResults = 50,
         int $numShowLines = 4,
@@ -229,11 +228,7 @@ final readonly class Utilities
         $withoutLinks = self::stripLinks($txt);
         $lines = explode("\n", $withoutLinks);
 
-        $isRegexSearch = null !== $regex;
-        $query = $isRegexSearch ? (string) $regex : (string) $pattern;
-
-        $regexPattern = $isRegexSearch ? $query : null;
-        $needle = $isRegexSearch ? null : mb_strtolower($query);
+        $query = (string) $regex;
         $regexError = null;
 
         $resultChunks = [];
@@ -242,14 +237,9 @@ final readonly class Utilities
         $matchIdx = 0;
         while ($lineIdx < \count($lines)) {
             $line = $lines[$lineIdx];
-            $matched = false;
-            if (null !== $regexPattern) {
-                $matched = self::regexMatches($regexPattern, $line, $regexError);
-                if (null !== $regexError) {
-                    break;
-                }
-            } elseif (null !== $needle) {
-                $matched = str_contains(mb_strtolower($line), $needle);
+            $matched = self::regexMatches($query, $line, $regexError);
+            if (null !== $regexError) {
+                break;
             }
 
             if (!$matched) {
@@ -279,13 +269,13 @@ final readonly class Utilities
         } elseif (!empty($resultChunks)) {
             $displayText = implode("\n\n", $resultChunks);
         } else {
-            $displayText = \sprintf('No `find` results for %s: `%s`', $isRegexSearch ? 'regex' : 'pattern', $query);
+            $displayText = \sprintf('No `find` results for regex: `%s`', $query);
         }
 
         return new PageContents(
-            url: $page->url.'/find?'.($isRegexSearch ? 'regex=' : 'pattern=').rawurlencode($query),
+            url: $page->url.'/find?regex='.rawurlencode($query),
             text: $displayText,
-            title: \sprintf('Find results for %s: `%s` in `%s`', $isRegexSearch ? 'regex' : 'text', $query, $page->title),
+            title: \sprintf('Find results for regex: `%s` in `%s`', $query, $page->title),
             urls: $urlsMap,
             snippets: $snippets,
         );

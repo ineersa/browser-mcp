@@ -23,3 +23,5 @@ phpstan.neon
 /.phpunit.cache/
 /coverage/
 ###< phpunit/phpunit ###
+
+/plans

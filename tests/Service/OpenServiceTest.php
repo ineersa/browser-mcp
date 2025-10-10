@@ -90,44 +90,6 @@ final class OpenServiceTest extends TestCase
         $this->assertStringContainsString('viewing lines ['.$loc.' -', $output);
     }
 
-    public function testOpenHandlesDirectUrlString(): void
-    {
-        $url = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
-        $html = file_get_contents(__DIR__.'/../dumps/SearxNG/open_page.html');
-        $this->assertNotFalse($html, 'Failed to read HTML fixture');
-
-        $state = new BrowserState();
-        /** @var array<string,string> $searchUrls */
-        $searchUrls = [];
-        $searchPage = new PageContents(
-            url: '',
-            text: '# Search Results',
-            title: 'Search Results',
-            urls: $searchUrls,
-        );
-        $searchPageId = $state->addPage($searchPage);
-
-        $httpClient = new MockHttpClient(function (string $method, string $requestUrl, array $options) use ($url, $html) {
-            if ('GET' !== $method || $requestUrl !== $url) {
-                throw new \RuntimeException('Unexpected request: '.$method.' '.$requestUrl);
-            }
-
-            return new MockResponse($html);
-        });
-
-        $backend = new SearxNGBackend('https://search.example', $httpClient);
-
-        $pageDisplay = new PageDisplayService();
-        $service = new OpenService($backend, $state, $pageDisplay);
-
-        $result = $service->__invoke($url);
-
-        $expected = (string) ($this->loadJson('open_page_response.json')['result'] ?? '');
-        $this->assertSame($expected, $result);
-        $this->assertSame($url, $state->getPage()->url);
-        $this->assertNotSame($searchPageId, $state->getCurrentPageId());
-    }
-
     public function testOpenRejectsInvalidLinkId(): void
     {
         $state = new BrowserState();

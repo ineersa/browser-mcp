@@ -7,7 +7,6 @@ namespace App\Tools;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\SearchService;
-use Mcp\Schema\Content\StructuredContent;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 

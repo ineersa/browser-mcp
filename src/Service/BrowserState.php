@@ -39,7 +39,7 @@ final class BrowserState
             throw new ToolUsageError('No pages to access!')->setHint('Run `browser.search` to obtain a `page_id`.');
         }
 
-        $lastIdx = \array_key_last($this->pageStack);
+        $lastIdx = array_key_last($this->pageStack);
         \assert(null !== $lastIdx);
 
         return $this->pageStack[$lastIdx];
@@ -73,8 +73,7 @@ final class BrowserState
         $resolvedId = $pageId ?? $this->getCurrentPageId();
 
         if (!\array_key_exists($resolvedId, $this->pages)) {
-            throw new ToolUsageError(\sprintf('Page `%s` is not available in the current browser session.', $resolvedId))
-                ->setHint('Use a `page_id` provided in the latest tool response.');
+            throw new ToolUsageError(\sprintf('Page `%s` is not available in the current browser session.', $resolvedId))->setHint('Use a `page_id` provided in the latest tool response.');
         }
 
         return $this->pages[$resolvedId];
@@ -115,7 +114,7 @@ final class BrowserState
         ++$this->pageSequence;
 
         $encoded = strtolower(base_convert((string) $value, 10, 36));
-        $encoded = str_pad($encoded, 4, '0', STR_PAD_LEFT);
+        $encoded = str_pad($encoded, 4, '0', \STR_PAD_LEFT);
 
         return 'p_'.$encoded;
     }

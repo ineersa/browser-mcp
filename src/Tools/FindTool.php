@@ -27,6 +27,7 @@ final class FindTool
             $result = $this->findService->__invoke(pattern: $pattern, regex: $regex, pageId: $pageId);
 
             $content = new TextContent($result);
+
             return new CallToolResult([$content], null, false);
         } catch (ToolUsageError|BackendError $exception) {
             $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();

@@ -23,36 +23,29 @@ final readonly class OpenService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(int|string $linkId = -1, ?string $pageId = null, int $loc = -1, int $numLines = -1): string
+    public function __invoke(int $linkId = -1, ?string $pageId = null, int $loc = -1, int $numLines = -1): string
     {
         $currPage = null;
         $stayOnCurrentPage = false;
-        $directUrlOpen = false;
         $snippet = null;
 
-        if (\is_string($linkId)) {
-            $url = $linkId;
-            $directUrlOpen = true;
-        } else {
-            $currPage = $this->state->getPage($pageId);
-            if ($linkId >= 0) {
-                $url = $currPage->urls[(string) $linkId] ?? '';
-                if ('' === $url) {
-                    throw new ToolUsageError(\sprintf('Invalid link_id `%s`.', $linkId))
-                        ->setHint('Use a `link_id` from the citations in the latest tool response.');
-                }
-                $snippet = $currPage->snippets[(string) $linkId] ?? null;
-            } else {
-                $stayOnCurrentPage = true;
-                $url = $currPage->url;
+        $currPage = $this->state->getPage($pageId);
+        if ($linkId >= 0) {
+            $url = $currPage->urls[(string) $linkId] ?? '';
+            if ('' === $url) {
+                throw new ToolUsageError(\sprintf('Invalid link_id `%s`.', $linkId))->setHint('Use a `link_id` from the citations in the latest tool response.');
             }
+            $snippet = $currPage->snippets[(string) $linkId] ?? null;
+        } else {
+            $stayOnCurrentPage = true;
+            $url = $currPage->url;
         }
 
         if ($stayOnCurrentPage) {
             $newPage = $currPage;
             \assert($newPage instanceof PageContents);
         } else {
-            $newPage = $this->openUrl($url, $directUrlOpen);
+            $newPage = $this->openUrl($url);
             $this->state->addPage($newPage);
         }
 
@@ -74,13 +67,11 @@ final readonly class OpenService
         }
     }
 
-    private function openUrl(string $url, bool $directUrlOpen): PageContents
+    private function openUrl(string $url): PageContents
     {
-        if (!$directUrlOpen) {
-            $cached = $this->state->getPageByUrl($url);
-            if ($cached) {
-                return $cached;
-            }
+        $cached = $this->state->getPageByUrl($url);
+        if ($cached) {
+            return $cached;
         }
         try {
             return $this->backend->fetch($url);

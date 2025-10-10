@@ -12,16 +12,22 @@ final class SearxFixtureHttpClient extends MockHttpClient
     public function __construct()
     {
         $results = $this->loadJson('results.json');
+        $testOpenPageResults = $this->loadJson('test_open_page_results.json');
         $openPageHtml = $this->loadFile('open_page.html');
         $openPageFragment = 'cbracco/html5-test-page/refs/heads/master/index.html';
 
-        parent::__construct(function (string $method, string $url) use ($results, $openPageHtml, $openPageFragment): MockResponse {
+        parent::__construct(function (string $method, string $url) use ($results, $testOpenPageResults, $openPageHtml, $openPageFragment): MockResponse {
             if ('GET' !== $method) {
                 throw new \RuntimeException(\sprintf('Unexpected HTTP method: %s %s', $method, $url));
             }
 
             if (str_contains($url, '/search')) {
-                $body = json_encode(['results' => $results], \JSON_THROW_ON_ERROR);
+                // Check if this is the "Test open page" query
+                if (str_contains($url, 'Test+open+page') || str_contains($url, 'Test%20open%20page')) {
+                    $body = json_encode(['results' => $testOpenPageResults], \JSON_THROW_ON_ERROR);
+                } else {
+                    $body = json_encode(['results' => $results], \JSON_THROW_ON_ERROR);
+                }
 
                 return new MockResponse($body, ['http_code' => 200]);
             }

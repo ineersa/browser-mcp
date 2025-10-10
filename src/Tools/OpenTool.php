@@ -12,9 +12,9 @@ use Mcp\Schema\Result\CallToolResult;
 
 final class OpenTool
 {
-    public const string NAME = 'open';
-    public const string TITLE = 'Open a link or page';
-    public const string DESCRIPTION = 'Opens the `link_id` from the page indicated by `page_id`, starting at line number `loc` and showing `num_lines` lines. Valid `link_id` values are displayed inside references such as `【{link_id}†…】`. If `page_id` is omitted, the most recently viewed page is used. Provide a fully-qualified URL as `link_id` to open it directly. Omitting `link_id` scrolls the current page. The tool response is prefixed with `[PAGE_ID:{page_id}]` and includes the viewport range. Cite with `【{link_id}†L{line_start}(-L{line_end})?】`.';
+    public const string NAME = 'open_result';
+    public const string TITLE = 'Open a search result page';
+    public const string DESCRIPTION = 'Opens the search result with the specified integer `link_id` from the page indicated by `page_id`, starting at line number `loc` and showing `num_lines` lines. Valid `link_id` values are integer IDs from search results displayed inside references such as `【{link_id}†…】`. If `page_id` is omitted, the most recently viewed page is used. Use link_id = -1 to scroll the current page. The tool response is prefixed with `[PAGE_ID:{page_id}]` and includes the viewport range. Cite with `【{link_id}†L{line_start}(-L{line_end})?】`.';
 
     public function __construct(
         private readonly OpenService $openService,
@@ -22,7 +22,7 @@ final class OpenTool
     }
 
     public function __invoke(
-        int|string $linkId = -1,
+        int $linkId = -1,
         ?string $pageId = null,
         int $loc = -1,
         int $numLines = -1,

@@ -83,8 +83,8 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('search', ['query' => 'SearxNG setup']),
-            $this->callToolRequest('open', ['linkId' => $this->openPageUrl()], 3),
+            $this->callToolRequest('search', ['query' => 'Test open page']),
+            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => 'p_a000'], 3),
         ]);
 
         $this->assertCount(3, $responses, 'Expected initialize, search, and open responses.');
@@ -112,8 +112,8 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('search', ['query' => 'SearxNG setup']),
-            $this->callToolRequest('open', ['linkId' => $this->openPageUrl()], 3),
+            $this->callToolRequest('search', ['query' => 'Test open page']),
+            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => 'p_a000'], 3),
             $this->callToolRequest('find', ['pattern' => 'Datetime'], 4),
         ]);
 
@@ -232,8 +232,4 @@ final class BrowserMcpCommandTest extends TestCase
         return $decoded;
     }
 
-    private function openPageUrl(): string
-    {
-        return 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
-    }
 }

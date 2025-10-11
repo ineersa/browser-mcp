@@ -23,9 +23,8 @@ final readonly class OpenService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(int $linkId = -1, ?string $pageId = null, int $loc = -1, int $numLines = -1): string
+    public function __invoke(int $linkId, string $pageId, int $loc = -1, int $numLines = -1): string
     {
-        $currPage = null;
         $stayOnCurrentPage = false;
         $snippet = null;
 
@@ -41,10 +40,7 @@ final readonly class OpenService
             $url = $currPage->url;
         }
 
-        if ($stayOnCurrentPage) {
-            $newPage = $currPage;
-            \assert($newPage instanceof PageContents);
-        } else {
+        if (!$stayOnCurrentPage) {
             $newPage = $this->openUrl($url);
             $this->state->addPage($newPage);
         }

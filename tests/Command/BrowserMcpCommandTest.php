@@ -114,7 +114,7 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('search', ['query' => 'Test open page']),
             $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => 'p_a000'], 3),
-            $this->callToolRequest('find', ['regex' => '/Datetime/i'], 4),
+            $this->callToolRequest('find', ['regex' => '/Datetime/i', 'pageId' => 'p_a001'], 4),
         ]);
 
         $this->assertCount(4, $responses, 'Expected initialize, search, open, and find responses.');
@@ -133,6 +133,139 @@ final class BrowserMcpCommandTest extends TestCase
 
         $expectedResult = $this->loadFixture('find_open_page_response')['result'] ?? '';
         $this->assertEquals($expectedResult, $payload);
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testOpenToolWithInvalidLinkIdReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('open_result', ['linkId' => -2, 'pageId' => 'test_page'], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testOpenToolWithEmptyPageIdReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => ''], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testOpenToolWithWhitespaceOnlyPageIdReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => '   '], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testFindToolWithEmptyRegexReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('find', ['regex' => '', 'pageId' => 'test_page'], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testFindToolWithWhitespaceOnlyRegexReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('find', ['regex' => '   ', 'pageId' => 'test_page'], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testFindToolWithEmptyPageIdReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('find', ['regex' => '/test/', 'pageId' => ''], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testFindToolWithWhitespaceOnlyPageIdReturnsError(): void
+    {
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('find', ['regex' => '/test/', 'pageId' => '   '], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
+
+        $callResponse = $responses[1];
+        $this->assertSame(2, $callResponse['id']);
+        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
+        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
+        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
     }
 
     /**
@@ -231,5 +364,4 @@ final class BrowserMcpCommandTest extends TestCase
 
         return $decoded;
     }
-
 }

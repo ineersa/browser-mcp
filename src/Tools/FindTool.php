@@ -14,7 +14,7 @@ final class FindTool
 {
     public const string NAME = 'find';
     public const string TITLE = 'Find pattern in page';
-    public const string DESCRIPTION = 'Finds regex matches within the page identified by `page_id`. Both `regex` and `page_id` are required parameters. The response is a new virtual page prefixed with its own `[PAGE_ID:{page_id}]`.';
+    public const string DESCRIPTION = 'Finds regex matches within the page at `url`. The `regex` parameter must be a valid PCRE regular expression (include delimiters like `/pattern/`, e.g. `/some text/iu`). Both `url` and `regex` are required; the page is fetched (and cached) by URL before searching.';
 
     public function __construct(
         private readonly FindService $findService,
@@ -22,20 +22,20 @@ final class FindTool
     }
 
     public function __invoke(
+        string $url,
         string $regex,
-        string $pageId,
     ): CallToolResult {
         // Validate required parameters
+        if ('' === trim($url)) {
+            throw new ToolUsageError('Invalid URL provided. The FindTool requires a non-empty URL.')->setHint('Use an absolute URL from a previous search result or open call.');
+        }
+
         if ('' === trim($regex)) {
             throw new ToolUsageError('Invalid regex provided. The FindTool requires a non-empty regex pattern.')->setHint('Provide a valid regex pattern to search for within the page.');
         }
 
-        if ('' === trim($pageId)) {
-            throw new ToolUsageError('Invalid page ID provided. The FindTool requires a non-empty page ID.')->setHint('Use the page ID from the latest tool response, typically shown as [PAGE_ID:{page_id}] in the tool output.');
-        }
-
         try {
-            $result = $this->findService->__invoke(regex: $regex, pageId: $pageId);
+            $result = $this->findService->__invoke(url: $url, regex: $regex);
 
             $content = new TextContent($result);
 

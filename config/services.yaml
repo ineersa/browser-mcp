@@ -45,7 +45,6 @@ services:
         public: true
     App\Service\FindService:
         public: true
-        arguments:
 
     # Make ALL services in App\Tools\ public
     App\Tools\:

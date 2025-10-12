@@ -81,10 +81,16 @@ final class BrowserMcpCommandTest extends TestCase
      */
     public function testOpenToolCallReturnsFixtureDisplay(): void
     {
+        $targetUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
+
         $responses = $this->runServer([
             $this->initializeRequest(),
             $this->callToolRequest('search', ['query' => 'Test open page']),
-            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => 'p_a000'], 3),
+            $this->callToolRequest('open', [
+                'url' => $targetUrl,
+                'start_at_line' => 0,
+                'number_of_lines' => 50,
+            ], 3),
         ]);
 
         $this->assertCount(3, $responses, 'Expected initialize, search, and open responses.');
@@ -110,11 +116,20 @@ final class BrowserMcpCommandTest extends TestCase
      */
     public function testFindToolCallReturnsFixtureDisplay(): void
     {
+        $targetUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
+
         $responses = $this->runServer([
             $this->initializeRequest(),
             $this->callToolRequest('search', ['query' => 'Test open page']),
-            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => 'p_a000'], 3),
-            $this->callToolRequest('find', ['regex' => '/Datetime/i', 'pageId' => 'p_a001'], 4),
+            $this->callToolRequest('open', [
+                'url' => $targetUrl,
+                'start_at_line' => 0,
+                'number_of_lines' => 50,
+            ], 3),
+            $this->callToolRequest('find', [
+                'url' => $targetUrl,
+                'regex' => '/Datetime/i',
+            ], 4),
         ]);
 
         $this->assertCount(4, $responses, 'Expected initialize, search, open, and find responses.');
@@ -138,11 +153,15 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testOpenToolWithInvalidLinkIdReturnsError(): void
+    public function testOpenToolWithEmptyUrlReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('open_result', ['linkId' => -2, 'pageId' => 'test_page'], 2),
+            $this->callToolRequest('open', [
+                'url' => '',
+                'start_at_line' => 0,
+                'number_of_lines' => 50,
+            ], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
@@ -157,11 +176,15 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testOpenToolWithEmptyPageIdReturnsError(): void
+    public function testOpenToolWithNegativeStartLineReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => ''], 2),
+            $this->callToolRequest('open', [
+                'url' => 'https://example.com',
+                'start_at_line' => -5,
+                'number_of_lines' => 50,
+            ], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
@@ -176,11 +199,15 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testOpenToolWithWhitespaceOnlyPageIdReturnsError(): void
+    public function testOpenToolWithNonPositiveNumberOfLinesReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('open_result', ['linkId' => 0, 'pageId' => '   '], 2),
+            $this->callToolRequest('open', [
+                'url' => 'https://example.com',
+                'start_at_line' => 0,
+                'number_of_lines' => 0,
+            ], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
@@ -199,7 +226,7 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['regex' => '', 'pageId' => 'test_page'], 2),
+            $this->callToolRequest('find', ['url' => 'https://example.com', 'regex' => ''], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -218,7 +245,7 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['regex' => '   ', 'pageId' => 'test_page'], 2),
+            $this->callToolRequest('find', ['url' => 'https://example.com', 'regex' => '   '], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -233,11 +260,11 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testFindToolWithEmptyPageIdReturnsError(): void
+    public function testFindToolWithEmptyUrlReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['regex' => '/test/', 'pageId' => ''], 2),
+            $this->callToolRequest('find', ['url' => '', 'regex' => '/test/'], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -252,11 +279,11 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testFindToolWithWhitespaceOnlyPageIdReturnsError(): void
+    public function testFindToolWithWhitespaceOnlyUrlReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['regex' => '/test/', 'pageId' => '   '], 2),
+            $this->callToolRequest('find', ['url' => '   ', 'regex' => '/test/'], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -284,11 +311,11 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertSame(OpenTool::DESCRIPTION, $indexed[OpenTool::NAME]['description']);
         $this->assertSame(OpenTool::TITLE, $indexed[OpenTool::NAME]['annotations']['title']);
-        $this->assertArrayHasKey('properties', $indexed[OpenTool::NAME]['inputSchema']);
+        $this->assertSame(['url', 'start_at_line', 'number_of_lines'], $indexed[OpenTool::NAME]['inputSchema']['required'] ?? []);
 
         $this->assertSame(FindTool::DESCRIPTION, $indexed[FindTool::NAME]['description']);
         $this->assertSame(FindTool::TITLE, $indexed[FindTool::NAME]['annotations']['title']);
-        $this->assertArrayHasKey('properties', $indexed[FindTool::NAME]['inputSchema']);
+        $this->assertSame(['url', 'regex'], $indexed[FindTool::NAME]['inputSchema']['required'] ?? []);
     }
 
     /**

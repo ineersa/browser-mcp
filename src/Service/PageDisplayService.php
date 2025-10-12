@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Service\DTO\PageContents;
 use App\Service\Exception\ToolUsageError;
 
 readonly class PageDisplayService
@@ -19,23 +20,41 @@ readonly class PageDisplayService
      *
      * @throws ToolUsageError
      */
-    public function showPage(BrowserState $state, int $loc = 0, int $numLines = -1, ?string $pageId = null): string
+    public function showPage(BrowserState $state, int $loc = 0, int $numLines = -1, ?string $url = null): string
     {
-        $resolvedPageId = $pageId ?? $state->getCurrentPageId();
-        $page = $state->getPage($resolvedPageId);
+        $page = $state->getPage($url);
+
+        return $this->render($page, $loc, $numLines);
+    }
+
+    /**
+     * Render a standalone page without storing it in BrowserState.
+     *
+     * @throws ToolUsageError
+     */
+    public function renderStandalone(PageContents $page, int $loc = 0, int $numLines = -1): string
+    {
+        return $this->render($page, $loc, $numLines);
+    }
+
+    /**
+     * @throws ToolUsageError
+     */
+    private function render(PageContents $page, int $loc, int $numLines): string
+    {
         $lines = Utilities::wrapLines($page->text);
         while (!empty($lines) && '' === $lines[\count($lines) - 1]) {
             array_pop($lines);
         }
         $totalLines = \count($lines);
         if ($loc >= $totalLines) {
-            throw new ToolUsageError(\sprintf('Invalid location parameter: `%d`. Cannot exceed page maximum of %d.', $loc, $totalLines - 1));
+            throw new ToolUsageError(\sprintf('Invalid start_at_line parameter: `%d`. Cannot exceed page maximum of %d.', $loc, max(0, $totalLines - 1)))->setHint('Choose a smaller `start_at_line` within the page line count.');
         }
         $endLoc = Utilities::getEndLoc($loc, $numLines, $totalLines, $lines, $this->viewTokens, $this->encodingName);
         $linesToShow = \array_slice($lines, $loc, $endLoc - $loc);
         $body = Utilities::joinLines($linesToShow, true, $loc);
         $scrollbar = \sprintf('viewing lines [%d - %d] of %d', $loc, $endLoc - 1, $totalLines - 1);
 
-        return Utilities::makeDisplay($page, $resolvedPageId, $body, $scrollbar);
+        return Utilities::makeDisplay($page, $body, $scrollbar);
     }
 }

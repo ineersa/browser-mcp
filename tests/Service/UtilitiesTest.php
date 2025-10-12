@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Service\DTO\PageContents;
+use App\Service\Exception\ToolUsageError;
 use App\Service\Utilities;
 use PHPUnit\Framework\TestCase;
 
@@ -54,15 +55,18 @@ final class UtilitiesTest extends TestCase
             title: 'Example',
         );
 
-        $result = Utilities::runFindInPage(page: $page, regex: '/unterminated', maxResults: 1, numShowLines: 1);
-
-        $this->assertSame('Find results for regex: `/unterminated` in `Example`', $result->title);
-        $this->assertSame(
-            'Regex error for regex `/unterminated`: Invalid regex pattern or internal PCRE error',
-            $result->text
-        );
-        $this->assertSame([], $result->urls);
-        $this->assertNotNull($result->snippets);
-        $this->assertSame([], $result->snippets);
+        try {
+            Utilities::runFindInPage(page: $page, regex: '/unterminated', maxResults: 1, numShowLines: 1);
+            $this->fail('Expected ToolUsageError when regex is invalid');
+        } catch (ToolUsageError $error) {
+            $this->assertSame(
+                'Regex error for pattern `/unterminated`: Invalid regex pattern or internal PCRE error',
+                $error->getMessage()
+            );
+            $this->assertSame(
+                'Ensure the `regex` parameter is a valid PCRE pattern that includes delimiters, e.g. `/pattern/`.',
+                $error->getHint()
+            );
+        }
     }
 }

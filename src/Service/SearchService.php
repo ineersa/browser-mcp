@@ -38,14 +38,8 @@ final readonly class SearchService
             throw new BackendError(\sprintf('Error during search for `%s`: %s', $query, $msg), previous: $e);
         }
         $this->state->reset();
-        $this->state->addPage($page);
-        try {
-            // Compute end location using Utilities::getEndLoc (numLines=-1)
-            return $this->pageDisplay->showPage($this->state, 0, -1);
-        } catch (ToolUsageError $e) {
-            // Can't show but page already in state, so we have to pop it
-            $this->state->popPageStack();
-            throw $e;
-        }
+
+        // Compute end location using Utilities::getEndLoc (numLines=-1)
+        return $this->pageDisplay->renderStandalone($page, 0, -1);
     }
 }

@@ -30,17 +30,66 @@ class SearxNGBackend implements BackendInterface
      */
     public function search(string $query, int $topn): PageContents
     {
-        if ($topn > 10) {
-            $topn = 10;
-        }
-        $items = $this->requestSearch($query, $topn);
-        $html = $this->buildSearchHtml($items);
+        $items = $this->requestSearch($query, min($topn, 10));
 
-        return PageProcessor::processHtml(
-            html: $html,
+        $lines = [];
+        $lines[] = \sprintf('Search results for "%s"', $query);
+        $lines[] = '';
+
+        $urls = [];
+        $seen = [];
+
+        foreach ($items as $index => $item) {
+            $position = $index + 1;
+            $rawUrl = (string) ($item['url'] ?? '');
+            $canonicalUrl = Utilities::canonicalizeUrl($rawUrl);
+            if ('' === $canonicalUrl) {
+                continue;
+            }
+            if (\in_array($canonicalUrl, $seen, true)) {
+                continue;
+            }
+            $seen[] = $canonicalUrl;
+
+            $title = trim((string) ($item['title'] ?? $canonicalUrl));
+            if ('' === $title) {
+                $title = $canonicalUrl;
+            }
+
+            $summary = trim((string) ($item['summary'] ?? ''));
+            if ('' !== $summary) {
+                $summary = html_entity_decode(strip_tags($summary), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+                $summary = preg_replace('/\s+/u', ' ', $summary) ?? $summary;
+                $summary = trim($summary);
+            }
+
+            $domain = PageProcessor::getDomain($canonicalUrl);
+            $label = \sprintf('%d. %s', $position, $title);
+            if ('' !== $domain) {
+                $label .= \sprintf(' — %s', $domain);
+            }
+
+            $lines[] = $label;
+            $lines[] = '   URL: '.$canonicalUrl;
+            if ('' !== $summary) {
+                $lines[] = '   Summary: '.$summary;
+            }
+            $lines[] = '';
+
+            $urls[(string) $position] = $canonicalUrl;
+        }
+
+        if (empty($urls)) {
+            $lines[] = 'No results found.';
+        }
+
+        $text = rtrim(implode("\n", $lines));
+
+        return new PageContents(
             url: '',
+            text: $text,
             title: $query,
-            displayUrls: true,
+            urls: $urls,
         );
     }
 
@@ -71,29 +120,6 @@ class SearxNGBackend implements BackendInterface
         }
 
         return $items;
-    }
-
-    /**
-     * Build a simple HTML list page from normalized search items.
-     *
-     * @param list<array{title:string,url:string,summary:string}> $items
-     */
-    public function buildSearchHtml(array $items): string
-    {
-        $lis = [];
-        foreach ($items as $it) {
-            $title = (string) $it['title'];
-            $url = (string) $it['url'];
-            $summary = (string) $it['summary'];
-            $lis[] = \sprintf(
-                "<li><a href='%s'>%s</a> %s</li>",
-                htmlspecialchars($url, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
-                htmlspecialchars($title, \ENT_NOQUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
-                htmlspecialchars($summary, \ENT_NOQUOTES | \ENT_SUBSTITUTE, 'UTF-8')
-            );
-        }
-
-        return "\n<html><body>\n<h1>Search Results</h1>\n<ul>\n".implode('', $lis)."\n</ul>\n</body></html>\n        ";
     }
 
     /**

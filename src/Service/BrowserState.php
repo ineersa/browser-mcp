@@ -6,43 +6,40 @@ namespace App\Service;
 
 use App\Service\DTO\PageContents;
 use App\Service\Exception\ToolUsageError;
+use App\Service\Utilities;
 
 final class BrowserState
 {
     /** @var array<string, PageContents> */
-    private array $pages = [];
+    private array $pagesByUrl = [];
 
     /** @var list<string> */
-    private array $pageStack = [];
+    private array $history = [];
 
-    /** @var array<string,string> */
-    private array $pageIdsByUrl = [];
-
-    private int $pageSequence = 0;
+    private ?string $currentUrl = null;
 
     public function reset(): void
     {
-        $this->pages = [];
-        $this->pageStack = [];
-        $this->pageIdsByUrl = [];
-        $this->pageSequence = 0;
+        $this->pagesByUrl = [];
+        $this->history = [];
+        $this->currentUrl = null;
     }
 
     public function isEmpty(): bool
     {
-        return [] === $this->pageStack;
+        return null === $this->currentUrl;
     }
 
-    public function getCurrentPageId(): string
+    /**
+     * @throws ToolUsageError
+     */
+    public function getCurrentUrl(): string
     {
         if ($this->isEmpty()) {
-            throw new ToolUsageError('No pages to access!')->setHint('Run `browser.search` to obtain a `page_id`.');
+            throw new ToolUsageError('No pages to access!')->setHint('Run `browser.open` with a URL to load a page first.');
         }
 
-        $lastIdx = array_key_last($this->pageStack);
-        \assert(null !== $lastIdx);
-
-        return $this->pageStack[$lastIdx];
+        return (string) $this->currentUrl;
     }
 
     /**
@@ -50,72 +47,81 @@ final class BrowserState
      */
     public function addPage(PageContents $page): string
     {
-        $pageId = $this->generatePageId();
-        $this->pages[$pageId] = $page;
-        $this->pageStack[] = $pageId;
-
-        if ('' !== $page->url) {
-            $this->pageIdsByUrl[$page->url] = $pageId;
+        $canonicalUrl = Utilities::canonicalizeUrl($page->url);
+        if ('' === $canonicalUrl) {
+            throw new ToolUsageError('Cannot cache a page without a URL.')->setHint('Only pages with a valid URL can be cached.');
         }
 
-        return $pageId;
+        $this->pagesByUrl[$canonicalUrl] = $page;
+        $this->touchHistory($canonicalUrl);
+
+        return $canonicalUrl;
     }
 
     /**
      * @throws ToolUsageError
      */
-    public function getPage(?string $pageId = null): PageContents
+    public function getPage(?string $url = null): PageContents
     {
         if ($this->isEmpty()) {
-            throw new ToolUsageError('No pages to access!')->setHint('Run `browser.search` to obtain a `page_id`.');
+            throw new ToolUsageError('No pages to access!')->setHint('Run `browser.open` with a URL to load a page first.');
         }
 
-        $resolvedId = $pageId ?? $this->getCurrentPageId();
+        $resolvedUrl = $url ?? $this->getCurrentUrl();
+        $canonical = Utilities::canonicalizeUrl($resolvedUrl);
 
-        if (!\array_key_exists($resolvedId, $this->pages)) {
-            throw new ToolUsageError(\sprintf('Page `%s` is not available in the current browser session.', $resolvedId))->setHint('Use a `page_id` provided in the latest tool response.');
+        if (!\array_key_exists($canonical, $this->pagesByUrl)) {
+            throw new ToolUsageError(\sprintf('Page `%s` is not available in the current browser session.', $resolvedUrl))->setHint('Open the page with `browser.open` first.');
         }
 
-        return $this->pages[$resolvedId];
+        $this->currentUrl = $canonical;
+
+        return $this->pagesByUrl[$canonical];
     }
 
     public function getPageByUrl(string $url): ?PageContents
     {
-        $pageId = $this->pageIdsByUrl[$url] ?? null;
+        $canonical = Utilities::canonicalizeUrl($url);
 
-        return null === $pageId ? null : ($this->pages[$pageId] ?? null);
+        return $this->pagesByUrl[$canonical] ?? null;
     }
 
-    public function popPageStack(): void
+    public function remove(string $url): void
     {
-        if ([] === $this->pageStack) {
-            return;
-        }
+        $canonical = Utilities::canonicalizeUrl($url);
+        unset($this->pagesByUrl[$canonical]);
+        $this->history = array_values(array_filter(
+            $this->history,
+            static fn (string $entry): bool => $entry !== $canonical,
+        ));
 
-        $pageId = array_pop($this->pageStack);
-
-        if (null === $pageId) {
-            return;
+        if ($this->currentUrl === $canonical) {
+            $this->currentUrl = empty($this->history) ? null : $this->history[\count($this->history) - 1];
         }
-
-        // We keep the cached page contents for potential reuse via getPageByUrl().
-        // When a page is removed due to an error, also drop its URL mapping.
-        foreach ($this->pageIdsByUrl as $url => $id) {
-            if ($id === $pageId) {
-                unset($this->pageIdsByUrl[$url]);
-            }
-        }
-        unset($this->pages[$pageId]);
     }
 
-    private function generatePageId(): string
+    /**
+     * @throws ToolUsageError
+     */
+    public function setCurrentUrl(string $url): void
     {
-        $value = 466560 + $this->pageSequence; // ensures IDs start at `a000`
-        ++$this->pageSequence;
+        $canonical = Utilities::canonicalizeUrl($url);
 
-        $encoded = strtolower(base_convert((string) $value, 10, 36));
-        $encoded = str_pad($encoded, 4, '0', \STR_PAD_LEFT);
+        if (!\array_key_exists($canonical, $this->pagesByUrl)) {
+            throw new ToolUsageError(\sprintf('Page `%s` is not available in the current browser session.', $url))->setHint('Open the page with `browser.open` first.');
+        }
 
-        return 'p_'.$encoded;
+        $this->touchHistory($canonical);
+    }
+
+    private function touchHistory(string $canonicalUrl): void
+    {
+        $idx = array_search($canonicalUrl, $this->history, true);
+        if (false !== $idx) {
+            unset($this->history[$idx]);
+            $this->history = array_values($this->history);
+        }
+        $this->history[] = $canonicalUrl;
+        $this->currentUrl = $canonicalUrl;
     }
 }

@@ -7,7 +7,6 @@ namespace App\Tests\Service;
 use App\Service\Backend\BackendInterface;
 use App\Service\Backend\SearxNGBackend;
 use App\Service\BrowserState;
-use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
@@ -19,33 +18,13 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class OpenServiceTest extends TestCase
 {
-    public function testOpenFollowsLinkAndAddsNewPageToState(): void
+    public function testOpenFetchesPageAndCachesByUrl(): void
     {
         $expectedUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
         $html = file_get_contents(__DIR__.'/../dumps/SearxNG/open_page.html');
         $this->assertNotFalse($html, 'Failed to read HTML fixture');
 
-        $state = new BrowserState();
-        $searchUrls = ['0' => $expectedUrl];
-        $searchSnippets = [
-            '0' => new Extract(
-                url: $expectedUrl,
-                text: 'HTML5 Test Page fixture',
-                title: '#0',
-                lineIdx: null,
-            ),
-        ];
-        $searchPage = new PageContents(
-            url: '',
-            text: "# Search Results\n\n  * ",
-            title: 'Search Results',
-            urls: $searchUrls, // @phpstan-ignore-line
-            snippets: $searchSnippets, // @phpstan-ignore-line
-        );
-        $searchPageId = $state->addPage($searchPage);
-        // Keep the stack minimal so the opened page receives the next sequential page_id.
-
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($expectedUrl, $html) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use ($expectedUrl, $html) {
             if ('GET' !== $method || $url !== $expectedUrl) {
                 throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
             }
@@ -54,84 +33,44 @@ final class OpenServiceTest extends TestCase
         });
         $backend = new SearxNGBackend('https://search.example', $httpClient);
 
-        $pageDisplay = new PageDisplayService();
-        $service = new OpenService($backend, $state, $pageDisplay);
+        $state = new BrowserState();
+        $display = new PageDisplayService();
+        $service = new OpenService($backend, $state, $display);
 
-        $result = $service->__invoke(0, $searchPageId);
+        $result = $service->__invoke($expectedUrl, 0, 50);
 
-        $currentPageId = $state->getCurrentPageId();
-        $this->assertNotSame($searchPageId, $currentPageId, 'New page should set the current page to the opened document.');
-        $currentPage = $state->getPage();
-        $this->assertSame($expectedUrl, $currentPage->url, 'Open should navigate to the link target.');
-        $this->assertSame('', $state->getPage($searchPageId)->url, 'Search page should remain accessible via its page_id.');
         $expectedResponse = (string) ($this->loadJson('open_page_response.json')['result'] ?? '');
-        $this->assertSame($expectedResponse, $result, 'Rendered response should match Python fixture.');
+        $this->assertSame($expectedResponse, $result);
+        $this->assertNotNull($state->getPageByUrl($expectedUrl));
+        $this->assertSame($expectedUrl, $state->getCurrentUrl());
     }
 
-    public function testOpenScrollsCurrentPageWithoutFetching(): void
+    public function testOpenUsesCachedPageWithoutFetching(): void
     {
         $fixture = $this->loadJson('new_page_contents.json');
         $page = $this->makePageContents($fixture['new_page'] ?? []);
 
         $state = new BrowserState();
-        $pageId = $state->addPage($page);
+        $state->addPage($page);
 
         $backend = $this->createMock(BackendInterface::class);
         $backend->expects($this->never())->method('fetch');
 
-        $pageDisplay = new PageDisplayService();
-        $service = new OpenService($backend, $state, $pageDisplay);
+        $display = new PageDisplayService();
+        $service = new OpenService($backend, $state, $display);
 
-        $loc = 42;
-        $output = $service->__invoke(-1, $pageId, $loc, 10);
+        $startLine = 42;
+        $output = $service->__invoke($page->url, $startLine, 10);
 
-        $this->assertSame($pageId, $state->getCurrentPageId(), 'Scroll should not create a new page entry.');
-        $this->assertSame($page, $state->getPage(), 'Current page should remain the original page instance.');
-        $this->assertStringContainsString('viewing lines ['.$loc.' -', $output);
-    }
-
-    public function testOpenRejectsInvalidLinkId(): void
-    {
-        $state = new BrowserState();
-        $searchPage = new PageContents(
-            url: '',
-            text: '# Search Results',
-            title: 'Search Results',
-            urls: ['0' => 'https://example.com/detail'], // @phpstan-ignore-line
-            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)], // @phpstan-ignore-line
-        );
-        $searchPageId = $state->addPage($searchPage);
-
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
-
-        $service = new OpenService($backend, $state, new PageDisplayService());
-
-        try {
-            $service->__invoke(1, $searchPageId);
-            $this->fail('OpenService should throw for missing link id');
-        } catch (ToolUsageError $e) {
-            $this->assertSame('Invalid link_id `1`.', $e->getMessage());
-            $this->assertSame($searchPageId, $state->getCurrentPageId(), 'State should remain on the search page');
-            $this->assertSame($searchPage->url, $state->getPage()->url);
-        }
+        $this->assertStringContainsString('viewing lines ['.$startLine.' -', $output);
+        $this->assertSame($page, $state->getPageByUrl($page->url));
     }
 
     /**
      * @throws BackendError
-     * @throws ToolUsageError
      */
-    public function testOpenRestoresStateWhenDisplayFails(): void
+    public function testOpenRemovesNewPageWhenDisplayFails(): void
     {
-        $state = new BrowserState();
-        $searchPage = new PageContents(
-            url: '',
-            text: '# Search Results',
-            title: 'Search Results',
-            urls: ['0' => 'https://example.com/article'], // @phpstan-ignore-line
-        );
-        $searchPageId = $state->addPage($searchPage);
-
         $articleUrl = 'https://example.com/article';
         $articlePage = new PageContents(
             url: $articleUrl,
@@ -143,20 +82,21 @@ final class OpenServiceTest extends TestCase
         $backend = $this->createMock(BackendInterface::class);
         $backend->expects($this->once())->method('fetch')->with($articleUrl)->willReturn($articlePage);
 
-        $pageDisplay = $this->createMock(PageDisplayService::class);
-        $pageDisplay->expects($this->once())
+        $state = new BrowserState();
+
+        $display = $this->createMock(PageDisplayService::class);
+        $display->expects($this->once())
             ->method('showPage')
             ->willThrowException(new ToolUsageError('cannot display article'));
 
-        $service = new OpenService($backend, $state, $pageDisplay);
+        $service = new OpenService($backend, $state, $display);
 
         try {
-            $service->__invoke(0, $searchPageId);
+            $service->__invoke($articleUrl, 0, 50);
             $this->fail('OpenService should rethrow ToolUsageError from PageDisplayService');
         } catch (ToolUsageError $e) {
             $this->assertSame('cannot display article', $e->getMessage());
-            $this->assertSame($searchPageId, $state->getCurrentPageId(), 'State should return to the search page');
-            $this->assertSame($searchPage->url, $state->getPage()->url, 'Search page should remain current after failure');
+            $this->assertNull($state->getPageByUrl($articleUrl));
         }
     }
 
@@ -165,8 +105,6 @@ final class OpenServiceTest extends TestCase
      */
     private function makePageContents(array $data): PageContents
     {
-        $snippets = $this->makeExtracts($data['snippets'] ?? null);
-
         /** @var array<string,string> $urls */
         $urls = [];
         if (isset($data['urls']) && \is_array($data['urls'])) {
@@ -180,33 +118,7 @@ final class OpenServiceTest extends TestCase
             text: (string) ($data['text'] ?? ''),
             title: (string) ($data['title'] ?? ''),
             urls: $urls,
-            snippets: $snippets,
-            errorMessage: isset($data['errorMessage']) ? (string) $data['errorMessage'] : null,
         );
-    }
-
-    /**
-     * @param array<string, array<string, mixed>>|null $raw
-     *
-     * @return array<string, Extract>|null
-     */
-    private function makeExtracts(?array $raw): ?array
-    {
-        if (null === $raw) {
-            return null;
-        }
-
-        $result = [];
-        foreach ($raw as $key => $value) {
-            $result[(string) $key] = new Extract(
-                url: (string) ($value['url'] ?? ''),
-                text: (string) ($value['text'] ?? ''),
-                title: (string) ($value['title'] ?? ''),
-                lineIdx: isset($value['line_idx']) ? (int) $value['line_idx'] : null,
-            );
-        }
-
-        return $result;
     }
 
     /**

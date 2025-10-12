@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Service\Backend\BackendInterface;
 use App\Service\BrowserState;
 use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
+use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
 use App\Service\PageDisplayService;
@@ -26,15 +28,15 @@ final class FindServiceTest extends TestCase
         );
 
         $state = new BrowserState();
-        $state->addPage(new PageContents(url: '', text: 'Search page', title: 'Search', urls: []));
-        $state->addPage(new PageContents(url: 'https://example.com/prev1', text: 'Prev 1', title: 'Prev 1', urls: []));
-        $state->addPage(new PageContents(url: 'https://example.com/prev2', text: 'Prev 2', title: 'Prev 2', urls: []));
         $state->addPage($page);
 
-        $pageDisplay = new PageDisplayService();
-        $service = new FindService($state, $pageDisplay);
+        $backend = $this->createMock(BackendInterface::class);
+        $backend->expects($this->never())->method('fetch');
 
-        $result = $service->__invoke(regex: '/configure/i');
+        $pageDisplay = new PageDisplayService();
+        $service = new FindService($backend, $state, $pageDisplay);
+
+        $result = $service->__invoke(url: $page->url, regex: '/configure/i');
 
         $expected = (string) ($this->loadJson('find_result.json')['result'] ?? '');
         $this->assertSame($expected, $result);
@@ -42,12 +44,22 @@ final class FindServiceTest extends TestCase
 
     public function testFindRequiresRegex(): void
     {
+        $backend = $this->createMock(BackendInterface::class);
         $state = new BrowserState();
-        $pageDisplay = new PageDisplayService();
-        $service = new FindService($state, $pageDisplay);
+        $service = new FindService($backend, $state, new PageDisplayService());
 
         $this->expectException(ToolUsageError::class);
-        $service->__invoke();
+        $service->__invoke(url: 'https://example.com', regex: '');
+    }
+
+    public function testFindRequiresUrl(): void
+    {
+        $backend = $this->createMock(BackendInterface::class);
+        $state = new BrowserState();
+        $service = new FindService($backend, $state, new PageDisplayService());
+
+        $this->expectException(ToolUsageError::class);
+        $service->__invoke(url: '', regex: '/test/');
     }
 
     public function testFindRejectsPageWithSnippets(): void
@@ -57,19 +69,23 @@ final class FindServiceTest extends TestCase
             url: 'https://example.com/results',
             text: 'Search results',
             title: 'Search results',
-            urls: ['0' => 'https://example.com/detail'], // @phpstan-ignore-line
-            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)], // @phpstan-ignore-line
+            urls: ['0' => 'https://example.com/detail'],
+            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)],
         );
         $state->addPage($searchPage);
 
-        $service = new FindService($state, new PageDisplayService());
+        $backend = $this->createMock(BackendInterface::class);
+        $service = new FindService($backend, $state, new PageDisplayService());
 
         $this->expectException(ToolUsageError::class);
         $this->expectExceptionMessage('Cannot run `find` on search results page or find results page');
-        $service->__invoke(regex: 'anything');
+        $service->__invoke(url: $searchPage->url, regex: '/anything/');
     }
 
-    public function testFindRestoresStateWhenDisplayFails(): void
+    /**
+     * @throws BackendError
+     */
+    public function testFindRemovesResultPageWhenDisplayFails(): void
     {
         $page = new PageContents(
             url: 'https://example.com/article',
@@ -78,22 +94,26 @@ final class FindServiceTest extends TestCase
             urls: [],
         );
         $state = new BrowserState();
-        $pageId = $state->addPage($page);
+
+        $backend = $this->createMock(BackendInterface::class);
+        $backend->expects($this->once())->method('fetch')->with($page->url)->willReturn($page);
+
+        $resultUrl = $page->url.'/find?regex=%2Fmatch%2F';
 
         $pageDisplay = $this->createMock(PageDisplayService::class);
         $pageDisplay->expects($this->once())
             ->method('showPage')
             ->willThrowException(new ToolUsageError('cannot render find results'));
 
-        $service = new FindService($state, $pageDisplay);
+        $service = new FindService($backend, $state, $pageDisplay);
 
         try {
-            $service->__invoke(regex: 'match');
+            $service->__invoke(url: $page->url, regex: '/match/');
             $this->fail('FindService should rethrow ToolUsageError from PageDisplayService');
         } catch (ToolUsageError $e) {
             $this->assertSame('cannot render find results', $e->getMessage());
-            $this->assertSame($pageId, $state->getCurrentPageId(), 'Find results page should be removed after failure');
-            $this->assertSame($page->url, $state->getPage()->url);
+            $this->assertNull($state->getPageByUrl($resultUrl));
+            $this->assertNotNull($state->getPageByUrl($page->url));
         }
     }
 

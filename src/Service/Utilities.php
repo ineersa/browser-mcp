@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
+use App\Service\Exception\ToolUsageError;
 use Yethee\Tiktoken\EncoderProvider;
 
 final readonly class Utilities
@@ -15,6 +16,40 @@ final readonly class Utilities
     // Tighter PCRE limits for regex-based find to avoid runaway backtracking.
     private const FIND_REGEX_BACKTRACK_LIMIT = 100000;
     private const FIND_REGEX_RECURSION_LIMIT = 1000;
+
+    public static function canonicalizeUrl(string $url): string
+    {
+        $trimmed = trim($url);
+        if ('' === $trimmed) {
+            return '';
+        }
+
+        $decoded = html_entity_decode($trimmed, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+        $decoded = trim($decoded);
+
+        if (!str_contains($decoded, '://')) {
+            $decoded = 'https://'.$decoded;
+        }
+
+        $parts = parse_url($decoded);
+        if (false === $parts || !isset($parts['host']) || '' === (string) $parts['host']) {
+            return $decoded;
+        }
+
+        $scheme = strtolower($parts['scheme'] ?? 'https');
+        $host = strtolower($parts['host']);
+        $port = isset($parts['port']) ? ':'.$parts['port'] : '';
+        $path = $parts['path'] ?? '';
+        $query = isset($parts['query']) && '' !== $parts['query'] ? '?'.$parts['query'] : '';
+
+        if ('' === $path) {
+            $path = '/';
+        } else {
+            $path = self::normalizeUrlPath($path);
+        }
+
+        return $scheme.'://'.$host.$port.$path.$query;
+    }
 
     public static function maybeTruncate(string $text, int $numChars = 1024): string
     {
@@ -199,23 +234,30 @@ final readonly class Utilities
         return min($loc + $numLines, $totalLines);
     }
 
-    public static function makeDisplay(PageContents $page, string $pageId, string $body, string $scrollbar): string
+    public static function makeDisplay(PageContents $page, string $body, string $scrollbar): string
     {
-        $domain = self::maybeTruncate(urldecode($page->url), 256);
+        $domain = PageProcessor::getDomain($page->url);
         $header = $page->title;
         if ('' !== $domain) {
             $header .= \sprintf(' (%s)', $domain);
+        }
+        $canonicalUrl = self::canonicalizeUrl($page->url);
+        $textStartsWithUrl = str_starts_with(ltrim($page->text), 'URL:');
+        if ('' !== $canonicalUrl && !$textStartsWithUrl) {
+            $header .= \sprintf("\nURL: %s", $canonicalUrl);
         }
         $header .= \sprintf("\n**%s**\n\n", $scrollbar);
 
         $result = $header;
         $result .= $body;
 
-        return \sprintf('[PAGE_ID:%s] %s', $pageId, $result);
+        return $result;
     }
 
     /**
      * Build a find results PageContents by scanning the page text for regex matches.
+     *
+     * @throws ToolUsageError
      */
     public static function runFindInPage(
         PageContents $page,
@@ -257,16 +299,25 @@ final readonly class Utilities
             $lineIdx += $numShowLines;
         }
 
+        if (null !== $regexError) {
+            $message = \sprintf('Regex error for pattern `%s`: %s', $query, $regexError);
+            $hint = 'Ensure the `regex` parameter is a valid PCRE pattern that includes delimiters, e.g. `/pattern/`.';
+            if (\in_array($regexError, ['PCRE backtrack limit reached', 'PCRE recursion limit reached'], true)) {
+                $hint = 'Simplify the regex pattern so it requires less backtracking or recursion.';
+            }
+
+            $exception = new ToolUsageError($message);
+            $exception->setHint($hint);
+
+            throw $exception;
+        }
+
         $urlsMap = [];
         for ($i = 0; $i < \count($resultChunks); ++$i) {
             $urlsMap[(string) $i] = $page->url;
         }
 
-        if (null !== $regexError) {
-            $displayText = \sprintf('Regex error for regex `%s`: %s', $query, $regexError);
-            $urlsMap = [];
-            $snippets = [];
-        } elseif (!empty($resultChunks)) {
+        if (!empty($resultChunks)) {
             $displayText = implode("\n\n", $resultChunks);
         } else {
             $displayText = \sprintf('No `find` results for regex: `%s`', $query);
@@ -361,5 +412,22 @@ final readonly class Utilities
         }
 
         return $pos;
+    }
+
+    private static function normalizeUrlPath(string $path): string
+    {
+        $segments = [];
+        foreach (explode('/', $path) as $segment) {
+            if ('' === $segment || '.' === $segment) {
+                continue;
+            }
+            if ('..' === $segment) {
+                array_pop($segments);
+                continue;
+            }
+            $segments[] = $segment;
+        }
+
+        return '/'.implode('/', $segments);
     }
 }

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Service\Backend\BackendInterface;
-use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
+use App\Service\Utilities;
 
 final readonly class OpenService
 {
@@ -23,41 +23,32 @@ final readonly class OpenService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(int $linkId, string $pageId, int $loc = -1, int $numLines = -1): string
+    public function __invoke(string $url, int $start_at_line, int $number_of_lines): string
     {
-        $stayOnCurrentPage = false;
-        $snippet = null;
+        $trimmedUrl = trim($url);
+        $canonicalUrl = Utilities::canonicalizeUrl($trimmedUrl);
+        if ('' === $trimmedUrl || '' === $canonicalUrl) {
+            throw new ToolUsageError('Invalid URL provided.')->setHint('Provide an absolute URL, e.g. `https://example.com/article`.');
+        }
 
-        $currPage = $this->state->getPage($pageId);
-        if ($linkId >= 0) {
-            $url = $currPage->urls[(string) $linkId] ?? '';
-            if ('' === $url) {
-                throw new ToolUsageError(\sprintf('Invalid link_id `%s`.', $linkId))->setHint('Use a `link_id` from the citations in the latest tool response.');
-            }
-            $snippet = $currPage->snippets[(string) $linkId] ?? null;
+        $startLine = $start_at_line >= 0 ? $start_at_line : 0;
+        $numLines = $number_of_lines > 0 ? $number_of_lines : 50;
+
+        $cachedPage = $this->state->getPageByUrl($canonicalUrl);
+        $addedNewPage = false;
+        if (null === $cachedPage) {
+            $fetched = $this->openUrl($canonicalUrl);
+            $this->state->addPage($fetched);
+            $addedNewPage = true;
         } else {
-            $stayOnCurrentPage = true;
-            $url = $currPage->url;
-        }
-
-        if (!$stayOnCurrentPage) {
-            $newPage = $this->openUrl($url);
-            $this->state->addPage($newPage);
-        }
-
-        if ($loc < 0) {
-            if ($snippet instanceof Extract && null !== $snippet->lineIdx) {
-                $loc = max(0, $snippet->lineIdx - 4);
-            } else {
-                $loc = 0;
-            }
+            $this->state->setCurrentUrl($canonicalUrl);
         }
 
         try {
-            return $this->pageDisplay->showPage($this->state, $loc, $numLines);
+            return $this->pageDisplay->showPage($this->state, $startLine, $numLines, $canonicalUrl);
         } catch (ToolUsageError $e) {
-            if (!$stayOnCurrentPage) {
-                $this->state->popPageStack();
+            if ($addedNewPage) {
+                $this->state->remove($canonicalUrl);
             }
             throw $e;
         }
@@ -65,10 +56,6 @@ final readonly class OpenService
 
     private function openUrl(string $url): PageContents
     {
-        $cached = $this->state->getPageByUrl($url);
-        if ($cached) {
-            return $cached;
-        }
         try {
             return $this->backend->fetch($url);
         } catch (\Throwable $e) {

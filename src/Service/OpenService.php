@@ -8,7 +8,6 @@ use App\Service\Backend\BackendInterface;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
-use App\Service\Utilities;
 
 final readonly class OpenService
 {
@@ -31,7 +30,7 @@ final readonly class OpenService
             throw new ToolUsageError('Invalid URL provided.')->setHint('Provide an absolute URL, e.g. `https://example.com/article`.');
         }
 
-        $startLine = $start_at_line >= 0 ? $start_at_line : 0;
+        $startLine = max($start_at_line, 0);
         $numLines = $number_of_lines > 0 ? $number_of_lines : 50;
 
         $cachedPage = $this->state->getPageByUrl($canonicalUrl);
@@ -54,6 +53,9 @@ final readonly class OpenService
         }
     }
 
+    /**
+     * @throws BackendError
+     */
     private function openUrl(string $url): PageContents
     {
         try {

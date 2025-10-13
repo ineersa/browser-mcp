@@ -45,7 +45,7 @@ final class SearxNGBackendTest extends TestCase
         $backend->expects($this->once())
             ->method('requestSearch')
             ->with('SearxNG setup', 5)
-            ->willReturn(array_slice($items, 0, 5));
+            ->willReturn(\array_slice($items, 0, 5));
 
         $page = $backend->search('SearxNG setup', 5);
 

@@ -41,7 +41,7 @@ class SearxNGBackend implements BackendInterface
 
         foreach ($items as $index => $item) {
             $position = $index + 1;
-            $rawUrl = (string) ($item['url'] ?? '');
+            $rawUrl = (string) $item['url'];
             $canonicalUrl = Utilities::canonicalizeUrl($rawUrl);
             if ('' === $canonicalUrl) {
                 continue;
@@ -51,12 +51,12 @@ class SearxNGBackend implements BackendInterface
             }
             $seen[] = $canonicalUrl;
 
-            $title = trim((string) ($item['title'] ?? $canonicalUrl));
+            $title = trim((string) $item['title']);
             if ('' === $title) {
                 $title = $canonicalUrl;
             }
 
-            $summary = trim((string) ($item['summary'] ?? ''));
+            $summary = trim((string) $item['summary']);
             if ('' !== $summary) {
                 $summary = html_entity_decode(strip_tags($summary), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
                 $summary = preg_replace('/\s+/u', ' ', $summary) ?? $summary;

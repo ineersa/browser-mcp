@@ -25,16 +25,15 @@ final class FindTool
         string $url,
         string $regex,
     ): CallToolResult {
-        // Validate required parameters
-        if ('' === trim($url)) {
-            throw new ToolUsageError('Invalid URL provided. The FindTool requires a non-empty URL.')->setHint('Use an absolute URL from a previous search result or open call.');
-        }
-
-        if ('' === trim($regex)) {
-            throw new ToolUsageError('Invalid regex provided. The FindTool requires a non-empty regex pattern.')->setHint('Provide a valid regex pattern to search for within the page.');
-        }
-
         try {
+            if ('' === trim($url)) {
+                throw new ToolUsageError('Invalid URL provided. The FindTool requires a non-empty URL.')->setHint('Use an absolute URL from a previous search result or open call.');
+            }
+
+            if ('' === trim($regex)) {
+                throw new ToolUsageError('Invalid regex provided. The FindTool requires a non-empty regex pattern.')->setHint('Provide a valid regular expression to search for within the page.');
+            }
+
             $result = $this->findService->__invoke(url: $url, regex: $regex);
 
             $content = new TextContent($result);

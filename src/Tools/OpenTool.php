@@ -26,19 +26,19 @@ final class OpenTool
         int $start_at_line,
         int $number_of_lines,
     ): CallToolResult {
-        if ('' === trim($url)) {
-            throw new ToolUsageError('Invalid URL provided.')->setHint('Use an absolute URL such as `https://example.com/article`.');
-        }
-
-        if ($start_at_line < 0) {
-            throw new ToolUsageError('`start_at_line` must be zero or greater.')->setHint('Use 0 for the top of the page.');
-        }
-
-        if ($number_of_lines <= 0) {
-            throw new ToolUsageError('`number_of_lines` must be greater than zero.')->setHint('Pick how many lines to display, e.g. 50.');
-        }
-
         try {
+            if ('' === trim($url)) {
+                throw new ToolUsageError('Invalid URL provided.')->setHint('Use an absolute URL such as `https://example.com/article`.');
+            }
+
+            if ($start_at_line < 0) {
+                throw new ToolUsageError('`start_at_line` must be zero or greater.')->setHint('Use 0 for the top of the page.');
+            }
+
+            if ($number_of_lines <= 0) {
+                throw new ToolUsageError('`number_of_lines` must be greater than zero.')->setHint('Pick how many lines to display, e.g. 50.');
+            }
+
             $result = $this->openService->__invoke($url, $start_at_line, $number_of_lines);
 
             $content = new TextContent($result);

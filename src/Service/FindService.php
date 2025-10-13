@@ -6,8 +6,8 @@ namespace App\Service;
 
 use App\Service\Backend\BackendInterface;
 use App\Service\DTO\PageContents;
-use App\Service\Exception\ToolUsageError;
 use App\Service\Exception\BackendError;
+use App\Service\Exception\ToolUsageError;
 
 final readonly class FindService
 {

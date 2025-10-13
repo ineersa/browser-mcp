@@ -260,24 +260,6 @@ final readonly class Utilities
     }
 
     /**
-     * @param array<string,string> $urls
-     */
-    private static function formatReferences(array $urls): string
-    {
-        if (empty($urls)) {
-            return '';
-        }
-
-        $lines = ['References:'];
-        foreach ($urls as $id => $url) {
-            $canonical = self::canonicalizeUrl($url);
-            $lines[] = \sprintf('[%s] %s', $id, '' !== $canonical ? $canonical : $url);
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /**
      * Build a find results PageContents by scanning the page text for regex matches.
      *
      * @throws ToolUsageError
@@ -354,6 +336,24 @@ final readonly class Utilities
             urls: $urlsMap,
             snippets: $snippets,
         );
+    }
+
+    /**
+     * @param array<string,string> $urls
+     */
+    private static function formatReferences(array $urls): string
+    {
+        if (empty($urls)) {
+            return '';
+        }
+
+        $lines = ['References:'];
+        foreach ($urls as $id => $url) {
+            $canonical = self::canonicalizeUrl($url);
+            $lines[] = \sprintf('[%s] %s', $id, '' !== $canonical ? $canonical : $url);
+        }
+
+        return implode("\n", $lines);
     }
 
     private static function regexMatches(string $pattern, string $subject, ?string &$error = null): bool

@@ -14,7 +14,7 @@ final class SearchTool
 {
     public const string NAME = 'search';
     public const string TITLE = 'Search for information';
-    public const string DESCRIPTION = 'Runs a web search for `query` and lists up to `topn` results. Each entry is numbered and includes a canonical `URL:` plus a short summary—use that URL with `browser.open` or `browser.find`. Avoid quoting more than 10 words from any single result.';
+    public const string DESCRIPTION = 'Runs a web search for `query` and lists up to `topn` results. Each entry is numbered and includes a canonical `URL:` plus a short summary—use that URL with `browser.open` or `browser.find`. A References section maps each result number to its canonical URL for citations. Avoid quoting more than 10 words from any single result.';
 
     public function __construct(
         private readonly SearchService $searchService,

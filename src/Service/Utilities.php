@@ -251,7 +251,30 @@ final readonly class Utilities
         $result = $header;
         $result .= $body;
 
+        $references = self::formatReferences($page->urls);
+        if ('' !== $references) {
+            $result .= "\n\n".$references;
+        }
+
         return $result;
+    }
+
+    /**
+     * @param array<string,string> $urls
+     */
+    private static function formatReferences(array $urls): string
+    {
+        if (empty($urls)) {
+            return '';
+        }
+
+        $lines = ['References:'];
+        foreach ($urls as $id => $url) {
+            $canonical = self::canonicalizeUrl($url);
+            $lines[] = \sprintf('[%s] %s', $id, '' !== $canonical ? $canonical : $url);
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -317,11 +340,12 @@ final readonly class Utilities
             $urlsMap[(string) $i] = $page->url;
         }
 
-        if (!empty($resultChunks)) {
-            $displayText = implode("\n\n", $resultChunks);
-        } else {
-            $displayText = \sprintf('No `find` results for regex: `%s`', $query);
-        }
+        $displayText = !empty($resultChunks)
+            ? implode("\n\n", $resultChunks)
+            : \sprintf(
+                "Pattern not found for regex: `%s`\n\nNext steps:\n- Broaden or simplify the pattern (e.g. adjust keywords or remove anchors)\n- Call `browser.open` with a larger `number_of_lines` to review more context",
+                $query
+            );
 
         return new PageContents(
             url: $page->url.'/find?regex='.rawurlencode($query),

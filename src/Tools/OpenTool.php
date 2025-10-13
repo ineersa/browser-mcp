@@ -14,7 +14,7 @@ final class OpenTool
 {
     public const string NAME = 'open';
     public const string TITLE = 'Open a page';
-    public const string DESCRIPTION = 'Loads `url` and returns a window of the page text. Provide `start_at_line` (0-based) and `number_of_lines` (how many lines to show, typically 50). Pages are cached by URL so you can scroll or run `find` without re-fetching.';
+    public const string DESCRIPTION = 'Loads `url` and returns a window of the page text. Provide `start_at_line` (0-based) and `number_of_lines` (how many lines to show, typically 50). Pages are cached by URL so you can scroll or run `find` without re-fetching. The response ends with a References section that lists canonical URLs for any inline citations.';
 
     public function __construct(
         private readonly OpenService $openService,

@@ -117,6 +117,30 @@ final class FindServiceTest extends TestCase
         }
     }
 
+    public function testFindProvidesNextStepsWhenNoMatches(): void
+    {
+        $page = new PageContents(
+            url: 'https://example.com/page',
+            text: "Intro\nMore content",
+            title: 'Example Page',
+            urls: [],
+        );
+
+        $state = new BrowserState();
+        $state->addPage($page);
+
+        $backend = $this->createMock(BackendInterface::class);
+        $backend->expects($this->never())->method('fetch');
+
+        $service = new FindService($backend, $state, new PageDisplayService());
+
+        $output = $service->__invoke($page->url, '/missing/');
+
+        $this->assertStringContainsString('Pattern not found for regex: `/missing/`', $output);
+        $this->assertStringContainsString('Next steps:', $output);
+        $this->assertStringContainsString('browser.open', $output);
+    }
+
     /**
      * @return array<string,mixed>
      */

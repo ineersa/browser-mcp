@@ -62,7 +62,7 @@ final readonly class OpenService
             return $this->backend->fetch($url);
         } catch (\Throwable $e) {
             $msg = Utilities::maybeTruncate($e->getMessage());
-            throw new BackendError(\sprintf('Error fetching URL `%s`: %s', Utilities::maybeTruncate($url, 256), $msg), previous: $e);
+            throw new BackendError(\sprintf('Error fetching URL `%s`: %s', Utilities::maybeTruncate($url, 256), $msg), previous: $e)->setHint('This may be a network timeout, server error, or the URL may be inaccessible. Try retrying the request or check if the URL is valid and accessible.');
         }
     }
 }

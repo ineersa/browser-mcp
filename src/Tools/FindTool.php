@@ -34,7 +34,7 @@ final class FindTool
                 throw new ToolUsageError('Invalid regex provided. The FindTool requires a non-empty regex pattern.')->setHint('Provide a valid regular expression to search for within the page.');
             }
 
-            $result = $this->findService->__invoke(url: $url, regex: $regex);
+            $result = $this->findService->__invoke(url: trim($url), regex: trim($regex));
 
             $content = new TextContent($result);
 

@@ -35,7 +35,7 @@ final readonly class SearchService
             $page = $this->backend->search($query, $topn);
         } catch (\Throwable $e) {
             $msg = Utilities::maybeTruncate($e->getMessage());
-            throw new BackendError(\sprintf('Error during search for `%s`: %s', $query, $msg), previous: $e);
+            throw new BackendError(\sprintf('Error during search for `%s`: %s', $query, $msg), previous: $e)->setHint('This may be a backend service error or network timeout. Try retrying the search request.');
         }
         $this->state->reset();
 

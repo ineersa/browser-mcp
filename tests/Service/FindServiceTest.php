@@ -42,16 +42,6 @@ final class FindServiceTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
-    public function testFindRequiresRegex(): void
-    {
-        $backend = $this->createMock(BackendInterface::class);
-        $state = new BrowserState();
-        $service = new FindService($backend, $state, new PageDisplayService());
-
-        $this->expectException(ToolUsageError::class);
-        $service->__invoke(url: 'https://example.com', regex: '');
-    }
-
     public function testFindRequiresUrl(): void
     {
         $backend = $this->createMock(BackendInterface::class);
@@ -78,7 +68,7 @@ final class FindServiceTest extends TestCase
         $service = new FindService($backend, $state, new PageDisplayService());
 
         $this->expectException(ToolUsageError::class);
-        $this->expectExceptionMessage('Cannot run `find` on search results page or find results page');
+        $this->expectExceptionMessage('Cannot run `find` on find results page');
         $service->__invoke(url: $searchPage->url, regex: '/anything/');
     }
 

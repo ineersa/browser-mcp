@@ -167,10 +167,10 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: Invalid URL provided.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -190,10 +190,10 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: `start_at_line` must be zero or greater.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -213,10 +213,10 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and open error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: `number_of_lines` must be greater than zero.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -232,10 +232,9 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: Invalid regex provided. The FindTool requires a non-empty regex pattern.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -251,10 +250,9 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: Invalid regex provided. The FindTool requires a non-empty regex pattern.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -270,10 +268,9 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: Invalid URL provided. The FindTool requires a non-empty URL.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -289,10 +286,9 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
 
         $callResponse = $responses[1];
-        $this->assertSame(2, $callResponse['id']);
-        $this->assertArrayHasKey('error', $callResponse, 'Response should have error key.');
-        $this->assertSame(-32603, $callResponse['error']['code'], 'Error code should indicate tool execution error.');
-        $this->assertSame('Error while executing tool', $callResponse['error']['message'], 'Error message should indicate tool execution error.');
+        $this->assertTrue($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+        $this->assertStringContainsString('Error Message: Invalid URL provided. The FindTool requires a non-empty URL.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**

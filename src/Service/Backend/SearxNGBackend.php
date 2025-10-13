@@ -156,14 +156,14 @@ class SearxNGBackend implements BackendInterface
             ]);
             $resp = $response->getContent();
         } catch (ClientExceptionInterface|ServerExceptionInterface|RedirectionExceptionInterface|TransportExceptionInterface $e) {
-            throw new BackendError(\sprintf('HTTP error for %s/search: %s', $this->searxNGUrl, Utilities::maybeTruncate($e->getMessage(), 500)), previous: $e);
+            throw new BackendError(\sprintf('HTTP error for %s/search: %s', $this->searxNGUrl, Utilities::maybeTruncate($e->getMessage(), 500)), previous: $e)->setHint('This may be a network connectivity issue or the SearxNG service may be down. Check if the SearxNG service is running and accessible, or try retrying the request.');
         }
         $json = json_decode($resp, true);
         if (!\is_array($json)) {
             if (\JSON_ERROR_NONE !== json_last_error()) {
-                throw new BackendError(\sprintf('JSON error: %s.', json_last_error_msg()));
+                throw new BackendError(\sprintf('JSON error: %s.', json_last_error_msg()))->setHint('The SearxNG service returned invalid JSON. This may indicate a service configuration issue or incompatible version. Check the SearxNG service logs and configuration.');
             }
-            throw new BackendError('Searx response is not JSON');
+            throw new BackendError('Searx response is not JSON')->setHint('The SearxNG service returned a non-JSON response. This may indicate a service error or incompatible version. Check the SearxNG service status and configuration.');
         }
 
         $results = $json['results'] ?? [];
@@ -183,7 +183,7 @@ class SearxNGBackend implements BackendInterface
 
             return $response->getContent();
         } catch (ClientExceptionInterface|ServerExceptionInterface|RedirectionExceptionInterface|TransportExceptionInterface $e) {
-            throw new BackendError(\sprintf('HTTP error for %s: %s', $url, Utilities::maybeTruncate($e->getMessage(), 500)), previous: $e);
+            throw new BackendError(\sprintf('HTTP error for %s: %s', $url, Utilities::maybeTruncate($e->getMessage(), 500)), previous: $e)->setHint('This may be a network timeout, server error, or the URL may be inaccessible. Try retrying the request or check if the URL is valid and the server is responding.');
         }
     }
 }

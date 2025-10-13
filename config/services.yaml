@@ -45,6 +45,8 @@ services:
         public: true
     App\Service\FindService:
         public: true
+        arguments:
+            $findContextLines: '%app.search.find_context_lines%'
 
     # Make ALL services in App\Tools\ public
     App\Tools\:

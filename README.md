@@ -1,9 +1,7 @@
 # Browser MCP
 
 PHP/Symfony implementation of a simple browser MCP server with a pluggable backend (SearxNG).   
-It provides three invokable services for search, open, and find, plus HTML→plaintext processing tailored for LLM consumption.
-
-As a base [GPT-OSS repository browser-mcp](https://github.com/openai/gpt-oss?tab=readme-ov-file#browser) was used with some tweaks and upgrades.
+It provides three invokable services for `search`, `open`, and `find`, plus HTML→plaintext processing tailored for LLM consumption.
 
 ## Installing and running MCP
 To generate binary run `./prepare_binary.sh`, it should work on Linux.
@@ -65,14 +63,32 @@ To debug server you should use `npx @modelcontextprotocol/inspector`
 - Static analysis: `composer phpstan`
 - Tests: `composer tests`
 
-Debug
+### Debug
 ```bash
-php -d xdebug.mode=debug -d xdebug.client_host=127.0.0.1 -d xdebug.client_port=9003 -d xdebug.start_with_request=yes /home/ineersa/mcp-servers/browser-mcp/bin/browser-mcp
+php -d xdebug.mode=debug -d xdebug.client_host=127.0.0.1 -d xdebug.client_port=9003 -d xdebug.start_with_request=yes ~/mcp-servers/browser-mcp/bin/browser-mcp
 ```
 
+## Tools definitions and logic
+### Response contract
+- Every tool reply is a single text block (`TextContent`) that starts with the page title (the domain is appended in parentheses) and, when available, an explicit `URL: ...` line.
+- A bold status line such as `**viewing lines [12 - 61] of 420**` shows what portion of the page is rendered; bodies are token-limited and lines are prefixed with `L<index>` when scrolling output (`browser.open`/`browser.find`).
+- Citations inside the body follow the `【id†excerpt†domain】` convention and always map to a trailing `References:` section where `[id]` resolves to a canonical URL.
+- If a tool fails validation or the backend errors, the response stays machine-readable: it begins with `Result: error`, followed by `Error Message:` and a `Hint:` string to help recover.
 
-## Notes
-- Exa backend is not implemented, only SearxNG available.
-- State is shared via `App\\Service\\BrowserState`, state resets each `search` tool call
-- Added regex search for `find` tool
-- Better cursor handling
+### `browser.search`
+- **Purpose**: Run SearxNG-backed web search and seed later `open`/`find` calls.
+- **Parameters**: `query` (string, required); `topn` (int, optional, default `5`, bounds `1-10`).
+- **Output shape**: Numbered list where each entry shows the title (with domain), a canonical `URL:` line, and a trimmed `Summary:`. The `References` table reuses the same numbers, so `[1]` matches result `1.` above.
+- **State**: Clears any cached pages in the browser state before returning fresh results.
+
+### `browser.open`
+- **Purpose**: Fetch and render a slice of a page for reading or scrolling.
+- **Parameters**: `url` (string, required absolute URL), `start_at_line` (int, required, 0-based), `number_of_lines` (int, required, positive).
+- **Output shape**: Page text rendered with prefixed line numbers (`L42:`) and capped by the token budget; the scrollbar line reports the viewed window. Inline citations map to the page’s outbound links, and the `References` section lists every discovered URL.
+- **State**: Pages are cached by canonical URL so subsequent `open` or `find` calls reuse the fetched copy unless an error occurs.
+
+### `browser.find`
+- **Purpose**: Locate regex matches within a previously opened page (or fetch it once).
+- **Parameters**: `url` (string, required), `regex` (string, required, PCRE syntax with delimiters such as `/pattern/iu`).
+- **Output shape**: Each match is rendered as `# 【id†match at L<line>】` followed by a few context lines; when no match exists the tool explains next steps. The `References` list keeps a single entry pointing back to the source page.
+- **State**: Uses the cached page if available and refuses to run on existing `find` result URLs to avoid recursion. Results are stored so you can scroll them with `browser.open`.

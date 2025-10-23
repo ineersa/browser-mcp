@@ -9,6 +9,8 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\SearchService;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\Result\CallToolResultInterface;
+use Mcp\Schema\Result\CallToolStructuredContentResult;
 
 final class SearchTool
 {
@@ -24,17 +26,19 @@ final class SearchTool
     public function __invoke(
         string $query,
         int $topn = 5,
-    ): CallToolResult {
+    ): CallToolResultInterface {
         try {
             $result = $this->searchService->__invoke($query, $topn);
             $content = new TextContent($result);
 
-            return new CallToolResult([$content], null, false);
+            $callToolResult = new CallToolResult([$content], false);
+
+            return new CallToolStructuredContentResult(['result' => $result], $callToolResult);
         } catch (ToolUsageError|BackendError $exception) {
             $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
             $content = new TextContent(text: $result);
 
-            return new CallToolResult([$content], null, true);
+            return new CallToolStructuredContentResult(['result' => $result], new CallToolResult([$content], true));
         }
     }
 }

@@ -80,8 +80,7 @@ class BrowserMcpCommand extends Command
                 logger: $this->logger,
             );
 
-            $server->connect($transport);
-            $transport->listen();
+            $server->run($transport);
         } catch (\Throwable $e) {
             $this->logger->error($e->getMessage(), [
                 'trace' => $e->getTrace(),

@@ -9,8 +9,6 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
-use Mcp\Schema\Result\CallToolResultInterface;
-use Mcp\Schema\Result\CallToolStructuredContentResult;
 
 final class FindTool
 {
@@ -26,7 +24,7 @@ final class FindTool
     public function __invoke(
         string $url,
         string $regex,
-    ): CallToolResultInterface {
+    ): CallToolResult {
         try {
             if ('' === trim($url)) {
                 throw new ToolUsageError('Invalid URL provided. The FindTool requires a non-empty URL.')->setHint('Use an absolute URL from a previous search result or open call.');
@@ -40,14 +38,12 @@ final class FindTool
 
             $content = new TextContent($result);
 
-            $callToolResult = new CallToolResult([$content], false);
-
-            return new CallToolStructuredContentResult(['result' => $result], $callToolResult);
+            return new CallToolResult([$content], false, ['result' => $result]);
         } catch (ToolUsageError|BackendError $exception) {
             $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
             $content = new TextContent(text: $result);
 
-            return new CallToolStructuredContentResult(['result' => $result], new CallToolResult([$content], true));
+            return new CallToolResult([$content], true, ['result' => $result]);
         }
     }
 }

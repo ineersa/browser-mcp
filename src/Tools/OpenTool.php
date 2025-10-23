@@ -9,8 +9,6 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
-use Mcp\Schema\Result\CallToolResultInterface;
-use Mcp\Schema\Result\CallToolStructuredContentResult;
 
 final class OpenTool
 {
@@ -27,7 +25,7 @@ final class OpenTool
         string $url,
         int $start_at_line,
         int $number_of_lines,
-    ): CallToolResultInterface {
+    ): CallToolResult {
         try {
             if ('' === trim($url)) {
                 throw new ToolUsageError('Invalid URL provided.')->setHint('Use an absolute URL such as `https://example.com/article`.');
@@ -45,14 +43,12 @@ final class OpenTool
 
             $content = new TextContent($result);
 
-            $callToolResult = new CallToolResult([$content], false);
-
-            return new CallToolStructuredContentResult(['result' => $result], $callToolResult);
+            return new CallToolResult([$content], false, ['result' => $result]);
         } catch (ToolUsageError|BackendError $exception) {
             $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
             $content = new TextContent(text: $result);
 
-            return new CallToolStructuredContentResult(['result' => $result], new CallToolResult([$content], true));
+            return new CallToolResult([$content], true, ['result' => $result]);
         }
     }
 }

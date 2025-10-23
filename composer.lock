@@ -108,12 +108,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ineersa/php-sdk.git",
-                "reference": "36e52475d0c7a1ac5f4bf8e468fa3ee0c33000f4"
+                "reference": "8e3f9c79e0ff1a108c3469937364715fedb6fb12"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ineersa/php-sdk/zipball/36e52475d0c7a1ac5f4bf8e468fa3ee0c33000f4",
-                "reference": "36e52475d0c7a1ac5f4bf8e468fa3ee0c33000f4",
+                "url": "https://api.github.com/repos/ineersa/php-sdk/zipball/8e3f9c79e0ff1a108c3469937364715fedb6fb12",
+                "reference": "8e3f9c79e0ff1a108c3469937364715fedb6fb12",
                 "shasum": ""
             },
             "require": {
@@ -184,7 +184,7 @@
             "support": {
                 "source": "https://github.com/ineersa/php-sdk/tree/structured-content-return"
             },
-            "time": "2025-10-23T00:27:55+00:00"
+            "time": "2025-10-23T21:30:12+00:00"
         },
         {
             "name": "monolog/monolog",

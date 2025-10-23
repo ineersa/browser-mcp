@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Tools\FindTool;
 use App\Tools\OpenTool;
 use App\Tools\SearchTool;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
 use Mcp\Server\Transport\StdioTransport;
@@ -50,6 +51,7 @@ class BrowserMcpCommand extends Command
                 )
                 ->setLogger($this->logger)
                 ->setContainer($this->container)
+                ->setProtocolVersion(ProtocolVersion::V2024_11_05)
                 ->addTool(
                     handler: SearchTool::class,
                     name: SearchTool::NAME,

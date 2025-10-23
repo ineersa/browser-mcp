@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a4b049c9d945cf0af27055f1c44342d8",
+    "content-hash": "587d86864bc6e046d6b6690e6ed5bc78",
     "packages": [
         {
             "name": "doctrine/deprecations",
@@ -104,16 +104,16 @@
         },
         {
             "name": "mcp/sdk",
-            "version": "dev-structured-content-return",
+            "version": "dev-release",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ineersa/php-sdk.git",
-                "reference": "8e3f9c79e0ff1a108c3469937364715fedb6fb12"
+                "reference": "4e3c1e70c1396c4bda78cb05b7afd924334355d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ineersa/php-sdk/zipball/8e3f9c79e0ff1a108c3469937364715fedb6fb12",
-                "reference": "8e3f9c79e0ff1a108c3469937364715fedb6fb12",
+                "url": "https://api.github.com/repos/ineersa/php-sdk/zipball/4e3c1e70c1396c4bda78cb05b7afd924334355d5",
+                "reference": "4e3c1e70c1396c4bda78cb05b7afd924334355d5",
                 "shasum": ""
             },
             "require": {
@@ -182,9 +182,9 @@
             ],
             "description": "Model Context Protocol SDK for Client and Server applications in PHP",
             "support": {
-                "source": "https://github.com/ineersa/php-sdk/tree/structured-content-return"
+                "source": "https://github.com/ineersa/php-sdk/tree/release"
             },
-            "time": "2025-10-23T21:30:12+00:00"
+            "time": "2025-10-23T21:45:41+00:00"
         },
         {
             "name": "monolog/monolog",

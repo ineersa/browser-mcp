@@ -37,10 +37,10 @@ final class PuppeteerWorkerTest extends TestCase
 
         $worker = new PuppeteerWorker($scriptPath, $resolvedNode, 60);
 
-        $html = $worker->fetch('https://github.com/symfony/symfony/blob/7.3/src/Symfony/Component/Console/Attribute/AsCommand.php');
+        $html = $worker->fetch('https://github.com/modelcontextprotocol/modelcontextprotocol');
 
         $this->assertNotEmpty($html, 'Puppeteer returned empty HTML.');
 
-                fwrite(fopen('test.html', 'w'), $html);
+//                fwrite(fopen('test.html', 'w'), $html);
     }
 }

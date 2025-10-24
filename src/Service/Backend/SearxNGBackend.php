@@ -7,6 +7,7 @@ namespace App\Service\Backend;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\PageProcessor;
+use App\Service\PuppeteerWorker;
 use App\Service\Utilities;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -18,11 +19,19 @@ class SearxNGBackend implements BackendInterface
 {
     private string $searxNGUrl;
     private HttpClientInterface $client;
+    private ?PuppeteerWorker $puppeteerWorker;
+    private bool $usePuppeteer;
 
-    public function __construct(string $searxNGUrl, HttpClientInterface $httpClient)
-    {
+    public function __construct(
+        string $searxNGUrl,
+        HttpClientInterface $httpClient,
+        ?PuppeteerWorker $puppeteerWorker = null,
+        bool $usePuppeteer = false,
+    ) {
         $this->searxNGUrl = rtrim($searxNGUrl, '/');
         $this->client = $httpClient;
+        $this->puppeteerWorker = $puppeteerWorker;
+        $this->usePuppeteer = $usePuppeteer;
     }
 
     /**
@@ -127,7 +136,15 @@ class SearxNGBackend implements BackendInterface
      */
     public function fetch(string $url): PageContents
     {
-        $html = $this->httpGet($url);
+        $html = null;
+
+        if ($this->usePuppeteer && null !== $this->puppeteerWorker) {
+            $html = $this->puppeteerWorker->fetch($url);
+        }
+
+        if (null === $html) {
+            $html = $this->httpGet($url);
+        }
 
         return PageProcessor::processHtml(
             html: $html,

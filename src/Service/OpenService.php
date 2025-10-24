@@ -11,6 +11,7 @@ use App\Service\Exception\ToolUsageError;
 
 final readonly class OpenService
 {
+
     public function __construct(
         private BackendInterface $backend,
         private BrowserState $state,
@@ -31,7 +32,7 @@ final readonly class OpenService
         }
 
         $startLine = max($start_at_line, 0);
-        $numLines = $number_of_lines > 0 ? $number_of_lines : 50;
+        $numLines = $number_of_lines > 0 ? $number_of_lines : 200;
 
         $cachedPage = $this->state->getPageByUrl($canonicalUrl);
         $addedNewPage = false;

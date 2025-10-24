@@ -14,7 +14,7 @@ final class OpenTool
 {
     public const string NAME = 'open';
     public const string TITLE = 'Open a page';
-    public const string DESCRIPTION = 'Loads `url` and returns a window of the page text. Provide `start_at_line` (0-based) and `number_of_lines` (how many lines to show, typically 50). Pages are cached by URL so you can scroll or run `find` without re-fetching. The response ends with a References section that lists canonical URLs for any inline citations.';
+    public const string DESCRIPTION = 'Loads `url` and returns a window of the page text. Provide `start_at_line` (0-based) and `number_of_lines` (how many lines to show, typically 200). Pages are cached by URL so you can scroll or run `find` without re-fetching. The response ends with a References section that lists canonical URLs for any inline citations. Call this directly when you already have the exact URL; no search step is required. To move through a document, make follow-up calls with a higher `start_at_line` (e.g. 0-200, then 200-400) instead of re-opening overlapping ranges.';
 
     public function __construct(
         private readonly OpenService $openService,
@@ -36,7 +36,7 @@ final class OpenTool
             }
 
             if ($number_of_lines <= 0) {
-                throw new ToolUsageError('`number_of_lines` must be greater than zero.')->setHint('Pick how many lines to display, e.g. 50.');
+                throw new ToolUsageError('`number_of_lines` must be greater than zero.')->setHint('Pick how many lines to display, e.g. 200.');
             }
 
             $result = $this->openService->__invoke($url, $start_at_line, $number_of_lines);

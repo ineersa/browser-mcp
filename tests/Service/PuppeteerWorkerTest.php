@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Service\Exception\BackendError;
 use App\Service\PuppeteerWorker;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Process\ExecutableFinder;
@@ -38,10 +37,10 @@ final class PuppeteerWorkerTest extends TestCase
 
         $worker = new PuppeteerWorker($scriptPath, $resolvedNode, 60);
 
-        $html = $worker->fetch('https://github.com/modelcontextprotocol/php-sdk/issues/14');
+        $html = $worker->fetch('https://github.com/symfony/symfony/blob/7.3/src/Symfony/Component/Console/Attribute/AsCommand.php');
 
         $this->assertNotEmpty($html, 'Puppeteer returned empty HTML.');
 
-//        fwrite(fopen('test.html', 'w'), $html);
+        //        fwrite(fopen('test.html', 'w'), $html);
     }
 }

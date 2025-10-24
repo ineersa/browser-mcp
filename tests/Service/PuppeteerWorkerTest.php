@@ -7,7 +7,6 @@ namespace App\Tests\Service;
 use App\Service\Exception\BackendError;
 use App\Service\PuppeteerWorker;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\ExecutableFinder;
 
 final class PuppeteerWorkerTest extends TestCase
@@ -37,8 +36,7 @@ final class PuppeteerWorkerTest extends TestCase
             }
         }
 
-        $httpClient = HttpClient::create();
-        $worker = new PuppeteerWorker($scriptPath, $resolvedNode, 60, $httpClient);
+        $worker = new PuppeteerWorker($scriptPath, $resolvedNode, 60);
 
         $html = $worker->fetch('https://github.com/modelcontextprotocol/php-sdk/issues/14');
 

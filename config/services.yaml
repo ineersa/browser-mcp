@@ -95,4 +95,3 @@ services:
             $scriptPath: '%kernel.project_dir%/bin/puppeteer-fetch.js'
             $nodeBinary: '%env(string:PUPPETEER_NODE_BINARY)%'
             $timeoutSeconds: '%env(int:PUPPETEER_TIMEOUT)%'
-            $httpClient: '@http_client'

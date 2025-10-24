@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Service\Exception\BackendError;
 use Symfony\Component\Process\Exception\ExceptionInterface;
 use Symfony\Component\Process\Process;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class PuppeteerWorker
 {
@@ -15,7 +14,6 @@ final readonly class PuppeteerWorker
         private string $scriptPath,
         private string $nodeBinary,
         private int $timeoutSeconds,
-        private ?HttpClientInterface $httpClient = null,
     ) {
     }
 
@@ -24,54 +22,7 @@ final readonly class PuppeteerWorker
      */
     public function fetch(string $url): string
     {
-        // Try to convert GitHub URLs to raw URLs and fetch via HTTP
-        $rawUrl = $this->convertGitHubUrl($url);
-
-        if (null !== $rawUrl && null !== $this->httpClient) {
-            try {
-                $response = $this->httpClient->request('GET', $rawUrl, [
-                    'timeout' => $this->timeoutSeconds,
-                ]);
-                $content = $response->getContent();
-
-                // Wrap in minimal HTML if it's markdown or plain text so downstream tooling can render it
-                return \sprintf('<pre>%s</pre>', htmlspecialchars($content));
-            } catch (\Throwable $e) {
-                // Fall through to Puppeteer if HTTP fetch fails (e.g. missing README or rate limits)
-                // (e.g., 404 if README doesn't exist on that branch)
-            }
-        }
-
-        // Fall back to Puppeteer for other URLs or if GitHub fetch failed
         return $this->fetchWithPuppeteer($url);
-    }
-
-    /**
-     * Convert GitHub web URLs to raw.githubusercontent.com URLs
-     * Only converts URLs that point to actual file content.
-     */
-    private function convertGitHubUrl(string $url): ?string
-    {
-        // Match: https://github.com/{owner}/{repo}/blob/{branch}/{path}
-        // This is a file view - safe to convert
-        if (preg_match('#^https://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+)$#', $url, $matches)) {
-            [, $owner, $repo, $branch, $path] = $matches;
-
-            return \sprintf('https://raw.githubusercontent.com/%s/%s/%s/%s', $owner, $repo, $branch, $path);
-        }
-
-        // Match: https://github.com/{owner}/{repo}/?$ (with optional trailing slash, no other segments)
-        // This is a repository home - safe to fetch README
-        if (preg_match('#^https://github\.com/([^/]+)/([^/]+)/?$#', $url, $matches)) {
-            [, $owner, $repo] = $matches;
-
-            // Try to fetch README (HEAD follows the default branch)
-            return \sprintf('https://raw.githubusercontent.com/%s/%s/HEAD/README.md', $owner, $repo);
-        }
-
-        // Don't convert tree URLs, issues, PRs, discussions, etc.
-        // Let Puppeteer handle those
-        return null;
     }
 
     /**

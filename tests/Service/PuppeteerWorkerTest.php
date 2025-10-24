@@ -41,6 +41,6 @@ final class PuppeteerWorkerTest extends TestCase
 
         $this->assertNotEmpty($html, 'Puppeteer returned empty HTML.');
 
-        //        fwrite(fopen('test.html', 'w'), $html);
+                fwrite(fopen('test.html', 'w'), $html);
     }
 }

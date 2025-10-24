@@ -6,6 +6,8 @@ namespace App\Tests\Service\Backend;
 
 use App\Service\Backend\SearxNGBackend;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class SearxNGBackendTest extends TestCase
@@ -53,6 +55,87 @@ final class SearxNGBackendTest extends TestCase
         $this->assertSame('SearxNG setup', $page->title);
         $this->assertSame((string) ($expected['text'] ?? ''), $page->text);
         $this->assertSame((array) ($expected['urls'] ?? []), $page->urls);
+    }
+
+    public function testFetchUsesGithubRawForBlobUrls(): void
+    {
+        $requested = [];
+        $rawContent = "<?php\necho 'hello';\n";
+
+        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requested, $rawContent) {
+            $requested[] = $method.' '.$url;
+            if ('GET' !== $method || 'https://raw.githubusercontent.com/foo/bar/main/src/File.php' !== $url) {
+                throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
+            }
+
+            return new MockResponse($rawContent);
+        });
+
+        $backend = new SearxNGBackend('https://search.example', $httpClient);
+
+        $page = $backend->fetch('https://github.com/foo/bar/blob/main/src/File.php');
+
+        $this->assertSame('https://github.com/foo/bar/blob/main/src/File.php', $page->url);
+        $this->assertSame('foo/bar/main/src/File.php', $page->title);
+        $this->assertStringContainsString('<?php', $page->text);
+        $this->assertStringContainsString("echo 'hello';", $page->text);
+        $this->assertStringContainsString('```php', $page->text);
+        $this->assertStringContainsString("\n```", $page->text);
+        $this->assertStringContainsString('URL: https://github.com/foo/bar/blob/main/src/File.php', $page->text);
+        $this->assertSame(['GET https://raw.githubusercontent.com/foo/bar/main/src/File.php'], $requested);
+    }
+
+    public function testFetchWrapsGithubRawHostContent(): void
+    {
+        $rawContent = "Line 1\nLine 2\n";
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($rawContent) {
+            if ('GET' !== $method) {
+                throw new \RuntimeException('Unexpected method: '.$method);
+            }
+            if ('https://raw.githubusercontent.com/foo/bar/main/README.md' !== $url) {
+                throw new \RuntimeException('Unexpected URL: '.$url);
+            }
+
+            return new MockResponse($rawContent);
+        });
+
+        $backend = new SearxNGBackend('https://search.example', $httpClient);
+
+        $page = $backend->fetch('https://raw.githubusercontent.com/foo/bar/main/README.md');
+
+        $this->assertSame('https://raw.githubusercontent.com/foo/bar/main/README.md', $page->url);
+        $this->assertSame('foo/bar/main/README.md', $page->title);
+        $this->assertStringContainsString('Line 1', $page->text);
+        $this->assertStringContainsString('Line 2', $page->text);
+        $this->assertStringContainsString('URL: https://raw.githubusercontent.com/foo/bar/main/README.md', $page->text);
+        $this->assertStringNotContainsString('```', $page->text);
+    }
+
+    public function testGithubBlobMarkdownFallsBackToStandardHtmlFetch(): void
+    {
+        $html = <<<HTML
+<!DOCTYPE html>
+<html><body><article><h1>Title</h1><p>Paragraph</p></article></body></html>
+HTML;
+
+        $requested = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($html, &$requested) {
+            $requested[] = $url;
+            if (str_contains($url, 'raw.githubusercontent.com')) {
+                throw new \RuntimeException('Should not request raw content for markdown files.');
+            }
+
+            return new MockResponse($html);
+        });
+
+        $backend = new SearxNGBackend('https://search.example', $httpClient);
+
+        $page = $backend->fetch('https://github.com/foo/bar/blob/main/README.md');
+
+        $this->assertSame('https://github.com/foo/bar/blob/main/README.md', $page->url);
+        $this->assertStringContainsString('Title', $page->text);
+        $this->assertStringContainsString('Paragraph', $page->text);
+        $this->assertContains('https://github.com/foo/bar/blob/main/README.md', $requested);
     }
 
     /**

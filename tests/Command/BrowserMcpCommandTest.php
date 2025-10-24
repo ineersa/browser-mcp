@@ -81,7 +81,7 @@ final class BrowserMcpCommandTest extends TestCase
      */
     public function testOpenToolCallReturnsFixtureDisplay(): void
     {
-        $targetUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
+        $targetUrl = 'https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
 
         $responses = $this->runServer([
             $this->initializeRequest(),
@@ -116,7 +116,7 @@ final class BrowserMcpCommandTest extends TestCase
      */
     public function testFindToolCallReturnsFixtureDisplay(): void
     {
-        $targetUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
+        $targetUrl = 'https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
 
         $responses = $this->runServer([
             $this->initializeRequest(),

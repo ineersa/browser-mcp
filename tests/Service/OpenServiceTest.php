@@ -20,7 +20,7 @@ final class OpenServiceTest extends TestCase
 {
     public function testOpenFetchesPageAndCachesByUrl(): void
     {
-        $expectedUrl = 'https://raw.githubusercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
+        $expectedUrl = 'https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
         $html = file_get_contents(__DIR__.'/../dumps/SearxNG/open_page.html');
         $this->assertNotFalse($html, 'Failed to read HTML fixture');
 

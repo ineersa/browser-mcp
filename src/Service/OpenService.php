@@ -11,7 +11,6 @@ use App\Service\Exception\ToolUsageError;
 
 final readonly class OpenService
 {
-
     public function __construct(
         private BackendInterface $backend,
         private BrowserState $state,

@@ -327,7 +327,7 @@ class SearxNGBackend implements BackendInterface
         $host = strtolower((string) ($parts['host'] ?? ''));
         $segments = array_values(array_filter(explode('/', $path), static fn ($segment) => '' !== $segment));
         if ('github.com' === $host && isset($segments[2]) && \in_array(strtolower($segments[2]), ['blob', 'raw'], true)) {
-            $segments = array_merge([$segments[0] ?? '', $segments[1] ?? ''], \array_slice($segments, 3));
+            $segments = array_merge([$segments[0], $segments[1]], \array_slice($segments, 3));
         }
 
         $decoded = array_map(static fn (string $segment): string => urldecode($segment), $segments);

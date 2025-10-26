@@ -325,7 +325,7 @@ final readonly class Utilities
         $displayText = !empty($resultChunks)
             ? implode("\n\n", $resultChunks)
             : \sprintf(
-                "Pattern not found for regex: `%s`\n\nNext steps:\n- Broaden or simplify the pattern (e.g. adjust keywords or remove anchors)\n- Call `browser.open` again with an adjusted `start_at_line` to review the next section (avoid reopening the same range)",
+                "Pattern not found for regex: `%s`\n\nNo visible matches were found on this page. The content may be structured data (e.g. JSON) or outside the scanned range. Adjust the regex if appropriate or inspect the page manually.",
                 $query
             );
 

@@ -111,33 +111,6 @@ final class SearxNGBackendTest extends TestCase
         $this->assertStringNotContainsString('```', $page->text);
     }
 
-    public function testGithubBlobMarkdownFallsBackToStandardHtmlFetch(): void
-    {
-        $html = <<<HTML
-<!DOCTYPE html>
-<html><body><article><h1>Title</h1><p>Paragraph</p></article></body></html>
-HTML;
-
-        $requested = [];
-        $httpClient = new MockHttpClient(function (string $method, string $url) use ($html, &$requested) {
-            $requested[] = $url;
-            if (str_contains($url, 'raw.githubusercontent.com')) {
-                throw new \RuntimeException('Should not request raw content for markdown files.');
-            }
-
-            return new MockResponse($html);
-        });
-
-        $backend = new SearxNGBackend('https://search.example', $httpClient);
-
-        $page = $backend->fetch('https://github.com/foo/bar/blob/main/README.md');
-
-        $this->assertSame('https://github.com/foo/bar/blob/main/README.md', $page->url);
-        $this->assertStringContainsString('Title', $page->text);
-        $this->assertStringContainsString('Paragraph', $page->text);
-        $this->assertContains('https://github.com/foo/bar/blob/main/README.md', $requested);
-    }
-
     /**
      * @param array<int, array<string|int, string>> $raw
      *

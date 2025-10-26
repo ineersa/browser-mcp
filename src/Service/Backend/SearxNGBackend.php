@@ -233,11 +233,6 @@ class SearxNGBackend implements BackendInterface
         }
 
         $rawUrl = $rawInfo['raw_url'];
-        $fileName = $rawInfo['file_name'];
-
-        if ($this->isMarkdownFile($fileName)) {
-            return null;
-        }
 
         try {
             $rawContent = $this->httpGet($rawUrl);

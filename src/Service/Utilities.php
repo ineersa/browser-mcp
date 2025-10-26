@@ -352,7 +352,7 @@ final readonly class Utilities
         $matches = [];
         preg_match_all('/【(?P<id>\d+)†/u', $body, $matches);
         /** @var string[] $ids */
-        $ids = array_map(static fn (string $id): string => $id, array_unique($matches['id'] ?? []));
+        $ids = array_map(static fn (string $id): string => $id, array_unique($matches['id']));
 
         if (!empty($ids)) {
             return array_intersect_key($urls, array_flip($ids));

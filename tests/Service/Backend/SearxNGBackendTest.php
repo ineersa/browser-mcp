@@ -111,17 +111,21 @@ final class SearxNGBackendTest extends TestCase
         $this->assertStringNotContainsString('```', $page->text);
     }
 
-    public function testGithubBlobMarkdownUsesRawContent(): void
+    public function testGithubBlobMarkdownFallsBackToStandardHtmlFetch(): void
     {
-        $rawContent = "# Heading\n\nSome text\n";
+        $html = <<<HTML
+<!DOCTYPE html>
+<html><body><article><h1>Title</h1><p>Paragraph</p></article></body></html>
+HTML;
+
         $requested = [];
-        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requested, $rawContent) {
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($html, &$requested) {
             $requested[] = $url;
-            if ('GET' !== $method || 'https://raw.githubusercontent.com/foo/bar/main/README.md' !== $url) {
-                throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
+            if (str_contains($url, 'raw.githubusercontent.com')) {
+                throw new \RuntimeException('Should not request raw content for markdown files.');
             }
 
-            return new MockResponse($rawContent);
+            return new MockResponse($html);
         });
 
         $backend = new SearxNGBackend('https://search.example', $httpClient);
@@ -129,10 +133,9 @@ final class SearxNGBackendTest extends TestCase
         $page = $backend->fetch('https://github.com/foo/bar/blob/main/README.md');
 
         $this->assertSame('https://github.com/foo/bar/blob/main/README.md', $page->url);
-        $this->assertStringContainsString('# Heading', $page->text);
-        $this->assertStringContainsString('Some text', $page->text);
-        $this->assertStringContainsString('URL: https://github.com/foo/bar/blob/main/README.md', $page->text);
-        $this->assertContains('https://raw.githubusercontent.com/foo/bar/main/README.md', $requested);
+        $this->assertStringContainsString('Title', $page->text);
+        $this->assertStringContainsString('Paragraph', $page->text);
+        $this->assertContains('https://github.com/foo/bar/blob/main/README.md', $requested);
     }
 
     /**

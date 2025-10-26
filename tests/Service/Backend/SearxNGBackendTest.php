@@ -111,21 +111,17 @@ final class SearxNGBackendTest extends TestCase
         $this->assertStringNotContainsString('```', $page->text);
     }
 
-    public function testGithubBlobMarkdownFallsBackToStandardHtmlFetch(): void
+    public function testGithubBlobMarkdownUsesRawContent(): void
     {
-        $html = <<<HTML
-<!DOCTYPE html>
-<html><body><article><h1>Title</h1><p>Paragraph</p></article></body></html>
-HTML;
-
+        $rawContent = "# Heading\n\nSome text\n";
         $requested = [];
-        $httpClient = new MockHttpClient(function (string $method, string $url) use ($html, &$requested) {
+        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requested, $rawContent) {
             $requested[] = $url;
-            if (str_contains($url, 'raw.githubusercontent.com')) {
-                throw new \RuntimeException('Should not request raw content for markdown files.');
+            if ('GET' !== $method || 'https://raw.githubusercontent.com/foo/bar/main/README.md' !== $url) {
+                throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
             }
 
-            return new MockResponse($html);
+            return new MockResponse($rawContent);
         });
 
         $backend = new SearxNGBackend('https://search.example', $httpClient);
@@ -133,9 +129,10 @@ HTML;
         $page = $backend->fetch('https://github.com/foo/bar/blob/main/README.md');
 
         $this->assertSame('https://github.com/foo/bar/blob/main/README.md', $page->url);
-        $this->assertStringContainsString('Title', $page->text);
-        $this->assertStringContainsString('Paragraph', $page->text);
-        $this->assertContains('https://github.com/foo/bar/blob/main/README.md', $requested);
+        $this->assertStringContainsString('# Heading', $page->text);
+        $this->assertStringContainsString('Some text', $page->text);
+        $this->assertStringContainsString('URL: https://github.com/foo/bar/blob/main/README.md', $page->text);
+        $this->assertContains('https://raw.githubusercontent.com/foo/bar/main/README.md', $requested);
     }
 
     /**

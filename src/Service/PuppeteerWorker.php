@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Service\Exception\BackendError;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Exception\ExceptionInterface;
 use Symfony\Component\Process\Process;
 
@@ -34,7 +37,7 @@ final readonly class PuppeteerWorker
             throw new BackendError(\sprintf('Puppeteer script not found at %s', $this->scriptPath))->setHint('Ensure the puppeteer fetch script exists and is readable. Reinstall dependencies or check the project files.');
         }
 
-        $process = new Process([$this->nodeBinary, $this->scriptPath, $url]);
+        $process = new Process([$this->nodeBinary, $this->resolveScriptPath(), $url]);
         $process->setTimeout($this->timeoutSeconds);
 
         try {
@@ -60,5 +63,66 @@ final readonly class PuppeteerWorker
         }
 
         return $html;
+    }
+
+    /**
+     * @throws BackendError
+     */
+    private function resolveScriptPath(): string
+    {
+        if (!$this->isPharPath($this->scriptPath)) {
+            return $this->scriptPath;
+        }
+
+        $scriptName = basename($this->scriptPath);
+        $scriptDir = \dirname($this->scriptPath);
+
+        $finder = Finder::create()->files()->name($scriptName);
+        try {
+            $finder->in($scriptDir);
+        } catch (\InvalidArgumentException) {
+            return $this->extractScriptWithStream($scriptName);
+        }
+
+        foreach ($finder as $file) {
+            return $this->dumpScriptToTemp($file->getContents(), $scriptName);
+        }
+
+        return $this->extractScriptWithStream($scriptName);
+    }
+
+    /**
+     * @throws BackendError
+     */
+    private function extractScriptWithStream(string $scriptName): string
+    {
+        $contents = @file_get_contents($this->scriptPath);
+        if (false === $contents) {
+            throw new BackendError(\sprintf('Unable to read puppeteer script at %s', $this->scriptPath))->setHint('Verify the PHAR archive contains bin/puppeteer-fetch.js and is readable.');
+        }
+
+        return $this->dumpScriptToTemp($contents, $scriptName);
+    }
+
+    private function isPharPath(string $path): bool
+    {
+        return str_starts_with($path, 'phar://') || str_starts_with($path, 'phar:');
+    }
+
+    /**
+     * @throws BackendError
+     */
+    private function dumpScriptToTemp(string $contents, string $scriptName): string
+    {
+        $tmpFile = rtrim(sys_get_temp_dir(), '/\\').'/browser-mcp-'.sha1($this->scriptPath).'-'.$scriptName;
+
+        $filesystem = new Filesystem();
+        try {
+            $filesystem->dumpFile($tmpFile, $contents);
+        } catch (IOExceptionInterface $e) {
+            throw (new BackendError(\sprintf('Unable to write puppeteer script to %s', $tmpFile), previous: $e))->setHint('Check system tmp directory permissions and available space.');
+        }
+
+        return $tmpFile;
     }
 }

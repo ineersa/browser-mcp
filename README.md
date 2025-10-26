@@ -38,15 +38,18 @@ PUPPETEER_TIMEOUT=45
 ```
 
 ## Puppeteer rendering (optional)
-To render JavaScript-heavy pages (e.g., GitHub) you can delegate fetching to Puppeteer instead of the Symfony HTTP client.
+To render JavaScript-heavy pages you can delegate fetching to Puppeteer instead of the Symfony HTTP client.
 
-1. Install Node.js 18+ and run `npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth puppeteer-extra-plugin-user-preferences puppeteer-extra-plugin-user-data-dir` from the project root (or provide compatible installations globally). The helper automatically enables the stealth plugin when present and falls back to vanilla Puppeteer otherwise. If you rely on a global installation, export `PUPPETEER_MODULE_PATH` or `NODE_PATH` so the Node helper can locate the packages (it also attempts `npm root -g` as a fallback).
+1. Install Node.js 18+ and run   
+    ```bash
+       npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth puppeteer-extra-plugin-user-preferences puppeteer-extra-plugin-user-data-dir
+    ```
+    from the project root (or provide compatible installations globally using `npm install -g`).  
+   The helper automatically enables the stealth plugin when present and falls back to vanilla Puppeteer otherwise. 
 2. Ensure the `node` binary is on your `PATH`, or override `PUPPETEER_NODE_BINARY` with the full path to your Node.js executable.
 3. Enable Puppeteer by setting `USE_PUPPETEER=true` (e.g., in `.env.local`). Optional: adjust `PUPPETEER_TIMEOUT` to control how long the worker waits for pages to finish loading.
 
 When enabled, `PuppeteerWorker` invokes `bin/puppeteer-fetch.js`, which launches a headless browser, waits for the network to settle, performs a short auto-scroll to trigger lazy content, and returns the rendered HTML to the backend.
-The helper blocks common asset types (fonts, images, media) and analytics domains to keep responses lightweight while you fetch primary content.
-You can further tune the Node helper with `PUPPETEER_MAX_WAIT_MS`, `PUPPETEER_IDLE_WAIT_MS`, `PUPPETEER_MAX_SCROLLS`, and `PUPPETEER_SCROLL_DELAY_MS` to adjust navigation timeouts, post-load settling delays, and scrolling behaviour.
 
 ## MCP config:
 **STDIO** is only supported transport for now, just add entry to `mcp.json` with a path to binary

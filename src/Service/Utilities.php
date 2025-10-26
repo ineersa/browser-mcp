@@ -248,10 +248,10 @@ final readonly class Utilities
         }
         $header .= \sprintf("\n**%s**\n\n", $scrollbar);
 
-        $result = $header;
-        $result .= $body;
+        $result = $header.$body;
 
-        $references = self::formatReferences($page->urls);
+        $displayUrls = self::filterVisibleUrls($page->urls, $body, $page->url);
+        $references = self::formatReferences($displayUrls);
         if ('' !== $references) {
             $result .= "\n\n".$references;
         }
@@ -336,6 +336,33 @@ final readonly class Utilities
             urls: $urlsMap,
             snippets: $snippets,
         );
+    }
+
+    /**
+     * @param array<string,string> $urls
+     *
+     * @return array<string,string>
+     */
+    private static function filterVisibleUrls(array $urls, string $body, string $pageUrl): array
+    {
+        if (empty($urls)) {
+            return [];
+        }
+
+        $matches = [];
+        preg_match_all('/【(?P<id>\d+)†/u', $body, $matches);
+        /** @var string[] $ids */
+        $ids = array_map(static fn (string $id): string => $id, array_unique($matches['id'] ?? []));
+
+        if (!empty($ids)) {
+            return array_intersect_key($urls, array_flip($ids));
+        }
+
+        if ('' === $pageUrl) {
+            return $urls;
+        }
+
+        return [];
     }
 
     /**

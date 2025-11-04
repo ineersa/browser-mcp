@@ -216,7 +216,43 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: `number_of_lines` must be greater than zero.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: `number_of_lines` must be greater than zero when `fetch_all` is false.', $callResponse['result']['content'][0]['text'] ?? '');
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testOpenToolWithFetchAllOverridesLineLimit(): void
+    {
+        $targetUrl = 'https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
+
+        $responses = $this->runServer([
+            $this->initializeRequest(),
+            $this->callToolRequest('open', [
+                'url' => $targetUrl,
+                'start_at_line' => 0,
+                'fetch_all' => true,
+            ], 2),
+        ]);
+
+        $this->assertCount(2, $responses, 'Expected initialize and open responses.');
+
+        $callResponse = $responses[1];
+
+        $this->assertFalse($callResponse['result']['isError'] ?? false);
+        $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
+
+        $payload = (string) ($callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertNotSame('', $payload, 'Open tool payload should not be empty when fetch_all is enabled.');
+        $this->assertStringContainsString('**viewing lines [0 -', $payload);
+
+        $pattern = '/\\*\\*viewing lines \\[(\\d+) - (\\d+)\\] of (\\d+)\\*\\*/';
+        $this->assertMatchesRegularExpression($pattern, $payload, 'Expected scrollbar metadata to be present.');
+        $match = [];
+        preg_match($pattern, $payload, $match);
+        $this->assertCount(4, $match);
+        $windowSize = ((int) $match[2] - (int) $match[1]) + 1;
+        $this->assertGreaterThan(50, $windowSize, 'fetch_all should expand the visible window beyond the default 50 lines.');
     }
 
     /**
@@ -307,7 +343,13 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertSame(OpenTool::DESCRIPTION, $indexed[OpenTool::NAME]['description']);
         $this->assertSame(OpenTool::TITLE, $indexed[OpenTool::NAME]['annotations']['title']);
-        $this->assertSame(['url', 'start_at_line', 'number_of_lines'], $indexed[OpenTool::NAME]['inputSchema']['required'] ?? []);
+
+        $openSchema = $indexed[OpenTool::NAME]['inputSchema'] ?? [];
+        $openProperties = $openSchema['properties'] ?? [];
+        $this->assertSame(['url', 'start_at_line'], $openSchema['required'] ?? []);
+        $this->assertSame(50, $openProperties['number_of_lines']['default'] ?? null);
+        $this->assertArrayHasKey('fetch_all', $openProperties);
+        $this->assertFalse($openProperties['fetch_all']['default'] ?? true);
 
         $this->assertSame(FindTool::DESCRIPTION, $indexed[FindTool::NAME]['description']);
         $this->assertSame(FindTool::TITLE, $indexed[FindTool::NAME]['annotations']['title']);

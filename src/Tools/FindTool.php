@@ -14,7 +14,7 @@ final class FindTool
 {
     public const string NAME = 'find';
     public const string TITLE = 'Find pattern in page';
-    public const string DESCRIPTION = 'Finds regex matches within the page at `url`. The `regex` parameter must be a valid PCRE regular expression (include delimiters like `/pattern/`, e.g. `/some text/iu`). Both `url` and `regex` are required; the page is fetched (and cached) by URL before searching, so you can call this directly when you already know the destination. Results include a References section for inline markers, and if no matches are found the tool suggests next steps (broader regex or opening more context).';
+    public const string DESCRIPTION = 'Finds regex matches within the page at `url`. The `regex` parameter must be a valid PCRE regular expression (include delimiters like `/pattern/`, e.g. `/some text/iu`). Both `url` and `regex` are required; the page is fetched (and cached) by URL before searching, so call this directly whenever you already know the destination and pattern—no prior `search` or `open` call is needed. Results include a References section for inline markers, and when no matches are found the response explains that no visible matches exist (useful for JSON or structured data pages).';
 
     public function __construct(
         private readonly FindService $findService,

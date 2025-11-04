@@ -103,8 +103,8 @@ php -d xdebug.mode=debug -d xdebug.client_host=127.0.0.1 -d xdebug.client_port=9
 
 ### `browser.open`
 - **Purpose**: Fetch and render a slice of a page for reading or scrolling.
-- **Parameters**: `url` (string, required absolute URL), `start_at_line` (int, required, 0-based), `number_of_lines` (int, required, positive).
-- **Output shape**: Page text rendered with prefixed line numbers (`L42:`) and capped by the token budget; the scrollbar line reports the viewed window. Inline citations map to the page’s outbound links, and the `References` section lists every discovered URL.
+- **Parameters**: `url` (string, required absolute URL), `start_at_line` (int, required, 0-based). Optional: `number_of_lines` (int, default `50`, minimum `1`), `fetch_all` (bool, default `false`; when `true`, ignores `number_of_lines` and returns the entire page body).
+- **Output shape**: Page text rendered with prefixed line numbers (`L42:`) and capped by the token budget; the scrollbar line reports the viewed window. Inline citations map to the page’s outbound links, and the `References` section lists every discovered URL. When `fetch_all` is used, the same header/footer rules apply and references still do not count toward line totals.
 - **State**: Pages are cached by canonical URL so subsequent `open` or `find` calls reuse the fetched copy unless an error occurs.
 
 ### `browser.find`

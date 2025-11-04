@@ -22,7 +22,7 @@ final readonly class OpenService
      * @throws BackendError
      * @throws ToolUsageError
      */
-    public function __invoke(string $url, int $start_at_line, int $number_of_lines): string
+    public function __invoke(string $url, int $start_at_line, int $number_of_lines, bool $fetchAll = false): string
     {
         $trimmedUrl = trim($url);
         $canonicalUrl = Utilities::canonicalizeUrl($trimmedUrl);
@@ -31,7 +31,7 @@ final readonly class OpenService
         }
 
         $startLine = max($start_at_line, 0);
-        $numLines = $number_of_lines > 0 ? $number_of_lines : 200;
+        $numLines = $fetchAll ? -1 : ($number_of_lines > 0 ? $number_of_lines : 50);
 
         $cachedPage = $this->state->getPageByUrl($canonicalUrl);
         $addedNewPage = false;

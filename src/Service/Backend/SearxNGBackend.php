@@ -295,9 +295,6 @@ class SearxNGBackend implements BackendInterface
         $owner = rawurlencode($segments[0]);
         $repo = rawurlencode($segments[1]);
         $tailSegments = \array_slice($segments, 3);
-        if (empty($tailSegments)) {
-            return null;
-        }
         $encodedTail = array_map(static fn (string $segment): string => rawurlencode($segment), $tailSegments);
         $tailPath = implode('/', $encodedTail);
 

@@ -60,6 +60,15 @@ services:
         resource: '../src/Tools'
         public: true
 
+    App\Service\ServerFactory:
+        arguments:
+            $cacheDir: '%kernel.cache_dir%'
+        public: true
+
+    App\Command\BrowserMcpCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     # PSR-16 cache: wrap a PSR-6 pool (ArrayAdapter) with Psr16Cache and alias to Psr\SimpleCache\CacheInterface
     cache.array_adapter:
         class: Symfony\Component\Cache\Adapter\ArrayAdapter

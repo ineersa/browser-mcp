@@ -23,7 +23,7 @@ final class SearchServiceTest extends TestCase
             urls: [],
         );
 
-        $backend = $this->createMock(BackendInterface::class);
+        $backend = $this->createStub(BackendInterface::class);
         $backend->method('search')->willReturn($page);
 
         $state = new BrowserState();

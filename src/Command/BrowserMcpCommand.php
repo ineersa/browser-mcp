@@ -7,16 +7,16 @@ namespace App\Command;
 use App\Tools\FindTool;
 use App\Tools\OpenTool;
 use App\Tools\SearchTool;
+use App\Transport\LoggingStdioTransport;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
-use Mcp\Server\Transport\StdioTransport;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
@@ -36,9 +36,6 @@ class BrowserMcpCommand extends Command
     {
     }
 
-    /**
-     * @param ConsoleOutput $output
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
@@ -51,35 +48,37 @@ class BrowserMcpCommand extends Command
                 )
                 ->setLogger($this->logger)
                 ->setContainer($this->container)
-                ->setProtocolVersion(ProtocolVersion::V2024_11_05)
+                ->setProtocolVersion(ProtocolVersion::V2025_06_18)
                 ->addTool(
-                    handler: SearchTool::class,
-                    name: SearchTool::NAME,
-                    description: SearchTool::DESCRIPTION,
-                    annotations: new ToolAnnotations(
+                    SearchTool::class,
+                    SearchTool::NAME,
+                    SearchTool::DESCRIPTION,
+                    new ToolAnnotations(
                         title: SearchTool::TITLE,
                     )
                 )
                 ->addTool(
-                    handler: OpenTool::class,
-                    name: OpenTool::NAME,
-                    description: OpenTool::DESCRIPTION,
-                    annotations: new ToolAnnotations(
+                    OpenTool::class,
+                    OpenTool::NAME,
+                    OpenTool::DESCRIPTION,
+                    new ToolAnnotations(
                         title: OpenTool::TITLE,
                     )
                 )
                 ->addTool(
-                    handler: FindTool::class,
-                    name: FindTool::NAME,
-                    description: FindTool::DESCRIPTION,
-                    annotations: new ToolAnnotations(
+                    FindTool::class,
+                    FindTool::NAME,
+                    FindTool::DESCRIPTION,
+                    new ToolAnnotations(
                         title: FindTool::TITLE,
                     )
                 )
                 ->build();
 
-            $transport = new StdioTransport(
-                logger: $this->logger,
+            $transport = new LoggingStdioTransport(
+                \STDIN,
+                \STDOUT,
+                $this->logger,
             );
 
             $server->run($transport);
@@ -87,6 +86,7 @@ class BrowserMcpCommand extends Command
             $this->logger->error($e->getMessage(), [
                 'trace' => $e->getTrace(),
             ]);
+            \assert($output instanceof ConsoleOutputInterface);
             $output->getErrorOutput()->writeln(json_encode([
                 'error' => $e->getMessage(),
             ]));

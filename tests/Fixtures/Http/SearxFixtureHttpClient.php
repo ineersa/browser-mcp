@@ -16,7 +16,7 @@ final class SearxFixtureHttpClient extends MockHttpClient
         $openPageHtml = $this->loadFile('open_page.html');
         $openPageFragment = 'cbracco/html5-test-page/refs/heads/master/index.html';
 
-        parent::__construct(function (string $method, string $url) use ($results, $testOpenPageResults, $openPageHtml, $openPageFragment): MockResponse {
+        parent::__construct(static function (string $method, string $url) use ($results, $testOpenPageResults, $openPageHtml, $openPageFragment): MockResponse {
             if ('GET' !== $method) {
                 throw new \RuntimeException(\sprintf('Unexpected HTTP method: %s %s', $method, $url));
             }

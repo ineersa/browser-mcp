@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\Backend;
 
 use App\Service\Backend\SearxNGBackend;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -12,13 +13,14 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class SearxNGBackendTest extends TestCase
 {
+    #[AllowMockObjectsWithoutExpectations]
     public function testRequestSearchBuildsItemsFromResultsFixture(): void
     {
         $fixtures = $this->loadJson('results.json');
         $expectedItems = $this->normalizeItemsFixture($this->loadJson('items.json')); // @phpstan-ignore-line
 
         // Create a partial mock overriding fetchSearxResults
-        $client = $this->createMock(HttpClientInterface::class);
+        $client = $this->createStub(HttpClientInterface::class);
         $backend = $this->getMockBuilder(SearxNGBackend::class)
             ->setConstructorArgs(['http://example.test', $client])
             ->onlyMethods(['fetchSearxResults'])
@@ -38,7 +40,7 @@ final class SearxNGBackendTest extends TestCase
         $items = $this->normalizeItemsFixture($this->loadJson('items.json')); // @phpstan-ignore-line
         $expected = $this->loadJson('search_page_contents.json');
 
-        $client = $this->createMock(HttpClientInterface::class);
+        $client = $this->createStub(HttpClientInterface::class);
         $backend = $this->getMockBuilder(SearxNGBackend::class)
             ->setConstructorArgs(['http://example.test', $client])
             ->onlyMethods(['requestSearch'])
@@ -62,7 +64,7 @@ final class SearxNGBackendTest extends TestCase
         $requested = [];
         $rawContent = "<?php\necho 'hello';\n";
 
-        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requested, $rawContent) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requested, $rawContent) {
             $requested[] = $method.' '.$url;
             if ('GET' !== $method || 'https://raw.githubusercontent.com/foo/bar/main/src/File.php' !== $url) {
                 throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
@@ -88,7 +90,7 @@ final class SearxNGBackendTest extends TestCase
     public function testFetchWrapsGithubRawHostContent(): void
     {
         $rawContent = "Line 1\nLine 2\n";
-        $httpClient = new MockHttpClient(function (string $method, string $url) use ($rawContent) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use ($rawContent) {
             if ('GET' !== $method) {
                 throw new \RuntimeException('Unexpected method: '.$method);
             }

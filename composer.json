@@ -9,12 +9,7 @@
             "email": "ineersa@gmail.com"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/ineersa/php-sdk"
-        }
-    ],
+    "repositories": [],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
@@ -26,17 +21,17 @@
         "ext-iconv": "*",
         "ext-libxml": "*",
         "ineersa/html2text": "^1.0",
-        "mcp/sdk": "dev-release@dev",
-        "symfony/cache": "7.3.*",
-        "symfony/console": "7.3.*",
-        "symfony/dotenv": "7.3.*",
-        "symfony/flex": "^2.8.2",
-        "symfony/framework-bundle": "7.3.*",
-        "symfony/http-client": "7.3.*",
-        "symfony/monolog-bundle": "^3.10",
-        "symfony/process": "7.3.*",
-        "symfony/runtime": "7.3.*",
-        "symfony/yaml": "7.3.*",
+        "mcp/sdk": ">=0.4",
+        "symfony/cache": "7.4.*",
+        "symfony/console": "7.4.*",
+        "symfony/dotenv": "7.4.*",
+        "symfony/flex": "^2.10",
+        "symfony/framework-bundle": "7.4.*",
+        "symfony/http-client": "7.4.*",
+        "symfony/monolog-bundle": "^3.11.1",
+        "symfony/process": "7.4.*",
+        "symfony/runtime": "7.4.*",
+        "symfony/yaml": "7.4.*",
         "yethee/tiktoken": "^0.11.1"
     },
     "config": {
@@ -93,14 +88,14 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.3.*"
+            "require": "7.4.*"
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.88.2",
-        "phpstan/phpstan": "^2.1.29",
-        "phpunit/phpunit": "^12.3.15",
-        "symfony/maker-bundle": "^1.64",
+        "friendsofphp/php-cs-fixer": "^3.94.2",
+        "phpstan/phpstan": "^2.1.40",
+        "phpunit/phpunit": "^12.5.14",
+        "symfony/maker-bundle": "^1.66",
         "symfony/var-dumper": "7.3.*"
     }
 }

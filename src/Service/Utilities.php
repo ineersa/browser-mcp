@@ -185,8 +185,8 @@ final readonly class Utilities
         $full = '/【\d+†(?P<content>[^†】]+)(?:†[^†】]+)?】/u';
 
         $text = (string) preg_replace($partialInitial, '', $text);
-        $text = (string) preg_replace_callback($partialFinal, fn ($m) => $m['content'], $text);
-        $text = (string) preg_replace_callback($full, fn ($m) => $m['content'], $text);
+        $text = (string) preg_replace_callback($partialFinal, static fn ($m) => $m['content'], $text);
+        $text = (string) preg_replace_callback($full, static fn ($m) => $m['content'], $text);
 
         return $text;
     }

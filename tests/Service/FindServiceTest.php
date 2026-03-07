@@ -44,7 +44,7 @@ final class FindServiceTest extends TestCase
 
     public function testFindRequiresUrl(): void
     {
-        $backend = $this->createMock(BackendInterface::class);
+        $backend = $this->createStub(BackendInterface::class);
         $state = new BrowserState();
         $service = new FindService($backend, $state, new PageDisplayService());
 
@@ -64,7 +64,7 @@ final class FindServiceTest extends TestCase
         );
         $state->addPage($searchPage);
 
-        $backend = $this->createMock(BackendInterface::class);
+        $backend = $this->createStub(BackendInterface::class);
         $service = new FindService($backend, $state, new PageDisplayService());
 
         $this->expectException(ToolUsageError::class);

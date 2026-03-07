@@ -19,7 +19,7 @@ final readonly class ServerFactory
     public function __construct(
         private LoggerInterface $logger,
         private ContainerInterface $container,
-        private string $cacheDir,
+        private string $sessionDir,
     ) {
     }
 
@@ -33,7 +33,7 @@ final readonly class ServerFactory
             )
             ->setLogger($this->logger)
             ->setContainer($this->container)
-            ->setSession(new FileSessionStore($this->cacheDir.'/mcp_sessions'))
+            ->setSession(new FileSessionStore($this->sessionDir))
             ->setProtocolVersion(ProtocolVersion::V2025_06_18)
             ->addTool(
                 SearchTool::class,

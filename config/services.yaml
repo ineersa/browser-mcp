@@ -62,7 +62,7 @@ services:
 
     App\Service\ServerFactory:
         arguments:
-            $cacheDir: '%kernel.cache_dir%'
+            $sessionDir: '%env(string:APP_VAR_DIR)%/sessions'
         public: true
 
     App\Command\BrowserMcpCommand:

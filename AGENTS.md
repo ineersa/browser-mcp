@@ -46,4 +46,4 @@
 
 ## Security & Configuration Tips
 - Never commit secrets. Use `.env.local` for machine-specific overrides.
-- Logging via Monolog; adjust `LOG_LEVEL` and optional `APP_LOG_DIR` in `.env`.
+- Logging via Monolog; adjust `LOG_LEVEL` and optional `APP_VAR_DIR` in `.env`.

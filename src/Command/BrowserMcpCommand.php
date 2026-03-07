@@ -22,11 +22,17 @@ use Symfony\Component\Process\Process;
 )]
 class BrowserMcpCommand extends Command
 {
+    private string $projectDir;
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly ServerFactory $serverFactory,
-        private readonly string $projectDir,
+        string $projectDir,
     ) {
+        if (!is_dir($projectDir) && !$this->isPharPath($projectDir)) {
+            $projectDir = dirname(__DIR__, 2);
+        }
+        $this->projectDir = $projectDir;
         parent::__construct();
     }
 
@@ -85,9 +91,11 @@ class BrowserMcpCommand extends Command
             }
         }
 
+        $cwd = $this->isPharPath($this->projectDir) ? null : $this->projectDir;
+
         $process = new Process(
             ['php', '-S', \sprintf('127.0.0.1:%d', $port), $workerPath],
-            $this->projectDir,
+            $cwd,
             $env,
         );
 
@@ -125,7 +133,8 @@ class BrowserMcpCommand extends Command
             throw new \RuntimeException(\sprintf('Unable to read HTTP worker script from PHAR at %s', $pharPath));
         }
 
-        $tmpPath = rtrim(sys_get_temp_dir(), '/\\').'/browser-mcp-'.sha1($pharPath).'-http-worker.php';
+        $baseDir = $_SERVER['APP_VAR_DIR'] ?? $_ENV['APP_VAR_DIR'] ?? getenv('APP_VAR_DIR') ?: sys_get_temp_dir();
+        $tmpPath = rtrim($baseDir, '/\\').'/browser-mcp-'.sha1($pharPath).'-http-worker.php';
 
         $filesystem = new Filesystem();
         try {

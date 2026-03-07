@@ -17,8 +17,8 @@ The easiest way is to just download binary from releases for your platform.
 ```dotenv
 ### Set log level, default INFO, with log action level ERROR
 LOG_LEVEL=info
-# Where to store logs
-APP_LOG_DIR="/tmp/mcp/python-mcp/log"
+# Where to store data (logs, cache, sessions)
+APP_VAR_DIR="/tmp/mcp/browser-mcp"
 # Backend to use
 BROWSER_BACKEND=searxng
 # Backend URL
@@ -35,6 +35,10 @@ USE_PUPPETEER=false
 PUPPETEER_NODE_BINARY=node
 # Navigation timeout for Puppeteer (seconds)
 PUPPETEER_TIMEOUT=45
+# MCP transport: stdio (default) or http
+MCP_TRANSPORT=stdio
+# Port for HTTP transport
+MCP_PORT=8000
 ```
 
 ## Puppeteer rendering (optional)
@@ -52,17 +56,35 @@ To render JavaScript-heavy pages you can delegate fetching to Puppeteer instead 
 When enabled, `PuppeteerWorker` invokes `bin/puppeteer-fetch.js`, which launches a headless browser, waits for the network to settle, performs a short auto-scroll to trigger lazy content, and returns the rendered HTML to the backend.
 
 ## MCP config:
-**STDIO** is only supported transport for now, just add entry to `mcp.json` with a path to binary
+The server supports **STDIO** (default) and **HTTP** transports.
+
+### STDIO
+Just add entry to `mcp.json` with a path to binary:
 ```json
 {
     "command": "./dist/browser-mcp",
     "args": [],
     "env": {
-        "APP_LOG_DIR": "/tmp/.symfony/browser-mcp/log"
+        "APP_VAR_DIR": "/tmp/.symfony/browser-mcp"
     }
 }
 ```
-You can also use `browser-mcp.phar` PHAR file.
+
+### HTTP
+To run the server with the HTTP transport, set the environment variables:
+```json
+{
+    "command": "./dist/browser-mcp",
+    "args": [],
+    "env": {
+        "MCP_TRANSPORT": "http",
+        "MCP_PORT": "8000"
+    }
+}
+```
+Or simply start it with `MCP_TRANSPORT=http ./bin/browser-mcp` and point your MCP client to the HTTP endpoint (e.g. `http://127.0.0.1:8000/message`).
+
+You can also use `browser-mcp.phar` PHAR file instead of `./dist/browser-mcp`.
 The server exposes tools: `browser.search`, `browser.open`, `browser.find`.
 
 If you want to use other transports use some wrapper for now, for example, [MCPO](https://github.com/open-webui/mcpo)

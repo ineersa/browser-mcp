@@ -49,7 +49,7 @@ when@prod:
                 channels: [ "!event", "!deprecation", "!doctrine"]
             nested:
                 type: rotating_file
-                path: "%env(string:APP_LOG_DIR)%/%kernel.environment%.log"
+                path: "%env(string:APP_VAR_DIR)%/log/%kernel.environment%.log"
                 level: "%env(string:LOG_LEVEL)%"
                 max_files: 1
                 formatter: monolog.formatter.json_with_stacktraces

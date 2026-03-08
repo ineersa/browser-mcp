@@ -60,6 +60,15 @@ services:
         resource: '../src/Tools'
         public: true
 
+    App\Service\ServerFactory:
+        arguments:
+            $sessionDir: '%env(string:APP_VAR_DIR)%/sessions'
+        public: true
+
+    App\Command\BrowserMcpCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     # PSR-16 cache: wrap a PSR-6 pool (ArrayAdapter) with Psr16Cache and alias to Psr\SimpleCache\CacheInterface
     cache.array_adapter:
         class: Symfony\Component\Cache\Adapter\ArrayAdapter
@@ -68,6 +77,9 @@ services:
             $storeSerialized: true
 
     Psr\Container\ContainerInterface: '@service_container'
+    Psr\Log\LoggerInterface:
+        alias: 'logger'
+        public: true
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

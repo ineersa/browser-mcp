@@ -13,19 +13,29 @@ class Kernel extends BaseKernel
 
     public function getProjectDir(): string
     {
-        return __DIR__.'/../';
+        return \dirname(__DIR__);
     }
 
     public function getLogDir(): string
     {
-        $dir = $_SERVER['APP_LOG_DIR']
-            ?? $_ENV['APP_LOG_DIR']
-            ?? getenv('APP_LOG_DIR');
+        return $this->getVarDir().'/log';
+    }
+
+    public function getCacheDir(): string
+    {
+        return $this->getVarDir().'/cache/'.$this->environment;
+    }
+
+    private function getVarDir(): string
+    {
+        $dir = $_SERVER['APP_VAR_DIR']
+            ?? $_ENV['APP_VAR_DIR']
+            ?? getenv('APP_VAR_DIR');
 
         if ($dir) {
             return rtrim($dir, '/');
         }
 
-        return parent::getLogDir();
+        return $this->getProjectDir().'/var';
     }
 }

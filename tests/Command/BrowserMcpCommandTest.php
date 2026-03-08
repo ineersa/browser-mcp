@@ -370,6 +370,7 @@ final class BrowserMcpCommandTest extends TestCase
             \dirname(__DIR__, 2),
             [
                 'APP_ENV' => 'test',
+                'MCP_TRANSPORT' => 'stdio',
             ],
             null,
             5.0

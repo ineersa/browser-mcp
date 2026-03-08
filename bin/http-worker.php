@@ -14,20 +14,46 @@ declare(strict_types=1);
 
 use App\Kernel;
 use App\Service\ServerFactory;
+use App\Transport\LoggingStreamableHttpTransport;
 use App\Transport\ResponseEmitter;
 use Mcp\Server\Transport\StreamableHttpTransport;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+if (!defined('STDIN')) {
+    define('STDIN', fopen('php://stdin', 'r'));
+}
+if (!defined('STDOUT')) {
+    define('STDOUT', fopen('php://stdout', 'w'));
+}
+if (!defined('STDERR')) {
+    define('STDERR', fopen('php://stderr', 'w'));
+}
 
 if (PHP_SAPI !== 'cli-server') {
     fwrite(STDERR, "This script must be run via PHP built-in server (cli-server SAPI).\n");
     exit(1);
 }
 
-// Resolve the project root: when extracted to tmp the __DIR__ is the temp dir,
-// so we rely on APP_PROJECT_DIR env var set by BrowserMcpCommand::execute().
-$projectDir = getenv('APP_PROJECT_DIR') ?: (getenv('DOCUMENT_ROOT') ?: __DIR__ . '/..');
+// Resolve the project root.
+// Priority:
+//  1. APP_PHAR_PATH  – raw path to the PHAR/static binary; wrap in phar://
+//  2. APP_PROJECT_DIR – already-resolved path (may already be phar://)
+//  3. Fallback to parent of __DIR__
+$pharPath = getenv('APP_PHAR_PATH');
+if ($pharPath) {
+    // Wrap the raw binary/phar path so PHP can read files from inside it
+    $projectDir = 'phar://' . $pharPath;
+} else {
+    $projectDir = getenv('APP_PROJECT_DIR') ?: dirname(__DIR__);
+    // If APP_PROJECT_DIR points to a file (not a directory or phar url), wrap it
+    if (!str_starts_with($projectDir, 'phar://') && is_file($projectDir)) {
+        $projectDir = 'phar://' . $projectDir;
+    }
+}
+$projectDir = rtrim($projectDir, '/');
 
 $autoloadFile = $projectDir . '/vendor/autoload.php';
 if (!is_file($autoloadFile)) {
@@ -47,6 +73,8 @@ $container = $kernel->getContainer();
 
 /** @var ServerFactory $factory */
 $factory = $container->get(ServerFactory::class);
+/** @var LoggerInterface $logger */
+$logger = $container->get(LoggerInterface::class);
 $server = $factory->create();
 
 $psr17Factory = new Psr17Factory();
@@ -58,10 +86,11 @@ $creator = new ServerRequestCreator(
 );
 $request = $creator->fromGlobals();
 
-$transport = new StreamableHttpTransport(
-    $request,
-    $psr17Factory,
-    $psr17Factory,
+$transport = new LoggingStreamableHttpTransport(
+    request: $request,
+    responseFactory: $psr17Factory,
+    streamFactory: $psr17Factory,
+    logger: $logger,
 );
 
 $response = $server->run($transport);

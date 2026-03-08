@@ -30,7 +30,7 @@ class BrowserMcpCommand extends Command
         string $projectDir,
     ) {
         if (!is_dir($projectDir) && !$this->isPharPath($projectDir)) {
-            $projectDir = dirname(__DIR__, 2);
+            $projectDir = \dirname(__DIR__, 2);
         }
         $this->projectDir = $projectDir;
         parent::__construct();
@@ -85,6 +85,14 @@ class BrowserMcpCommand extends Command
 
         $env = $_SERVER;
         $env['APP_PROJECT_DIR'] = $this->projectDir;
+        // For PHAR/static binaries, also pass the raw file path so the worker
+        // can build the correct phar:// URL for autoloading.
+        if ($this->isPharPath($this->projectDir)) {
+            $pharPath = $this->resolvePharPath();
+            if ('' !== $pharPath) {
+                $env['APP_PHAR_PATH'] = $pharPath;
+            }
+        }
         foreach ($env as $key => $value) {
             if (!\is_scalar($value)) {
                 unset($env[$key]);
@@ -93,8 +101,10 @@ class BrowserMcpCommand extends Command
 
         $cwd = $this->isPharPath($this->projectDir) ? null : $this->projectDir;
 
+        $phpBinary = is_executable(\PHP_BINARY) ? \PHP_BINARY : 'php';
+
         $process = new Process(
-            ['php', '-S', \sprintf('127.0.0.1:%d', $port), $workerPath],
+            [$phpBinary, '-S', \sprintf('127.0.0.1:%d', $port), $workerPath],
             $cwd,
             $env,
         );
@@ -149,5 +159,65 @@ class BrowserMcpCommand extends Command
     private function isPharPath(string $path): bool
     {
         return str_starts_with($path, 'phar://') || str_starts_with($path, 'phar:');
+    }
+
+    /**
+     * Returns the raw filesystem path to the PHAR archive that the worker should
+     * load via phar://.  For plain .phar files Phar::running(false) is correct.
+     * For spc micro:combine static binaries the running path points to the fused
+     * binary which is NOT a valid phar:// stream from an external PHP process.
+     * In that case we fall back to the sibling <binary>.phar file that box
+     * produced before the combine step.
+     */
+    private function resolvePharPath(): string
+    {
+        $candidates = [];
+
+        $running = \Phar::running(false);
+        if ('' !== $running) {
+            $candidates[] = $running;
+        }
+
+        $projectDirCandidate = $this->extractPharCandidateFromProjectDir();
+        if ('' !== $projectDirCandidate) {
+            $candidates[] = $projectDirCandidate;
+        }
+
+        foreach (array_unique($candidates) as $candidate) {
+            if (str_ends_with($candidate, '.phar') && is_file($candidate)) {
+                return $candidate;
+            }
+
+            $sibling = $candidate.'.phar';
+            if (is_file($sibling)) {
+                return $sibling;
+            }
+
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
+    }
+
+    private function extractPharCandidateFromProjectDir(): string
+    {
+        if (!$this->isPharPath($this->projectDir)) {
+            return '';
+        }
+
+        $path = preg_replace('#^phar:(//)?#', '', $this->projectDir);
+        if (!\is_string($path) || '' === $path) {
+            return '';
+        }
+
+        $pharPosition = strpos($path, '.phar');
+
+        if (false !== $pharPosition) {
+            return substr($path, 0, $pharPosition + 5);
+        }
+
+        return rtrim($path, '/');
     }
 }

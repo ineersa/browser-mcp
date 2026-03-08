@@ -13,7 +13,7 @@ class Kernel extends BaseKernel
 
     public function getProjectDir(): string
     {
-        return dirname(__DIR__);
+        return \dirname(__DIR__);
     }
 
     public function getLogDir(): string

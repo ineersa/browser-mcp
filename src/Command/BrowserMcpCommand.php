@@ -42,7 +42,7 @@ class BrowserMcpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $transport = strtolower((string) ($_SERVER['MCP_TRANSPORT'] ?? 'stdio'));
+        $transport = strtolower($this->getEnv('MCP_TRANSPORT', 'stdio'));
 
         try {
             if ('http' === $transport) {
@@ -80,7 +80,7 @@ class BrowserMcpCommand extends Command
 
     private function runHttp(OutputInterface $output): int
     {
-        $port = (int) ($_SERVER['MCP_PORT'] ?? 8000);
+        $port = (int) $this->getEnv('MCP_PORT', '8000');
         $workerPath = $this->resolveWorkerPath();
 
         $env = $_SERVER;
@@ -134,6 +134,18 @@ class BrowserMcpCommand extends Command
         }
 
         return $this->extractWorkerToTemp($workerPath);
+    }
+
+    private function getEnv(string $key, string $default): string
+    {
+        $value = $_SERVER[$key] ?? $_ENV[$key] ?? getenv($key);
+        if (false === $value) {
+            return $default;
+        }
+
+        $str = trim((string) $value);
+
+        return '' !== $str ? $str : $default;
     }
 
     private function extractWorkerToTemp(string $pharPath): string

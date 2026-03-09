@@ -37,6 +37,26 @@ services:
         arguments:
             $usePuppeteer: '%app.use_puppeteer%'
 
+    App\Service\Searcher\LegacyBackendSearcherAdapter:
+        arguments:
+            $provider: '%app.browser_backend%'
+
+    App\Service\Searcher\SearcherInterface:
+        alias: App\Service\Searcher\LegacyBackendSearcherAdapter
+        public: true
+
+    App\Service\Reader\LegacyBackendReaderAdapter:
+        arguments:
+            $provider: '%app.browser_backend%'
+
+    App\Service\Reader\ReaderInterface:
+        alias: App\Service\Reader\LegacyBackendReaderAdapter
+        public: true
+
+    App\Service\Formatter\FormatterPipelineInterface:
+        alias: App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter
+        public: true
+
     App\Service\BrowserState:
         public: true
 

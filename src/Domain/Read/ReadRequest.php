@@ -9,7 +9,6 @@ final readonly class ReadRequest
     public function __construct(
         public string $url,
         public string $canonicalUrl = '',
-        public ?string $provider = null,
     ) {
     }
 }

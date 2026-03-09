@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Tests\Service\Formatter;
 
 use App\Domain\Format\FormatContext;
-use App\Domain\Format\FormatPayload;
 use App\Domain\Read\ReadDocument;
+use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchResultSet;
+use App\Service\Formatter\FormatterChain;
+use App\Service\Formatter\FormatterInterface;
 use App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter;
 use App\Service\PageDisplayService;
 use PHPUnit\Framework\TestCase;
 
 final class LegacyDisplayFormatterPipelineAdapterTest extends TestCase
 {
-    public function testProcessFormatsReadDocumentViaLegacyPageDisplayService(): void
+    public function testFormatFormatsReadDocumentViaLegacyPageDisplayService(): void
     {
         $document = new ReadDocument(
             url: 'https://example.com/page',
@@ -26,39 +28,70 @@ final class LegacyDisplayFormatterPipelineAdapterTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $payload = new FormatPayload(document: $document);
-        $context = new FormatContext(tool: 'open', startLine: 0, numberOfLines: -1);
+        $context = new FormatContext(tool: 'open', startLine: 0, numberOfLines: -1, document: $document);
 
         $display = new PageDisplayService();
-        $pipeline = new LegacyDisplayFormatterPipelineAdapter($display);
+        $chain = new FormatterChain();
+        $chain->addFormatter(new LegacyDisplayFormatterPipelineAdapter($display));
 
-        $result = $pipeline->process($payload, $context);
+        $result = $chain->format($context);
         $expected = $display->renderStandalone($document->toPageContents(), 0, -1);
 
         $this->assertSame($expected, $result->output);
     }
 
-    public function testProcessFormatsSearchResultSetViaLegacyPageDisplayService(): void
+    public function testFormatFormatsSearchResultSetViaLegacyPageDisplayService(): void
     {
         $search = new SearchResultSet(
             query: 'query',
-            hits: [],
+            hits: [
+                new SearchHit(
+                    id: '0',
+                    url: 'https://example.com/page',
+                    title: 'Example Result',
+                    snippet: 'Example snippet',
+                ),
+            ],
             provider: 'searxng',
             fetchedAt: new \DateTimeImmutable(),
-            renderedText: 'Search results for "query"',
-            renderedTitle: 'query',
-            references: [],
         );
 
-        $payload = new FormatPayload(document: $search);
-        $context = new FormatContext(tool: 'search', startLine: 0, numberOfLines: -1);
+        $context = new FormatContext(tool: 'search', startLine: 0, numberOfLines: -1, document: $search);
 
         $display = new PageDisplayService();
-        $pipeline = new LegacyDisplayFormatterPipelineAdapter($display);
+        $chain = new FormatterChain();
+        $chain->addFormatter(new LegacyDisplayFormatterPipelineAdapter($display));
 
-        $result = $pipeline->process($payload, $context);
+        $result = $chain->format($context);
         $expected = $display->renderStandalone($search->toPageContents(), 0, -1);
 
         $this->assertSame($expected, $result->output);
+    }
+
+    public function testFormatRunsFormattersInOrderTheyWereAdded(): void
+    {
+        $chain = new FormatterChain();
+        $chain->addFormatter(new class() implements FormatterInterface {
+            public function format(FormatContext $context): FormatContext
+            {
+                return $context->withOutput($context->output.'A');
+            }
+        });
+        $chain->addFormatter(new class() implements FormatterInterface {
+            public function format(FormatContext $context): FormatContext
+            {
+                return $context->withOutput($context->output.'B');
+            }
+        });
+        $chain->addFormatter(new class() implements FormatterInterface {
+            public function format(FormatContext $context): FormatContext
+            {
+                return $context->withOutput($context->output.'C');
+            }
+        });
+
+        $result = $chain->format(new FormatContext(tool: 'open'));
+
+        $this->assertSame('ABC', $result->output);
     }
 }

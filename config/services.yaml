@@ -53,8 +53,13 @@ services:
         alias: App\Service\Reader\LegacyBackendReaderAdapter
         public: true
 
+    App\Service\Formatter\FormatterChain:
+        public: true
+        calls:
+            - [addFormatter, ['@App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter']]
+
     App\Service\Formatter\FormatterPipelineInterface:
-        alias: App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter
+        alias: App\Service\Formatter\FormatterChain
         public: true
 
     App\Service\BrowserState:

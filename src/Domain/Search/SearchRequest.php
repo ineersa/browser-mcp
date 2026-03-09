@@ -9,7 +9,6 @@ final readonly class SearchRequest
     public function __construct(
         public string $query,
         public int $limit = 5,
-        public ?string $provider = null,
     ) {
     }
 }

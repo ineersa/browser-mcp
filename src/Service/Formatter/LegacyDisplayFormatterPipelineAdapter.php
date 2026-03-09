@@ -5,22 +5,21 @@ declare(strict_types=1);
 namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatContext;
-use App\Domain\Format\FormatPayload;
 use App\Domain\Read\ReadDocument;
 use App\Domain\Search\SearchResultSet;
 use App\Service\DTO\PageContents;
 use App\Service\PageDisplayService;
 
-final readonly class LegacyDisplayFormatterPipelineAdapter implements FormatterPipelineInterface
+final readonly class LegacyDisplayFormatterPipelineAdapter implements FormatterInterface
 {
     public function __construct(
         private PageDisplayService $pageDisplay,
     ) {
     }
 
-    public function process(FormatPayload $payload, FormatContext $context): FormatPayload
+    public function format(FormatContext $context): FormatContext
     {
-        $page = $this->resolvePage($payload);
+        $page = $this->resolvePage($context->document);
         $startLine = $context->startLine ?? 0;
         $numberOfLines = $context->fetchAll ? -1 : ($context->numberOfLines ?? -1);
 
@@ -30,20 +29,16 @@ final readonly class LegacyDisplayFormatterPipelineAdapter implements FormatterP
             numLines: $numberOfLines,
         );
 
-        return new FormatPayload(
-            document: $payload->document,
-            output: $output,
-            working: $payload->working,
-        );
+        return $context->withOutput($output);
     }
 
-    private function resolvePage(FormatPayload $payload): PageContents
+    private function resolvePage(mixed $document): PageContents
     {
         return match (true) {
-            $payload->document instanceof SearchResultSet => $payload->document->toPageContents(),
-            $payload->document instanceof ReadDocument => $payload->document->toPageContents(),
-            $payload->document instanceof PageContents => $payload->document,
-            default => throw new \InvalidArgumentException(\sprintf('Unsupported document type `%s` for legacy formatter pipeline.', get_debug_type($payload->document))),
+            $document instanceof SearchResultSet => $document->toPageContents(),
+            $document instanceof ReadDocument => $document->toPageContents(),
+            $document instanceof PageContents => $document,
+            default => throw new \InvalidArgumentException(\sprintf('Unsupported document type `%s` for legacy formatter pipeline.', get_debug_type($document))),
         };
     }
 }

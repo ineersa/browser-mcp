@@ -6,8 +6,9 @@ namespace App\Service\Searcher;
 
 use App\Domain\Search\SearchRequest;
 use App\Domain\Search\SearchResultSet;
+use App\Service\ProviderInterface;
 
-interface SearcherInterface
+interface SearcherInterface extends ProviderInterface
 {
     public function search(SearchRequest $request): SearchResultSet;
 }

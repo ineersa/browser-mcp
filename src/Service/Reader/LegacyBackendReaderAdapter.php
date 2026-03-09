@@ -16,6 +16,11 @@ final readonly class LegacyBackendReaderAdapter implements ReaderInterface
     ) {
     }
 
+    public function getProvider(): string
+    {
+        return $this->provider;
+    }
+
     public function read(ReadRequest $request): ReadDocument
     {
         $fetchUrl = '' !== $request->canonicalUrl ? $request->canonicalUrl : $request->url;
@@ -27,7 +32,7 @@ final readonly class LegacyBackendReaderAdapter implements ReaderInterface
             title: $page->title,
             markdown: $page->text,
             references: $page->urls,
-            provider: $request->provider ?? $this->provider,
+            provider: $this->getProvider(),
             fetchedAt: new \DateTimeImmutable(),
         );
     }

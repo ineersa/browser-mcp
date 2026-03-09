@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Service\ServerFactory;
+use App\Service\Utilities;
 use App\Transport\LoggingStdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -42,7 +43,7 @@ class BrowserMcpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $transport = strtolower($this->getEnv('MCP_TRANSPORT', 'stdio'));
+        $transport = strtolower(Utilities::getEnv('MCP_TRANSPORT', 'stdio'));
 
         try {
             if ('http' === $transport) {
@@ -80,7 +81,7 @@ class BrowserMcpCommand extends Command
 
     private function runHttp(OutputInterface $output): int
     {
-        $port = (int) $this->getEnv('MCP_PORT', '8000');
+        $port = (int) Utilities::getEnv('MCP_PORT', '8000');
         $workerPath = $this->resolveWorkerPath();
 
         $env = $_SERVER;
@@ -134,18 +135,6 @@ class BrowserMcpCommand extends Command
         }
 
         return $this->extractWorkerToTemp($workerPath);
-    }
-
-    private function getEnv(string $key, string $default): string
-    {
-        $value = $_SERVER[$key] ?? $_ENV[$key] ?? getenv($key);
-        if (false === $value) {
-            return $default;
-        }
-
-        $str = trim((string) $value);
-
-        return '' !== $str ? $str : $default;
     }
 
     private function extractWorkerToTemp(string $pharPath): string

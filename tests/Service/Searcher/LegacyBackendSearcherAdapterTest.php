@@ -32,16 +32,14 @@ final class LegacyBackendSearcherAdapterTest extends TestCase
 
         $this->assertSame('query', $result->query);
         $this->assertSame('searxng', $result->provider);
-        $this->assertSame($page->text, $result->renderedText);
-        $this->assertSame($page->title, $result->renderedTitle);
-        $this->assertSame($page->urls, $result->references);
         $this->assertCount(1, $result->hits);
         $this->assertSame('result-1', $result->hits[0]->id);
         $this->assertSame('https://example.com/page', $result->hits[0]->url);
 
         $converted = $result->toPageContents();
-        $this->assertSame($page->text, $converted->text);
-        $this->assertSame($page->title, $converted->title);
+        $this->assertStringContainsString('Search results for "query"', $converted->text);
+        $this->assertStringContainsString('URL: https://example.com/page', $converted->text);
+        $this->assertSame('query', $converted->title);
         $this->assertSame($page->urls, $converted->urls);
     }
 }

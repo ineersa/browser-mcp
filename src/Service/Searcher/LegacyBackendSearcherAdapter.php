@@ -18,6 +18,11 @@ final readonly class LegacyBackendSearcherAdapter implements SearcherInterface
     ) {
     }
 
+    public function getProvider(): string
+    {
+        return $this->provider;
+    }
+
     public function search(SearchRequest $request): SearchResultSet
     {
         $page = $this->backend->search($request->query, $request->limit);
@@ -36,11 +41,8 @@ final readonly class LegacyBackendSearcherAdapter implements SearcherInterface
         return new SearchResultSet(
             query: $request->query,
             hits: $hits,
-            provider: $request->provider ?? $this->provider,
+            provider: $this->getProvider(),
             fetchedAt: new \DateTimeImmutable(),
-            renderedText: $page->text,
-            renderedTitle: $page->title,
-            references: $page->urls,
         );
     }
 }

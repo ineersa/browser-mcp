@@ -68,26 +68,7 @@ readers:
     http:
       timeout_seconds: 30
       max_retries: 2
-    puppeteer:
-      script_path: bin/puppeteer-fetch.js
-      node_binary: node
-      timeout_seconds: 45
 ```
-
-## Puppeteer rendering (optional)
-
-To render JavaScript-heavy pages you can delegate fetching to Puppeteer instead of the Symfony HTTP client.
-
-1. Install Node.js 18+ and run
-    ```bash
-       npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth puppeteer-extra-plugin-user-preferences puppeteer-extra-plugin-user-data-dir
-    ```
-    from the project root (or provide compatible installations globally using `npm install -g`).
-    The helper automatically enables the stealth plugin when present and falls back to vanilla Puppeteer otherwise.
-2. Ensure the `node` binary is on your `PATH`, or set `readers.providers.puppeteer.node_binary` in `browser_config.yaml`.
-3. Enable Puppeteer by setting `readers.selected: puppeteer` in `browser_config.yaml`. Optional: adjust `readers.providers.puppeteer.timeout_seconds`.
-
-When enabled, the Puppeteer reader invokes `bin/puppeteer-fetch.js`, which launches a headless browser, waits for the network to settle, performs a short auto-scroll to trigger lazy content, and returns the rendered HTML to the backend.
 
 ## MCP config:
 

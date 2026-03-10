@@ -14,9 +14,17 @@ final class PageProcessor
     private const HTML_SUP_RE = '/<sup( [^>]*)?>([\w\-]+)<\/sup>/u';
     private const HTML_SUB_RE = '/<sub( [^>]*)?>([\w\-]+)<\/sub>/u';
     private const HTML_TAGS_SEQUENCE_RE = '/(?<=\w)((<[^>]*>)+)(?=\w)/u';
+    private const MIN_CONTENT_TEXT_LEN = 120;
+    private const POSITIVE_HINT_RE = '/\b(article|content|entry|main|post|markdown|doc|documentation|readme|page-body|prose)\b/i';
+    private const NEGATIVE_HINT_RE = '/\b(nav|navbar|menu|footer|header|sidebar|aside|related|share|social|cookie|banner|popup|modal|breadcrumb|pagination|ads?|advert|promo|subscribe)\b/i';
+    /** @var string[] */
+    private const DEFAULT_NOISE_CLASS_TOKENS = ['codeblock-lines', 'linenos', 'line-numbers', 'gutter'];
 
     /** Create a PageContents from HTML. */
-    public static function processHtml(string $html, string $url, ?string $title, bool $displayUrls = false): PageContents
+    /**
+     * @param string[] $noiseClassTokens
+     */
+    public static function processHtml(string $html, string $url, ?string $title, bool $displayUrls = false, array $noiseClassTokens = []): PageContents
     {
         $html = self::removeUnicodeSmp($html);
         $html = self::replaceSpecialChars($html);
@@ -42,16 +50,24 @@ final class PageProcessor
         $xpath = new \DOMXPath($dom);
         $finalTitle = $title ?? self::extractTitle($xpath) ?? ('' !== $url ? Utilities::getDomain($url) : '');
 
-        $urls = self::cleanLinks($dom, $xpath, $url);
+        $root = self::pickContentRoot($xpath);
+        if ($root instanceof \DOMElement) {
+            self::removeBoilerplate($xpath, $root);
+            self::removeKnownNoise($xpath, $root, $noiseClassTokens);
+            self::absolutizeLinks($xpath, $root, $url);
+        }
+
         self::replaceImages($dom, $xpath);
         self::removeMath($dom, $xpath);
 
-        $cleanHtml = $dom->saveHTML() ?: '';
+        $cleanHtml = $root instanceof \DOMElement
+            ? (string) ($dom->saveHTML($root) ?: '')
+            : (string) ($dom->saveHTML() ?: '');
         $text = self::normalizeText(self::htmlToText($cleanHtml));
 
         $top = $displayUrls ? "\nURL: $url\n" : '';
 
-        return new PageContents(url: $url, text: $top.$text, title: $finalTitle, urls: $urls);
+        return new PageContents(url: $url, text: $top.$text, title: $finalTitle, urls: []);
     }
 
     private static function extractTitle(\DOMXPath $xpath): ?string
@@ -64,53 +80,33 @@ final class PageProcessor
         return null;
     }
 
-    /** @return array<string,string> */
-    private static function cleanLinks(\DOMDocument $dom, \DOMXPath $xpath, string $curUrl): array
+    private static function pickContentRoot(\DOMXPath $xpath): ?\DOMElement
     {
-        $curDomain = Utilities::getDomain($curUrl);
-        $urls = [];
-        $urlsRev = [];
-        $nodes = $xpath->query('//a[@href]');
-        if (!$nodes) {
-            return [];
-        }
-        foreach ($nodes as $a) {
-            if (!$a instanceof \DOMElement || !$a->hasAttribute('href')) {
-                continue;
-            }
-            $href = (string) $a->getAttribute('href');
-            if (str_starts_with($href, 'mailto:') || str_starts_with($href, 'javascript:')) {
-                continue;
-            }
-            $text = self::mergeWhitespace($a->textContent ?? '');
-            $text = str_replace('†', '‡', $text);
-            if ('' === trim(preg_replace('/【@([^】]+)】/u', '', $text) ?? '')) {
-                continue; // likely an image-only link
-            }
-            if (str_starts_with($href, '#')) {
-                self::replaceNodeWithText($dom, $a, $text);
-                continue;
-            }
-            $link = self::urlJoin($curUrl, $href);
-            $domain = Utilities::getDomain($link);
-            if ('' === $domain) {
-                self::replaceNodeWithText($dom, $a, $text);
-                continue;
-            }
-            $link = self::arxivToAr5iv($link);
-            $linkId = $urlsRev[$link] ?? null;
-            if (null === $linkId) {
-                $linkId = (string) \count($urls);
-                $urls[$linkId] = $link;
-                $urlsRev[$link] = $linkId;
-            }
-            $replacement = $domain === $curDomain
-                ? \sprintf('【%s†%s】', $linkId, $text)
-                : \sprintf('【%s†%s†%s】', $linkId, $text, $domain);
-            self::replaceNodeWithText($dom, $a, $replacement);
+        $body = $xpath->query('//body')->item(0);
+        if (!$body instanceof \DOMElement) {
+            return null;
         }
 
-        return $urls;
+        $candidates = $xpath->query('//main | //article | //section | //div');
+        if (!$candidates) {
+            return $body;
+        }
+
+        $bestNode = null;
+        $bestScore = 0.0;
+        foreach ($candidates as $candidate) {
+            if (!$candidate instanceof \DOMElement) {
+                continue;
+            }
+
+            $score = self::scoreCandidate($xpath, $candidate);
+            if ($score > $bestScore) {
+                $bestNode = $candidate;
+                $bestScore = $score;
+            }
+        }
+
+        return $bestNode ?? $body;
     }
 
     private static function replaceImages(\DOMDocument $dom, \DOMXPath $xpath): void
@@ -144,6 +140,200 @@ final class PageProcessor
         }
     }
 
+    private static function removeBoilerplate(\DOMXPath $xpath, \DOMElement $root): void
+    {
+        $nodes = $xpath->query('.//*', $root);
+        if (!$nodes) {
+            return;
+        }
+
+        $toRemove = [];
+        foreach ($nodes as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+            if (self::isBoilerplateNode($xpath, $node)) {
+                $toRemove[] = $node;
+            }
+        }
+
+        foreach ($toRemove as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+    }
+
+    /**
+     * @param string[] $noiseClassTokens
+     */
+    private static function removeKnownNoise(\DOMXPath $xpath, \DOMElement $root, array $noiseClassTokens): void
+    {
+        $tokens = self::normalizeNoiseClassTokens($noiseClassTokens);
+        if ([] === $tokens) {
+            return;
+        }
+
+        $conditions = array_map(
+            static fn (string $token): string => sprintf('contains(concat(" ", normalize-space(@class), " "), " %s ")', $token),
+            $tokens,
+        );
+        $query = './/*[self::pre or self::div or self::span]['.implode(' or ', $conditions).']';
+        $nodes = $xpath->query($query, $root);
+        if (!$nodes) {
+            return;
+        }
+
+        $toRemove = [];
+        foreach ($nodes as $node) {
+            if ($node instanceof \DOMElement) {
+                $toRemove[] = $node;
+            }
+        }
+
+        foreach ($toRemove as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+    }
+
+    /**
+     * @param string[] $noiseClassTokens
+     *
+     * @return string[]
+     */
+    private static function normalizeNoiseClassTokens(array $noiseClassTokens): array
+    {
+        $tokens = [];
+        foreach (array_merge(self::DEFAULT_NOISE_CLASS_TOKENS, $noiseClassTokens) as $token) {
+            if (!is_string($token)) {
+                continue;
+            }
+
+            $normalized = strtolower(trim($token));
+            if ('' === $normalized) {
+                continue;
+            }
+
+            $tokens[] = $normalized;
+        }
+
+        return array_values(array_unique($tokens));
+    }
+
+    private static function isBoilerplateNode(\DOMXPath $xpath, \DOMElement $node): bool
+    {
+        $tagName = strtolower($node->tagName);
+        if (in_array($tagName, ['script', 'style', 'noscript', 'template', 'iframe', 'svg', 'canvas', 'nav', 'footer', 'header', 'aside', 'form', 'button'], true)) {
+            return true;
+        }
+
+        $className = strtolower(trim((string) $node->getAttribute('class')));
+        $id = strtolower(trim((string) $node->getAttribute('id')));
+        $role = strtolower(trim((string) $node->getAttribute('role')));
+        $ariaLabel = strtolower(trim((string) $node->getAttribute('aria-label')));
+        $hints = trim(implode(' ', array_filter([$className, $id, $role, $ariaLabel], static fn (string $value): bool => '' !== $value)));
+        if ('' === $hints || 1 !== preg_match(self::NEGATIVE_HINT_RE, $hints)) {
+            return false;
+        }
+
+        if (!in_array($tagName, ['div', 'section', 'ul', 'ol', 'li'], true)) {
+            return false;
+        }
+
+        if (self::containsLikelyMainContent($xpath, $node)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function containsLikelyMainContent(\DOMXPath $xpath, \DOMElement $node): bool
+    {
+        $mainNodes = $xpath->query('.//main | .//article', $node);
+        if ($mainNodes && $mainNodes->length > 0) {
+            return true;
+        }
+
+        $textLen = mb_strlen(self::mergeWhitespace($node->textContent ?? ''));
+        if ($textLen < 600) {
+            return false;
+        }
+
+        $paragraphs = $xpath->query('.//p', $node);
+        $headings = $xpath->query('.//h1 | .//h2 | .//h3', $node);
+
+        return ($paragraphs?->length ?? 0) >= 3 || ($headings?->length ?? 0) >= 1;
+    }
+
+    private static function scoreCandidate(\DOMXPath $xpath, \DOMElement $candidate): float
+    {
+        $text = self::mergeWhitespace($candidate->textContent ?? '');
+        $textLen = mb_strlen($text);
+        if ($textLen < self::MIN_CONTENT_TEXT_LEN) {
+            return 0.0;
+        }
+
+        $tagName = strtolower($candidate->tagName);
+        $score = (float) $textLen;
+        if ('main' === $tagName || 'article' === $tagName) {
+            $score += 450.0;
+        }
+
+        $className = strtolower(trim((string) $candidate->getAttribute('class')));
+        $id = strtolower(trim((string) $candidate->getAttribute('id')));
+        $hints = trim($className.' '.$id);
+        if ('' !== $hints && 1 === preg_match(self::POSITIVE_HINT_RE, $hints)) {
+            $score += 300.0;
+        }
+        if ('' !== $hints && 1 === preg_match(self::NEGATIVE_HINT_RE, $hints)) {
+            $score -= 400.0;
+        }
+
+        $links = $xpath->query('.//a', $candidate);
+        $linkTextLen = 0;
+        if ($links) {
+            foreach ($links as $link) {
+                if (!$link instanceof \DOMElement) {
+                    continue;
+                }
+                $linkTextLen += mb_strlen(self::mergeWhitespace($link->textContent ?? ''));
+            }
+        }
+
+        if ($textLen > 0) {
+            $linkDensity = $linkTextLen / $textLen;
+            $score -= min(0.9, $linkDensity) * 500.0;
+        }
+
+        return $score;
+    }
+
+    private static function absolutizeLinks(\DOMXPath $xpath, \DOMElement $root, string $baseUrl): void
+    {
+        $nodes = $xpath->query('.//a[@href]', $root);
+        if (!$nodes) {
+            return;
+        }
+
+        foreach ($nodes as $a) {
+            if (!$a instanceof \DOMElement || !$a->hasAttribute('href')) {
+                continue;
+            }
+
+            $href = trim((string) $a->getAttribute('href'));
+            if (
+                '' === $href
+                || str_starts_with($href, '#')
+                || str_starts_with($href, 'mailto:')
+                || str_starts_with($href, 'javascript:')
+                || str_starts_with($href, 'tel:')
+                || str_starts_with($href, 'data:')
+            ) {
+                continue;
+            }
+
+            $a->setAttribute('href', self::urlJoin($baseUrl, $href));
+        }
+    }
+
     private static function replaceNodeWithText(\DOMDocument $dom, \DOMNode $node, string $text): void
     {
         $textNode = $dom->createTextNode($text);
@@ -156,7 +346,7 @@ final class PageProcessor
         $config = new Config(
             unicodeSnob: true,
             bodyWidth: 0,
-            ignoreAnchors: true,
+            ignoreAnchors: false,
             ignoreImages: true,
             ignoreEmphasis: true,
             ignoreTables: true,
@@ -184,7 +374,6 @@ final class PageProcessor
 
     private static function normalizeText(string $text): string
     {
-        $text = (string) preg_replace('/(【@[^】]+】)(\s+)/u', '$2$1', $text);
         $text = self::removeEmptyLines($text);
         $text = self::collapseExtraNewlines($text);
         $text = self::normalizeTrailingWhitespace($text);
@@ -236,8 +425,6 @@ final class PageProcessor
     private static function replaceSpecialChars(string $text): string
     {
         $replacements = [
-            '【' => '〖',
-            '】' => '〗',
             '◼' => '◾',
             "\u{200B}" => '', // zero width space
             "\u{00A0}" => ' ',
@@ -252,11 +439,6 @@ final class PageProcessor
         $text = (string) preg_replace('/\s+/', ' ', $text);
 
         return trim($text);
-    }
-
-    private static function arxivToAr5iv(string $url): string
-    {
-        return preg_replace('/arxiv\.org/i', 'ar5iv.org', $url) ?? $url;
     }
 
     private static function removeUnicodeSmp(string $text): string

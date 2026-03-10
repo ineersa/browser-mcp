@@ -19,10 +19,17 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class HttpReader implements ReaderContract
 {
+    public const DEFAULT_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0';
+
+    /**
+     * @param string[] $noiseClassTokens
+     */
     public function __construct(
         private readonly HttpClientInterface $client,
         private readonly float $timeoutSeconds = 30.0,
         private readonly int $maxRetries = 2,
+        private readonly string $userAgent = self::DEFAULT_USER_AGENT,
+        private readonly array $noiseClassTokens = [],
     ) {
     }
 
@@ -62,8 +69,9 @@ class HttpReader implements ReaderContract
         return PageProcessor::processHtml(
             html: $html,
             url: $url,
-            title: $url,
+            title: null,
             displayUrls: true,
+            noiseClassTokens: $this->noiseClassTokens,
         );
     }
 
@@ -82,6 +90,13 @@ class HttpReader implements ReaderContract
                 'max_redirects' => 10,
                 'timeout' => $this->timeoutSeconds > 0 ? $this->timeoutSeconds : 30.0,
                 'max_retries' => max(0, $this->maxRetries),
+                'headers' => [
+                    'User-Agent' => $this->userAgent,
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.7',
+                    'Accept-Language' => 'en-US,en;q=0.9',
+                    'Cache-Control' => 'no-cache',
+                    'Pragma' => 'no-cache',
+                ],
             ]);
 
             return $response->getContent();

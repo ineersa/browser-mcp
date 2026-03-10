@@ -24,7 +24,7 @@ final class HttpReaderTest extends TestCase
         $this->assertSame($url, $result->url);
         $this->assertSame($url, $result->canonicalUrl);
         $this->assertSame('searxng', $result->provider);
-        $this->assertSame($url, $result->title);
+        $this->assertSame('Article', $result->title);
         $this->assertStringContainsString('Hello', $result->markdown);
     }
 
@@ -105,5 +105,9 @@ final class HttpReaderTest extends TestCase
 
         $this->assertSame(12.5, $optionsSeen['timeout'] ?? null);
         $this->assertSame(4, $optionsSeen['max_retries'] ?? null);
+        $normalizedHeaders = $optionsSeen['normalized_headers'] ?? [];
+        $this->assertSame(['User-Agent: '.HttpReader::DEFAULT_USER_AGENT], $normalizedHeaders['user-agent'] ?? null);
+        $this->assertArrayHasKey('accept', $normalizedHeaders);
+        $this->assertArrayHasKey('accept-language', $normalizedHeaders);
     }
 }

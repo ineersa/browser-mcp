@@ -18,27 +18,27 @@ general:
   port: "%env(TEST_MCP_PORT)%"
 readers:
   providers:
-    puppeteer:
-      node_binary: "%env(TEST_NODE_BINARY)%"
-      script_path: "bin/%env(TEST_SCRIPT_NAME)%"
+    http:
+      timeout_seconds: "%env(TEST_HTTP_TIMEOUT)%"
+      user_agent: "%env(TEST_HTTP_UA)%"
 YAML
 );
 
-        $snapshot = $this->snapshotEnv(['CONFIG_FILE', 'TEST_TRANSPORT', 'TEST_MCP_PORT', 'TEST_NODE_BINARY', 'TEST_SCRIPT_NAME']);
+        $snapshot = $this->snapshotEnv(['CONFIG_FILE', 'TEST_TRANSPORT', 'TEST_MCP_PORT', 'TEST_HTTP_TIMEOUT', 'TEST_HTTP_UA']);
 
         try {
             $_SERVER['CONFIG_FILE'] = 'config.yaml';
             $_ENV['TEST_TRANSPORT'] = 'http';
             $_ENV['TEST_MCP_PORT'] = '8080';
-            $_ENV['TEST_NODE_BINARY'] = '/usr/local/bin/node';
-            $_SERVER['TEST_SCRIPT_NAME'] = 'fetch.js';
+            $_ENV['TEST_HTTP_TIMEOUT'] = '12';
+            $_SERVER['TEST_HTTP_UA'] = 'test-agent';
 
             $config = (new ConfigLoader($dir))->load();
 
             $this->assertSame('http', $config->getTransport());
             $this->assertSame(8080, $config->getPort());
-            $this->assertSame('/usr/local/bin/node', $config->getReaderConfig('puppeteer')['node_binary']);
-            $this->assertSame('bin/fetch.js', $config->getReaderConfig('puppeteer')['script_path']);
+            $this->assertSame('12', $config->getReaderConfig('http')['timeout_seconds']);
+            $this->assertSame('test-agent', $config->getReaderConfig('http')['user_agent']);
         } finally {
             $this->restoreEnv($snapshot);
         }

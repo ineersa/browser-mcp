@@ -32,9 +32,7 @@ services:
         factory: ['@App\Service\Searcher\SearcherFactory', 'create']
         public: true
 
-    App\Service\Reader\ReaderFactory:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
+    App\Service\Reader\ReaderFactory: ~
 
     App\Service\Contracts\ReaderContract:
         factory: ['@App\Service\Reader\ReaderFactory', 'create']

@@ -31,7 +31,51 @@ final readonly class ConfigLoader
             throw new \RuntimeException(sprintf('Config file `%s` must contain a YAML object at root.', $resolvedPath));
         }
 
+        $parsed = $this->resolveEnvVars($parsed);
+
         return new AppConfig($parsed);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function resolveEnvVars(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $data[$key] = $this->resolveEnvVarsInString($value);
+                continue;
+            }
+
+            if (is_array($value)) {
+                $data[$key] = $this->resolveEnvVars($value);
+            }
+        }
+
+        return $data;
+    }
+
+    private function resolveEnvVarsInString(string $value): string
+    {
+        return preg_replace_callback(
+            '/%env\(([^)]+)\)%/',
+            function (array $matches): string {
+                $varName = trim($matches[1]);
+                if ('' === $varName) {
+                    throw new \RuntimeException('Encountered invalid environment placeholder `%env()%`.');
+                }
+
+                $resolved = $_ENV[$varName] ?? $_SERVER[$varName] ?? getenv($varName);
+                if (false === $resolved) {
+                    throw new \RuntimeException(sprintf('Environment variable "%s" is not defined.', $varName));
+                }
+
+                return (string) $resolved;
+            },
+            $value,
+        ) ?: $value;
     }
 
     private function resolvePath(string $configFile): string

@@ -28,7 +28,7 @@ services:
     App\Config\AppConfig:
         factory: ['@App\Config\ConfigLoader', 'load']
 
-    App\Service\Searcher\SearcherInterface:
+    App\Service\Contracts\SearcherContract:
         factory: ['@App\Service\Searcher\SearcherFactory', 'create']
         public: true
 
@@ -36,7 +36,7 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    App\Service\Reader\ReaderInterface:
+    App\Service\Contracts\ReaderContract:
         factory: ['@App\Service\Reader\ReaderFactory', 'create']
         public: true
 
@@ -56,7 +56,7 @@ services:
         resource: '../src/Tools'
         public: true
 
-    App\Service\ServerFactory:
+    App\Server\ServerFactory:
         arguments:
             $sessionDir: '%env(string:APP_VAR_DIR)%/sessions'
         public: true

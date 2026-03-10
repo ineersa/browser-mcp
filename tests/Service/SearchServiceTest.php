@@ -6,7 +6,7 @@ namespace App\Tests\Service;
 
 use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchResultSet;
-use App\Service\Searcher\SearcherInterface;
+use App\Service\Contracts\SearcherContract;
 use App\Service\SearchService;
 use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +29,7 @@ final class SearchServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $searcher = $this->createStub(SearcherInterface::class);
+        $searcher = $this->createStub(SearcherContract::class);
         $searcher->method('search')->willReturn($resultSet);
 
         $service = new SearchService($searcher);
@@ -49,7 +49,7 @@ final class SearchServiceTest extends TestCase
 
     public function testInvokeReturnsEmptyArrayWhenNoHits(): void
     {
-        $searcher = $this->createMock(SearcherInterface::class);
+        $searcher = $this->createMock(SearcherContract::class);
         $searcher->expects($this->once())->method('search')->willReturn(
             new SearchResultSet(query: 'query', hits: [], provider: 'searxng', fetchedAt: new \DateTimeImmutable())
         );

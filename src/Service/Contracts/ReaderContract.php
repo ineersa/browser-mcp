@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service\Reader;
+namespace App\Service\Contracts;
 
 use App\Domain\Read\ReadDocument;
 use App\Domain\Read\ReadRequest;
-use App\Service\ProviderInterface;
 
-interface ReaderInterface extends ProviderInterface
+interface ReaderContract extends ProviderContract
 {
     public function read(ReadRequest $request): ReadDocument;
 }

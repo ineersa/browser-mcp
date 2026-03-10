@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Reader\Processors;
 
 use App\Service\DTO\PageContents;
+use App\Service\Utilities;
 use Ineersa\Html2text\Config;
 use Ineersa\Html2text\HTML2Markdown;
 

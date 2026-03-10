@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatPayload;
+use App\Service\Contracts\FormatterContract;
 use HelgeSverre\Toon\Toon;
 
-final class ToonFormatter implements FormatterInterface
+final class ToonFormatter implements FormatterContract
 {
     public function format(FormatPayload $payload): FormatPayload
     {

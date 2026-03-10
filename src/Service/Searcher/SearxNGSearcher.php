@@ -7,6 +7,7 @@ namespace App\Service\Searcher;
 use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchRequest;
 use App\Domain\Search\SearchResultSet;
+use App\Service\Contracts\SearcherContract;
 use App\Service\Exception\BackendError;
 use App\Service\Utilities;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
@@ -15,7 +16,7 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final readonly class SearxNGSearcher implements SearcherInterface
+final readonly class SearxNGSearcher implements SearcherContract
 {
     public function __construct(
         private string $searxNGUrl,

@@ -12,12 +12,12 @@ use App\Service\Formatter\FormatterChain;
 use App\Service\Formatter\NormalizeHitsFormatter;
 use App\Service\Formatter\SearchResultToArrayFormatter;
 use App\Service\Formatter\ToonFormatter;
-use App\Service\Searcher\SearcherInterface;
+use App\Service\Contracts\SearcherContract;
 
 final readonly class SearchService
 {
     public function __construct(
-        private SearcherInterface $searcher,
+        private SearcherContract $searcher,
     ) {
     }
 

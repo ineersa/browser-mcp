@@ -6,8 +6,9 @@ namespace App\Service\Formatter;
 
 use App\Domain\Find\FindDocument;
 use App\Domain\Format\FormatPayload;
+use App\Service\Contracts\FormatterContract;
 
-final class FindResultToArrayFormatter implements FormatterInterface
+final class FindResultToArrayFormatter implements FormatterContract
 {
     public function format(FormatPayload $payload): FormatPayload
     {

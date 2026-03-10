@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service\Formatter;
+namespace App\Service\Contracts;
 
 use App\Domain\Format\FormatPayload;
 
-interface FormatterInterface
+interface FormatterContract
 {
     public function format(FormatPayload $payload): FormatPayload;
 }

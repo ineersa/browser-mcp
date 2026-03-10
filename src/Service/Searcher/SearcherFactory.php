@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Searcher;
 
 use App\Config\AppConfig;
+use App\Service\Contracts\SearcherContract;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class SearcherFactory
@@ -15,7 +16,7 @@ final readonly class SearcherFactory
     ) {
     }
 
-    public function create(): SearcherInterface
+    public function create(): SearcherContract
     {
         $provider = $this->config->getSelectedSearcher();
         $providerConfig = $this->config->getSearcherConfig($provider);

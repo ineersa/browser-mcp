@@ -13,7 +13,7 @@ declare(strict_types=1);
  */
 
 use App\Kernel;
-use App\Service\ServerFactory;
+use App\Server\ServerFactory;
 use App\Transport\LoggingStreamableHttpTransport;
 use App\Transport\ResponseEmitter;
 use Mcp\Server\Transport\StreamableHttpTransport;

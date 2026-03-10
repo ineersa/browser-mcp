@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Config\AppConfig;
-use App\Service\ServerFactory;
+use App\Server\ServerFactory;
 use App\Transport\LoggingStdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;

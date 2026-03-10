@@ -6,10 +6,11 @@ namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatPayload;
 use App\Domain\Read\ReadDocument;
+use App\Service\Contracts\FormatterContract;
 use App\Service\Exception\ToolUsageError;
 use App\Service\Utilities;
 
-final readonly class NumLinesFormatter implements FormatterInterface
+final readonly class NumLinesFormatter implements FormatterContract
 {
     public function __construct(
         private int $startAtLine,

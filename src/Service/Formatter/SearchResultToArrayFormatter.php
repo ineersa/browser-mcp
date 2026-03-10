@@ -6,9 +6,10 @@ namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatPayload;
 use App\Domain\Search\SearchResultSet;
+use App\Service\Contracts\FormatterContract;
 use App\Service\Utilities;
 
-final class SearchResultToArrayFormatter implements FormatterInterface
+final class SearchResultToArrayFormatter implements FormatterContract
 {
     public function format(FormatPayload $payload): FormatPayload
     {

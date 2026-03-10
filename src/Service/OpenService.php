@@ -13,7 +13,7 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\Formatter\FormatterChain;
 use App\Service\Formatter\LinedOutputFormatter;
 use App\Service\Formatter\NumLinesFormatter;
-use App\Service\Reader\ReaderInterface;
+use App\Service\Contracts\ReaderContract;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -21,7 +21,7 @@ final readonly class OpenService
 {
     public function __construct(
         private AppConfig $config,
-        private ReaderInterface $reader,
+        private ReaderContract $reader,
         private CacheInterface $cache,
     ) {
     }

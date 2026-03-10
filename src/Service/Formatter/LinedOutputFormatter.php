@@ -6,10 +6,11 @@ namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatPayload;
 use App\Domain\Read\ReadDocument;
+use App\Service\Contracts\FormatterContract;
 use App\Service\DTO\PageContents;
 use App\Service\Utilities;
 
-final class LinedOutputFormatter implements FormatterInterface
+final class LinedOutputFormatter implements FormatterContract
 {
     public function format(FormatPayload $payload): FormatPayload
     {

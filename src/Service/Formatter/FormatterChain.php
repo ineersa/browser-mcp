@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatPayload;
+use App\Service\Contracts\FormatterContract;
 
 final class FormatterChain
 {
     /**
-     * @var list<FormatterInterface>
+     * @var list<FormatterContract>
      */
     private array $formatters = [];
 
-    public function addFormatter(FormatterInterface $formatter): self
+    public function addFormatter(FormatterContract $formatter): self
     {
         $this->formatters[] = $formatter;
 

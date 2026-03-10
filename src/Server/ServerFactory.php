@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Server;
 
 use App\Tools\FindTool;
 use App\Tools\OpenTool;

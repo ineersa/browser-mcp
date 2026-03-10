@@ -6,10 +6,10 @@ namespace App\Tests\Service;
 
 use App\Config\AppConfig;
 use App\Domain\Read\ReadDocument;
+use App\Service\Contracts\ReaderContract;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
-use App\Service\Reader\ReaderInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
@@ -28,7 +28,7 @@ final class OpenServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $reader = $this->createMock(ReaderInterface::class);
+        $reader = $this->createMock(ReaderContract::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
         $service = new OpenService($this->config(), $reader, new ArrayAdapter());
@@ -53,7 +53,7 @@ final class OpenServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $reader = $this->createMock(ReaderInterface::class);
+        $reader = $this->createMock(ReaderContract::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
         $service = new OpenService($this->config(), $reader, new ArrayAdapter());
@@ -77,7 +77,7 @@ final class OpenServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $reader = $this->createStub(ReaderInterface::class);
+        $reader = $this->createStub(ReaderContract::class);
         $reader->method('read')->willReturn($document);
 
         $service = new OpenService($this->config(), $reader, new ArrayAdapter());
@@ -90,7 +90,7 @@ final class OpenServiceTest extends TestCase
     {
         $articleUrl = 'https://example.com/article';
 
-        $reader = $this->createMock(ReaderInterface::class);
+        $reader = $this->createMock(ReaderContract::class);
         $reader->expects($this->once())
             ->method('read')
             ->willThrowException(new \RuntimeException('network timeout'));

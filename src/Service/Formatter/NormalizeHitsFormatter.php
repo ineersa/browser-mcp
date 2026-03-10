@@ -7,9 +7,10 @@ namespace App\Service\Formatter;
 use App\Domain\Format\FormatPayload;
 use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchResultSet;
+use App\Service\Contracts\FormatterContract;
 use App\Service\Utilities;
 
-final class NormalizeHitsFormatter implements FormatterInterface
+final class NormalizeHitsFormatter implements FormatterContract
 {
     public function format(FormatPayload $payload): FormatPayload
     {

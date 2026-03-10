@@ -7,10 +7,10 @@ namespace App\Tests\Service;
 use App\Config\AppConfig;
 use App\Domain\Find\FindMatchMode;
 use App\Domain\Read\ReadDocument;
+use App\Service\Contracts\ReaderContract;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
-use App\Service\Reader\ReaderInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
@@ -31,7 +31,7 @@ final class FindServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $reader = $this->createMock(ReaderInterface::class);
+        $reader = $this->createMock(ReaderContract::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
         $service = new FindService($this->config(), $reader, new ArrayAdapter());
@@ -57,7 +57,7 @@ final class FindServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $reader = $this->createMock(ReaderInterface::class);
+        $reader = $this->createMock(ReaderContract::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
         $service = new FindService($this->config(), $reader, new ArrayAdapter());
@@ -70,7 +70,7 @@ final class FindServiceTest extends TestCase
 
     public function testFindRequiresUrl(): void
     {
-        $backend = $this->createStub(ReaderInterface::class);
+        $backend = $this->createStub(ReaderContract::class);
         $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
@@ -79,7 +79,7 @@ final class FindServiceTest extends TestCase
 
     public function testFindRejectsEmptyQuery(): void
     {
-        $backend = $this->createStub(ReaderInterface::class);
+        $backend = $this->createStub(ReaderContract::class);
         $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
@@ -100,7 +100,7 @@ final class FindServiceTest extends TestCase
             fetchedAt: new \DateTimeImmutable(),
         );
 
-        $backend = $this->createMock(ReaderInterface::class);
+        $backend = $this->createMock(ReaderContract::class);
         $backend->expects($this->once())->method('read')->willReturn($document);
 
         $service = new FindService($this->config(), $backend, new ArrayAdapter());
@@ -113,7 +113,7 @@ final class FindServiceTest extends TestCase
 
     public function testFindWrapsReaderErrorsAsBackendError(): void
     {
-        $backend = $this->createMock(ReaderInterface::class);
+        $backend = $this->createMock(ReaderContract::class);
         $backend->expects($this->once())->method('read')->willThrowException(new \RuntimeException('network timeout'));
 
         $service = new FindService($this->config(), $backend, new ArrayAdapter());

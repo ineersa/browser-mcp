@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service\Searcher;
+namespace App\Service\Contracts;
 
 use App\Domain\Search\SearchRequest;
 use App\Domain\Search\SearchResultSet;
-use App\Service\ProviderInterface;
 
-interface SearcherInterface extends ProviderInterface
+interface SearcherContract extends ProviderContract
 {
     public function search(SearchRequest $request): SearchResultSet;
 }

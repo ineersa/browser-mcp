@@ -10,7 +10,7 @@ use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
 use App\Service\OpenService;
-use App\Service\Reader\ReaderInterface;
+use App\Service\Contracts\ReaderContract;
 use App\Service\SearchService;
 use App\Service\Utilities;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -27,7 +27,7 @@ final class ReplCommand extends Command
 {
     public function __construct(
         private readonly SearchService $searchService,
-        private readonly ReaderInterface $reader,
+        private readonly ReaderContract $reader,
         private readonly OpenService $openService,
         private readonly FindService $findService,
     ) {

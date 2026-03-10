@@ -7,8 +7,8 @@ namespace App\Tests\Service\Formatter;
 use App\Domain\Format\FormatPayload;
 use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchResultSet;
+use App\Service\Contracts\FormatterContract;
 use App\Service\Formatter\FormatterChain;
-use App\Service\Formatter\FormatterInterface;
 use App\Service\Formatter\NormalizeHitsFormatter;
 use App\Service\Formatter\SearchResultToArrayFormatter;
 use App\Service\Formatter\ToonFormatter;
@@ -72,19 +72,19 @@ final class FormatterChainTest extends TestCase
     public function testFormatRunsFormattersInOrderTheyWereAdded(): void
     {
         $chain = new FormatterChain();
-        $chain->addFormatter(new class() implements FormatterInterface {
+        $chain->addFormatter(new class() implements FormatterContract {
             public function format(FormatPayload $payload): FormatPayload
             {
                 return new FormatPayload(document: $payload->document, output: $payload->output.'A');
             }
         });
-        $chain->addFormatter(new class() implements FormatterInterface {
+        $chain->addFormatter(new class() implements FormatterContract {
             public function format(FormatPayload $payload): FormatPayload
             {
                 return new FormatPayload(document: $payload->document, output: $payload->output.'B');
             }
         });
-        $chain->addFormatter(new class() implements FormatterInterface {
+        $chain->addFormatter(new class() implements FormatterContract {
             public function format(FormatPayload $payload): FormatPayload
             {
                 return new FormatPayload(document: $payload->document, output: $payload->output.'C');

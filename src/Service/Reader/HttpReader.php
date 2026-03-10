@@ -6,9 +6,10 @@ namespace App\Service\Reader;
 
 use App\Domain\Read\ReadDocument;
 use App\Domain\Read\ReadRequest;
+use App\Service\Contracts\ReaderContract;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
-use App\Service\PageProcessor;
+use App\Service\Reader\Processors\PageProcessor;
 use App\Service\Utilities;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -16,7 +17,7 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class HttpReader implements ReaderInterface
+class HttpReader implements ReaderContract
 {
     public function __construct(
         private readonly HttpClientInterface $client,

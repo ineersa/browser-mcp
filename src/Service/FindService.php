@@ -16,7 +16,7 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\Formatter\FindResultToArrayFormatter;
 use App\Service\Formatter\FormatterChain;
 use App\Service\Formatter\ToonFormatter;
-use App\Service\Reader\ReaderInterface;
+use App\Service\Contracts\ReaderContract;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -24,7 +24,7 @@ final readonly class FindService
 {
     public function __construct(
         private AppConfig $config,
-        private ReaderInterface $reader,
+        private ReaderContract $reader,
         private CacheInterface $cache,
     ) {
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Reader;
 
 use App\Config\AppConfig;
+use App\Service\Contracts\ReaderContract;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class ReaderFactory
@@ -16,7 +17,7 @@ final readonly class ReaderFactory
     ) {
     }
 
-    public function create(): ReaderInterface
+    public function create(): ReaderContract
     {
         $reader = $this->config->getSelectedReader();
         $readerConfig = $this->config->getReaderConfig($reader);

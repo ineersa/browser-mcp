@@ -42,6 +42,8 @@ services:
 
     App\Service\SearchService:
         public: true
+        arguments:
+            $cache: '@cache.app'
     App\Service\OpenService:
         public: true
         arguments:

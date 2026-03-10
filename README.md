@@ -40,6 +40,7 @@ Default `browser_config.yaml`:
 general:
   transport: stdio
   port: 8000
+  search_cache_ttl_seconds: 600
   open_cache_ttl_seconds: 300
   find_cache_ttl_seconds: 300
 

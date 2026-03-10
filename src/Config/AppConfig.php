@@ -56,6 +56,13 @@ final readonly class AppConfig
         return $value > 0 ? $value : 300;
     }
 
+    public function getSearchCacheTtlSeconds(): int
+    {
+        $value = (int) $this->getValue('general.search_cache_ttl_seconds', 600);
+
+        return $value > 0 ? $value : 600;
+    }
+
     public function getSelectedSearcher(): string
     {
         $value = strtolower(trim((string) $this->getValue('searchers.selected', 'searxng')));

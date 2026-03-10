@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
-final class SearxNGReaderTest extends TestCase
+final class HttpReaderTest extends TestCase
 {
     public function testReadMapsDocumentFromUrl(): void
     {

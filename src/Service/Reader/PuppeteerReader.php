@@ -13,7 +13,7 @@ use Symfony\Component\Process\Exception\ExceptionInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final class PuppeteerReader extends SearxNGReader
+final class PuppeteerReader extends HttpReader
 {
     public function __construct(
         HttpClientInterface $client,

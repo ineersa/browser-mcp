@@ -8,7 +8,6 @@ use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchRequest;
 use App\Domain\Search\SearchResultSet;
 use App\Service\Exception\BackendError;
-use App\Service\PageProcessor;
 use App\Service\Utilities;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -52,8 +51,7 @@ final readonly class SearxNGSearcher implements SearcherInterface
                 id: (string) ($index + 1),
                 url: $canonicalUrl,
                 title: $title,
-                snippet: $this->normalizeSummary((string) $item['summary']),
-                sourceDomain: PageProcessor::getDomain($canonicalUrl),
+                snippet: (string) $item['summary'],
             );
         }
 
@@ -68,31 +66,7 @@ final readonly class SearxNGSearcher implements SearcherInterface
     /**
      * @return list<array{title:string,url:string,summary:string}>
      */
-    public function requestSearch(string $query, int $topn): array
-    {
-        $results = $this->fetchSearxResults($query, $topn);
-        $items = [];
-
-        foreach ($results as $result) {
-            $url = (string) ($result['url'] ?? '');
-            if ('' === $url) {
-                continue;
-            }
-
-            $items[] = [
-                'title' => (string) ($result['title'] ?? $url),
-                'url' => $url,
-                'summary' => (string) ($result['content'] ?? ''),
-            ];
-        }
-
-        return $items;
-    }
-
-    /**
-     * @return list<array<string,mixed>>
-     */
-    protected function fetchSearxResults(string $query, int $topn): array
+    private function requestSearch(string $query, int $topn): array
     {
         try {
             $response = $this->client->request('GET', rtrim($this->searxNGUrl, '/').'/search', [
@@ -116,20 +90,28 @@ final readonly class SearxNGSearcher implements SearcherInterface
         }
 
         $results = $json['results'] ?? [];
-
-        return array_slice($results, 0, $topn);
-    }
-
-    private function normalizeSummary(string $summary): string
-    {
-        $summary = trim($summary);
-        if ('' === $summary) {
-            return '';
+        if (!is_array($results)) {
+            throw new BackendError('Searx results are not valid JSON array');
         }
 
-        $summary = html_entity_decode(strip_tags($summary), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
-        $summary = preg_replace('/\s+/u', ' ', $summary) ?? $summary;
+        $items = [];
+        foreach (array_slice($results, 0, $topn) as $result) {
+            if (!is_array($result)) {
+                continue;
+            }
 
-        return trim($summary);
+            $url = (string) ($result['url'] ?? '');
+            if ('' === $url) {
+                continue;
+            }
+
+            $items[] = [
+                'title' => (string) ($result['title'] ?? $url),
+                'url' => $url,
+                'summary' => (string) ($result['content'] ?? ''),
+            ];
+        }
+
+        return $items;
     }
 }

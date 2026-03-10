@@ -33,13 +33,13 @@ final class PageProcessor
         if (!$loaded) {
             // Fallback: strip tags if HTML is invalid
             $text = self::normalizeText(self::htmlToText($html));
-            $finalTitle = $title ?? ('' !== $url ? self::getDomain($url) : '');
+            $finalTitle = $title ?? ('' !== $url ? Utilities::getDomain($url) : '');
 
             return new PageContents(url: $url, text: ($displayUrls ? "\nURL: $url\n" : '').$text, title: $finalTitle, urls: []);
         }
 
         $xpath = new \DOMXPath($dom);
-        $finalTitle = $title ?? self::extractTitle($xpath) ?? ('' !== $url ? self::getDomain($url) : '');
+        $finalTitle = $title ?? self::extractTitle($xpath) ?? ('' !== $url ? Utilities::getDomain($url) : '');
 
         $urls = self::cleanLinks($dom, $xpath, $url);
         self::replaceImages($dom, $xpath);
@@ -51,19 +51,6 @@ final class PageProcessor
         $top = $displayUrls ? "\nURL: $url\n" : '';
 
         return new PageContents(url: $url, text: $top.$text, title: $finalTitle, urls: $urls);
-    }
-
-    public static function getDomain(string $url): string
-    {
-        if ('' === $url) {
-            return '';
-        }
-        if (!str_contains($url, 'http')) {
-            $url = 'http://'.$url;
-        }
-        $parts = parse_url($url);
-
-        return (string) ($parts['host'] ?? '');
     }
 
     private static function extractTitle(\DOMXPath $xpath): ?string
@@ -79,7 +66,7 @@ final class PageProcessor
     /** @return array<string,string> */
     private static function cleanLinks(\DOMDocument $dom, \DOMXPath $xpath, string $curUrl): array
     {
-        $curDomain = self::getDomain($curUrl);
+        $curDomain = Utilities::getDomain($curUrl);
         $urls = [];
         $urlsRev = [];
         $nodes = $xpath->query('//a[@href]');
@@ -104,7 +91,7 @@ final class PageProcessor
                 continue;
             }
             $link = self::urlJoin($curUrl, $href);
-            $domain = self::getDomain($link);
+            $domain = Utilities::getDomain($link);
             if ('' === $domain) {
                 self::replaceNodeWithText($dom, $a, $text);
                 continue;

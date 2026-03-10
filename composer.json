@@ -20,6 +20,7 @@
         "ext-fileinfo": "*",
         "ext-iconv": "*",
         "ext-libxml": "*",
+        "helgesverre/toon": "^3.1",
         "ineersa/html2text": "^1.0",
         "mcp/sdk": ">=0.4",
         "nyholm/psr7": "^1.8",

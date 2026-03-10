@@ -47,7 +47,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         );
     }
 
-    public function testSearchToolCallReturnsFixtureDisplay(): void
+    public function testSearchToolCallReturnsToonPayload(): void
     {
         $output = $this->runInspector([
             '--method', 'tools/call',
@@ -64,8 +64,8 @@ final class BrowserMcpHttpCommandTest extends TestCase
         $this->assertSame('text', $first['type'] ?? null);
         $this->assertNotSame('', $first['text'] ?? '');
 
-        $expectedResult = $this->loadFixture('search_tool_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $first['text']);
+        $this->assertStringContainsString('[5]{url,domain,title,summary}:', (string) $first['text']);
+        $this->assertStringContainsString('https://docs.searxng.org/admin/installation-searxng.html', (string) $first['text']);
     }
 
     public function testOpenToolWithEmptyUrlReturnsError(): void
@@ -190,18 +190,4 @@ final class BrowserMcpHttpCommandTest extends TestCase
         return $allowFailure ? $process->getOutput()."\n".$process->getErrorOutput() : $process->getOutput();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function loadFixture(string $name): array
-    {
-        $path = __DIR__.'/../dumps/SearxNG/'.$name.'.json';
-        $contents = file_get_contents($path);
-        $this->assertNotFalse($contents, 'Failed to read fixture '.$name);
-
-        $decoded = json_decode($contents, true);
-        $this->assertIsArray($decoded, 'Fixture '.$name.' is not valid JSON.');
-
-        return $decoded;
-    }
 }

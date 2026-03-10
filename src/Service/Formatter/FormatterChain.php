@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Formatter;
 
-use App\Domain\Format\FormatContext;
-use Psr\Container\ContainerInterface;
+use App\Domain\Format\FormatPayload;
 
 final class FormatterChain implements FormatterPipelineInterface
 {
@@ -14,43 +13,19 @@ final class FormatterChain implements FormatterPipelineInterface
      */
     private array $formatters = [];
 
-    public function __construct(
-        private readonly ?ContainerInterface $container = null,
-    ) {
-    }
-
-    public function addFormatter(string|FormatterInterface $formatter): self
+    public function addFormatter(FormatterInterface $formatter): self
     {
-        $resolved = $this->resolveFormatter($formatter);
-        $this->formatters[] = $resolved;
+        $this->formatters[] = $formatter;
 
         return $this;
     }
 
-    public function format(FormatContext $context): FormatContext
+    public function format(FormatPayload $payload): FormatPayload
     {
         foreach ($this->formatters as $formatter) {
-            $context = $formatter->format($context);
+            $payload = $formatter->format($payload);
         }
 
-        return $context;
-    }
-
-    private function resolveFormatter(string|FormatterInterface $formatter): FormatterInterface
-    {
-        if ($formatter instanceof FormatterInterface) {
-            return $formatter;
-        }
-
-        if (null === $this->container) {
-            throw new \InvalidArgumentException(sprintf('Cannot resolve formatter `%s` without container.', $formatter));
-        }
-
-        $resolved = $this->container->get($formatter);
-        if (!$resolved instanceof FormatterInterface) {
-            throw new \InvalidArgumentException(sprintf('Resolved formatter `%s` must implement FormatterInterface.', $formatter));
-        }
-
-        return $resolved;
+        return $payload;
     }
 }

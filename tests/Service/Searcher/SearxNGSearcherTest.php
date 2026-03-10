@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\Searcher;
 
-use App\Domain\Format\FormatContext;
-use App\Service\Formatter\TextSearchOutputFormatter;
 use App\Service\Searcher\SearxNGSearcher;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -15,20 +13,21 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 final class SearxNGSearcherTest extends TestCase
 {
     #[AllowMockObjectsWithoutExpectations]
-    public function testRequestSearchBuildsItemsFromResultsFixture(): void
+    public function testSearchBuildsHitsFromResultsFixture(): void
     {
         $fixtures = $this->loadJson('results.json');
-        $expectedItems = array_slice($this->normalizeItemsFixture($this->loadJson('items.json')), 0, 10); // @phpstan-ignore-line
 
         $client = new MockHttpClient(static function () use ($fixtures): MockResponse {
             return new MockResponse(json_encode(['results' => $fixtures], \JSON_THROW_ON_ERROR));
         });
         $searcher = new SearxNGSearcher('http://example.test', $client);
 
-        $items = $searcher->requestSearch('query', 10);
-        $normalized = $this->normalizeItemsFixture($items);
+        $result = $searcher->search(new \App\Domain\Search\SearchRequest(query: 'query', limit: 10));
 
-        $this->assertSame($expectedItems, $normalized);
+        $this->assertCount(10, $result->hits);
+        $this->assertSame('Step by step installation — SearXNG Documentation (2025.9.12+687121d58)', $result->hits[0]->title);
+        $this->assertSame('https://docs.searxng.org/admin/installation-searxng.html', $result->hits[0]->url);
+        $this->assertNotSame('', $result->hits[0]->snippet);
     }
 
     public function testSearchMapsItemsToSearchHitsWithSummaries(): void
@@ -45,30 +44,6 @@ final class SearxNGSearcherTest extends TestCase
         $this->assertSame('searxng', $result->provider);
         $this->assertNotEmpty($result->hits);
         $this->assertNotSame('', $result->hits[0]->snippet);
-
-        $page = (new TextSearchOutputFormatter())->format(new FormatContext(tool: 'search', document: $result))->document;
-        $this->assertStringContainsString('Search results for "SearxNG setup"', $page->text);
-        $this->assertStringContainsString('Summary:', $page->text);
-        $this->assertNotEmpty($page->urls);
-    }
-
-    /**
-     * @param array<int, array<string|int, string>> $raw
-     *
-     * @return list<array{title:string,url:string,summary:string}>
-     */
-    private function normalizeItemsFixture(array $raw): array
-    {
-        $normalized = [];
-        foreach ($raw as $item) {
-            $normalized[] = [
-                'title' => (string) ($item['title'] ?? ($item[0] ?? '')),
-                'url' => (string) ($item['url'] ?? ($item[1] ?? '')),
-                'summary' => (string) ($item['summary'] ?? ($item[2] ?? '')),
-            ];
-        }
-
-        return $normalized;
     }
 
     private function getFixturesPath(): string

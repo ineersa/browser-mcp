@@ -11,7 +11,6 @@ final readonly class SearchHit
         public string $url,
         public string $title,
         public string $snippet = '',
-        public string $sourceDomain = '',
     ) {
     }
 }

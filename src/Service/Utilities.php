@@ -60,6 +60,32 @@ final readonly class Utilities
         return $text;
     }
 
+    public static function getDomain(string $url): string
+    {
+        if ('' === $url) {
+            return '';
+        }
+        if (!str_contains($url, 'http')) {
+            $url = 'http://'.$url;
+        }
+        $parts = parse_url($url);
+
+        return (string) ($parts['host'] ?? '');
+    }
+
+    public static function normalizeSummary(string $summary): string
+    {
+        $summary = trim($summary);
+        if ('' === $summary) {
+            return '';
+        }
+
+        $summary = html_entity_decode(strip_tags($summary), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+        $summary = preg_replace('/\s+/u', ' ', $summary) ?? $summary;
+
+        return trim($summary);
+    }
+
     public static function getEnv(string $key, string $default): string
     {
         $value = $_SERVER[$key] ?? $_ENV[$key] ?? getenv($key);
@@ -248,7 +274,7 @@ final readonly class Utilities
 
     public static function makeDisplay(PageContents $page, string $body, string $scrollbar): string
     {
-        $domain = PageProcessor::getDomain($page->url);
+        $domain = self::getDomain($page->url);
         $header = $page->title;
         if ('' !== $domain) {
             $header .= \sprintf(' (%s)', $domain);

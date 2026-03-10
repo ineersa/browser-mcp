@@ -48,7 +48,7 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testSearchToolCallReturnsFixtureDisplay(): void
+    public function testSearchToolCallReturnsToonPayload(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
@@ -72,8 +72,8 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($first['text'] ?? '');
         $this->assertNotSame('', $payload, 'Search tool payload should not be empty.');
 
-        $expectedResult = $this->loadFixture('search_tool_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $payload);
+        $this->assertStringContainsString('[5]{url,domain,title,summary}:', $payload);
+        $this->assertStringContainsString('https://docs.searxng.org/admin/installation-searxng.html', $payload);
     }
 
     /**

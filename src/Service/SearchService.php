@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Domain\Format\FormatContext;
+use App\Domain\Format\FormatPayload;
 use App\Domain\Search\SearchRequest;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\Formatter\FormatterChain;
-use App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter;
-use App\Service\Formatter\TextSearchOutputFormatter;
+use App\Service\Formatter\NormalizeHitsFormatter;
+use App\Service\Formatter\SearchResultToArrayFormatter;
+use App\Service\Formatter\ToonFormatter;
 use App\Service\Searcher\SearcherInterface;
 
 final readonly class SearchService
@@ -18,8 +19,6 @@ final readonly class SearchService
     public function __construct(
         private SearcherInterface $searcher,
         private BrowserState $state,
-        private TextSearchOutputFormatter $searchResultFormatter,
-        private LegacyDisplayFormatterPipelineAdapter $displayFormatter,
     ) {
     }
 
@@ -47,15 +46,11 @@ final readonly class SearchService
 
         $chain = new FormatterChain();
         $chain
-            ->addFormatter($this->searchResultFormatter)
-            ->addFormatter($this->displayFormatter);
+            ->addFormatter(new NormalizeHitsFormatter())
+            ->addFormatter(new SearchResultToArrayFormatter())
+            ->addFormatter(new ToonFormatter());
 
-        $formatted = $chain->format(new FormatContext(
-            tool: 'search',
-            startLine: 0,
-            numberOfLines: -1,
-            document: $resultSet,
-        ));
+        $formatted = $chain->format(new FormatPayload(document: $resultSet));
 
         return $formatted->output;
     }

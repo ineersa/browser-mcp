@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Domain\Format\FormatContext;
 use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchResultSet;
 use App\Service\BrowserState;
 use App\Service\DTO\PageContents;
-use App\Service\Exception\ToolUsageError;
-use App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter;
-use App\Service\Formatter\TextSearchOutputFormatter;
-use App\Service\PageDisplayService;
 use App\Service\Searcher\SearcherInterface;
 use App\Service\SearchService;
+use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 
 final class SearchServiceTest extends TestCase
 {
-    public function testInvokeReturnsRenderedStandaloneOutput(): void
+    public function testInvokeReturnsToonEncodedArrayOutput(): void
     {
         $resultSet = new SearchResultSet(
             query: 'foo',
@@ -29,7 +25,6 @@ final class SearchServiceTest extends TestCase
                     url: 'https://example.com/article',
                     title: 'Example',
                     snippet: 'Example summary.',
-                    sourceDomain: 'example.com',
                 ),
             ],
             provider: 'searxng',
@@ -47,23 +42,23 @@ final class SearchServiceTest extends TestCase
             urls: [],
         ));
 
-        $display = new PageDisplayService();
-        $service = new SearchService(
-            $searcher,
-            $state,
-            new TextSearchOutputFormatter(),
-            new LegacyDisplayFormatterPipelineAdapter($display),
-        );
+        $service = new SearchService($searcher, $state);
 
-        $searchText = (new TextSearchOutputFormatter())->format(new FormatContext(tool: 'search', document: $resultSet));
-        $expected = $display->renderStandalone($searchText->document, 0, -1);
+        $expected = Toon::encode([
+            [
+                'url' => 'https://example.com/article',
+                'domain' => 'example.com',
+                'title' => 'Example',
+                'summary' => 'Example summary.',
+            ],
+        ]);
         $result = $service('foo', 5);
 
         $this->assertSame($expected, $result);
         $this->assertTrue($state->isEmpty(), 'Search should reset BrowserState cache.');
     }
 
-    public function testInvokeLeavesStateEmptyWhenDisplayFails(): void
+    public function testInvokeReturnsEmptyArrayWhenNoHits(): void
     {
         $searcher = $this->createMock(SearcherInterface::class);
         $searcher->expects($this->once())->method('search')->willReturn(
@@ -71,24 +66,11 @@ final class SearchServiceTest extends TestCase
         );
 
         $state = new BrowserState();
-        $display = $this->createMock(PageDisplayService::class);
-        $display->expects($this->once())
-            ->method('renderStandalone')
-            ->willThrowException(new ToolUsageError('render failed'));
+        $service = new SearchService($searcher, $state);
 
-        $service = new SearchService(
-            $searcher,
-            $state,
-            new TextSearchOutputFormatter(),
-            new LegacyDisplayFormatterPipelineAdapter($display),
-        );
+        $result = $service('query');
 
-        try {
-            $service('query');
-            $this->fail('SearchService should rethrow ToolUsageError from formatter pipeline');
-        } catch (ToolUsageError $e) {
-            $this->assertSame('render failed', $e->getMessage());
-            $this->assertTrue($state->isEmpty(), 'BrowserState should be empty even when rendering fails.');
-        }
+        $this->assertSame(Toon::encode([]), $result);
+        $this->assertTrue($state->isEmpty(), 'BrowserState should be empty after search.');
     }
 }

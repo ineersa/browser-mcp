@@ -29,6 +29,12 @@ final readonly class SearcherFactory
                 token: trim((string) ($providerConfig['token'] ?? '')),
                 client: $this->httpClient,
             ),
+            'duckduckgo', 'duckduckgolite', 'ddg' => new DuckDuckGoLiteSearcher(
+                timeoutSeconds: max(1, (int) ($providerConfig['timeout_seconds'] ?? 5)),
+                maxRetries: max(0, (int) ($providerConfig['max_retries'] ?? 1)),
+                client: $this->httpClient,
+                userAgent: trim((string) ($providerConfig['user_agent'] ?? '')) ?: DuckDuckGoLiteSearcher::DEFAULT_USER_AGENT,
+            ),
             default => throw new \UnhandledMatchError('Unknown search provider'),
         };
     }

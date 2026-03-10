@@ -15,6 +15,10 @@ searchers:
             url: http://server:8088
         jinaai:
             token: test-jina-token
+        duckduckgo:
+            timeout_seconds: 5
+            max_retries: 1
+            user_agent: Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0
 
 readers:
     selected: http

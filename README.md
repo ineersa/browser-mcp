@@ -1,6 +1,6 @@
 # Browser MCP
 
-PHP/Symfony implementation of a simple browser MCP server with pluggable search backends (SearxNG, Jina AI, DuckDuckGo Lite).
+PHP/Symfony implementation of a simple browser MCP server with pluggable search backends (SearxNG, Jina AI, Tavily, DuckDuckGo Lite).
 It provides three invokable services for `search`, `open`, and `find`, plus HTML→plaintext processing tailored for LLM consumption.
 
 ## Installing and running MCP
@@ -54,6 +54,8 @@ searchers:
       url: http://server:8088
     jinaai:
       token: "%env(JINA_SEARCH_TOKEN)%"
+    tavily:
+      token: "%env(TAVILY_SEARCH_TOKEN)%"
     duckduckgo:
       timeout_seconds: 5
       max_retries: 1

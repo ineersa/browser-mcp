@@ -56,13 +56,6 @@ final readonly class AppConfig
         return $value > 0 ? $value : 300;
     }
 
-    public function getFindCacheTtlSeconds(): int
-    {
-        $value = (int) $this->getValue('general.find_cache_ttl_seconds', 300);
-
-        return $value > 0 ? $value : 300;
-    }
-
     public function getSelectedSearcher(): string
     {
         $value = strtolower(trim((string) $this->getValue('searchers.selected', 'searxng')));
@@ -78,7 +71,7 @@ final readonly class AppConfig
         $all = $this->getArray('searchers.providers');
         $config = $all[$name] ?? [];
 
-        return is_array($config) ? $config : [];
+        return \is_array($config) ? $config : [];
     }
 
     public function getSelectedReader(): string
@@ -96,7 +89,7 @@ final readonly class AppConfig
         $all = $this->getArray('readers.providers');
         $config = $all[$name] ?? [];
 
-        return is_array($config) ? $config : [];
+        return \is_array($config) ? $config : [];
     }
 
     /**
@@ -106,7 +99,7 @@ final readonly class AppConfig
     {
         $value = $this->getValue($path, []);
 
-        return is_array($value) ? $value : [];
+        return \is_array($value) ? $value : [];
     }
 
     private function getValue(string $path, mixed $default): mixed

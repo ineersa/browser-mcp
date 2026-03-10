@@ -2,19 +2,20 @@ general:
     transport: stdio
     port: 8000
     open_cache_ttl_seconds: 300
-    find_cache_ttl_seconds: 300
 
 display:
     search_view_tokens: 1024
     search_encoding_name: o200k_base
 
 searchers:
-    selected: duckduckgo
+    selected: tavily
     providers:
         searxng:
             url: http://server:8088
         jinaai:
             token: "%env(JINA_SEARCH_TOKEN)%"
+        tavily:
+            token: "%env(TAVILY_SEARCH_TOKEN)%"
         duckduckgo:
             timeout_seconds: 5
             max_retries: 1

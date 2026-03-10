@@ -11,12 +11,12 @@ use App\Domain\Find\FindMatchMode;
 use App\Domain\Format\FormatPayload;
 use App\Domain\Read\ReadDocument;
 use App\Domain\Read\ReadRequest;
+use App\Service\Contracts\ReaderContract;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\Formatter\FindResultToArrayFormatter;
 use App\Service\Formatter\FormatterChain;
 use App\Service\Formatter\ToonFormatter;
-use App\Service\Contracts\ReaderContract;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -67,7 +67,7 @@ final readonly class FindService
 
         try {
             return $this->cache->get($cacheKey, function (ItemInterface $item) use ($url): ReadDocument {
-                $item->expiresAfter($this->config->getFindCacheTtlSeconds());
+                $item->expiresAfter($this->config->getOpenCacheTtlSeconds());
 
                 return $this->reader->read(new ReadRequest(url: $url, canonicalUrl: $url));
             });

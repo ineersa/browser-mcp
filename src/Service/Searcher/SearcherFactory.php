@@ -6,6 +6,7 @@ namespace App\Service\Searcher;
 
 use App\Config\AppConfig;
 use App\Service\Contracts\SearcherContract;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class SearcherFactory
@@ -13,6 +14,7 @@ final readonly class SearcherFactory
     public function __construct(
         private AppConfig $config,
         private HttpClientInterface $httpClient,
+        private CacheInterface $cache,
     ) {
     }
 
@@ -28,6 +30,12 @@ final readonly class SearcherFactory
             'jinaai', 'jina' => new JinaAISearcher(
                 token: trim((string) ($providerConfig['token'] ?? '')),
                 client: $this->httpClient,
+            ),
+            'tavily' => new TavilySearcher(
+                token: trim((string) ($providerConfig['token'] ?? '')),
+                cacheTtlSeconds: $this->config->getOpenCacheTtlSeconds(),
+                client: $this->httpClient,
+                cache: $this->cache,
             ),
             'duckduckgo', 'duckduckgolite', 'ddg' => new DuckDuckGoLiteSearcher(
                 timeoutSeconds: max(1, (int) ($providerConfig['timeout_seconds'] ?? 5)),

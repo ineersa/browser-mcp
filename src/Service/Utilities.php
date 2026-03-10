@@ -4,18 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
-use App\Service\Exception\ToolUsageError;
 use Yethee\Tiktoken\EncoderProvider;
 
 final readonly class Utilities
 {
-    private const FIND_PAGE_LINK_FORMAT = '# 【%s†%s】';
     private const FALLBACK_CHARS_PER_TOKEN = 3.37;
-    // Tighter PCRE limits for regex-based find to avoid runaway backtracking.
-    private const FIND_REGEX_BACKTRACK_LIMIT = 100000;
-    private const FIND_REGEX_RECURSION_LIMIT = 1000;
 
     public static function canonicalizeUrl(string $url): string
     {
@@ -298,85 +292,6 @@ final readonly class Utilities
     }
 
     /**
-     * Build a find results PageContents by scanning the page text for regex matches.
-     *
-     * @throws ToolUsageError
-     */
-    public static function runFindInPage(
-        PageContents $page,
-        ?string $regex = null,
-        int $maxResults = 50,
-        int $numShowLines = 4,
-    ): PageContents {
-        $lines = self::wrapLines($page->text);
-        $txt = self::joinLines($lines);
-        $withoutLinks = self::stripLinks($txt);
-        $lines = explode("\n", $withoutLinks);
-
-        $query = (string) $regex;
-        $regexError = null;
-
-        $resultChunks = [];
-        $snippets = [];
-        $lineIdx = 0;
-        $matchIdx = 0;
-        while ($lineIdx < \count($lines)) {
-            $line = $lines[$lineIdx];
-            $matched = self::regexMatches($query, $line, $regexError);
-            if (null !== $regexError) {
-                break;
-            }
-
-            if (!$matched) {
-                ++$lineIdx;
-                continue;
-            }
-            $snippet = implode("\n", \array_slice($lines, $lineIdx, $numShowLines));
-            $linkTitle = \sprintf(self::FIND_PAGE_LINK_FORMAT, (string) $matchIdx, \sprintf('match at L%d', $lineIdx));
-            $resultChunks[] = $linkTitle."\n".$snippet;
-            $snippets[(string) $matchIdx] = new Extract($page->url, $snippet, \sprintf('#%d', $matchIdx), $lineIdx);
-            if (\count($resultChunks) === $maxResults) {
-                break;
-            }
-            ++$matchIdx;
-            $lineIdx += $numShowLines;
-        }
-
-        if (null !== $regexError) {
-            $message = \sprintf('Regex error for pattern `%s`: %s', $query, $regexError);
-            $hint = 'Ensure the `regex` parameter is a valid PCRE pattern that includes delimiters, e.g. `/pattern/`.';
-            if (\in_array($regexError, ['PCRE backtrack limit reached', 'PCRE recursion limit reached'], true)) {
-                $hint = 'Simplify the regex pattern so it requires less backtracking or recursion.';
-            }
-
-            $exception = new ToolUsageError($message);
-            $exception->setHint($hint);
-
-            throw $exception;
-        }
-
-        $urlsMap = [];
-        for ($i = 0; $i < \count($resultChunks); ++$i) {
-            $urlsMap[(string) $i] = $page->url;
-        }
-
-        $displayText = !empty($resultChunks)
-            ? implode("\n\n", $resultChunks)
-            : \sprintf(
-                "Pattern not found for regex: `%s`\n\nNo visible matches were found on this page. The content may be structured data (e.g. JSON) or outside the scanned range. Adjust the regex if appropriate or inspect the page manually.\n\nNext steps: use `browser.open` to review the surrounding page manually, or refine the `regex` before responding.",
-                $query
-            );
-
-        return new PageContents(
-            url: $page->url.'/find?regex='.rawurlencode($query),
-            text: $displayText,
-            title: \sprintf('Find results for regex: `%s` in `%s`', $query, $page->title),
-            urls: $urlsMap,
-            snippets: $snippets,
-        );
-    }
-
-    /**
      * @param array<string,string> $urls
      *
      * @return array<string,string>
@@ -419,60 +334,6 @@ final readonly class Utilities
         }
 
         return implode("\n", $lines);
-    }
-
-    private static function regexMatches(string $pattern, string $subject, ?string &$error = null): bool
-    {
-        $error = null;
-        $result = self::withPcreLimits(static function () use ($pattern, $subject, &$error) {
-            $match = @preg_match($pattern, $subject);
-            if (false === $match) {
-                $error = self::describePregError(preg_last_error());
-
-                return false;
-            }
-
-            return 1 === $match;
-        });
-
-        return (bool) $result;
-    }
-
-    private static function withPcreLimits(callable $callback): mixed
-    {
-        $backtrack = \ini_get('pcre.backtrack_limit');
-        $recursion = \ini_get('pcre.recursion_limit');
-
-        try {
-            ini_set('pcre.backtrack_limit', (string) self::FIND_REGEX_BACKTRACK_LIMIT);
-            ini_set('pcre.recursion_limit', (string) self::FIND_REGEX_RECURSION_LIMIT);
-
-            return $callback();
-        } finally {
-            if (false !== $backtrack) {
-                ini_set('pcre.backtrack_limit', (string) $backtrack);
-            } else {
-                ini_restore('pcre.backtrack_limit');
-            }
-
-            if (false !== $recursion) {
-                ini_set('pcre.recursion_limit', (string) $recursion);
-            } else {
-                ini_restore('pcre.recursion_limit');
-            }
-        }
-    }
-
-    private static function describePregError(int $code): string
-    {
-        return match ($code) {
-            \PREG_BACKTRACK_LIMIT_ERROR => 'PCRE backtrack limit reached',
-            \PREG_RECURSION_LIMIT_ERROR => 'PCRE recursion limit reached',
-            \PREG_BAD_UTF8_ERROR, \PREG_BAD_UTF8_OFFSET_ERROR => 'Invalid UTF-8 data in subject',
-            \PREG_INTERNAL_ERROR => 'Invalid regex pattern or internal PCRE error',
-            \PREG_JIT_STACKLIMIT_ERROR => 'PCRE JIT stack limit reached',
-            default => 'Unknown PCRE error (code '.$code.')',
-        };
     }
 
     private static function estimateNumLinesFallback(string $text, int $totalLines, int $viewTokens): int

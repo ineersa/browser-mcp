@@ -11,8 +11,8 @@ parameters:
     # SearchService tunable
     app.search.view_tokens: '%env(int:SEARCH_VIEW_TOKENS)%'
     app.search.encoding_name: '%env(string:SEARCH_ENCODING_NAME)%'
-    app.search.find_context_lines: '%env(int:FIND_CONTEXT_LINES)%'
     app.open.cache_ttl_seconds: 300
+    app.find.cache_ttl_seconds: 300
 
 services:
     # default configuration for services in *this* file
@@ -68,7 +68,8 @@ services:
     App\Service\FindService:
         public: true
         arguments:
-            $findContextLines: '%app.search.find_context_lines%'
+            $cache: '@cache.array_adapter'
+            $cacheTtlSeconds: '%app.find.cache_ttl_seconds%'
 
     # Make ALL services in App\Tools\ public
     App\Tools\:

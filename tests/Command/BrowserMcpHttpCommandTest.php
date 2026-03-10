@@ -83,7 +83,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         );
     }
 
-    public function testFindToolWithEmptyRegexReturnsError(): void
+    public function testFindToolWithEmptyQueryReturnsError(): void
     {
         $output = $this->runInspector([
             '--method', 'tools/call',
@@ -92,7 +92,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         ], true);
 
         $this->assertStringContainsString(
-            'Missing required properties: `regex`',
+            'Missing required properties: `query`',
             $output
         );
     }

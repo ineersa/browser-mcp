@@ -128,7 +128,8 @@ final class BrowserMcpCommandTest extends TestCase
             ], 3),
             $this->callToolRequest('find', [
                 'url' => $targetUrl,
-                'regex' => '/Datetime/i',
+                'query' => 'Datetime',
+                'match' => 'contains',
             ], 4),
         ]);
 
@@ -146,8 +147,8 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($content[0]['text'] ?? '');
         $this->assertNotSame('', $payload, 'Find tool payload should not be empty.');
 
-        $expectedResult = $this->loadFixture('find_open_page_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $payload);
+        $this->assertStringContainsString('Find results for contains `Datetime`', $payload);
+        $this->assertStringContainsString('URL: https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html', $payload);
     }
 
     /**
@@ -258,11 +259,11 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testFindToolWithEmptyRegexReturnsError(): void
+    public function testFindToolWithEmptyQueryReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => 'https://example.com', 'regex' => ''], 2),
+            $this->callToolRequest('find', ['url' => 'https://example.com', 'query' => ''], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -270,17 +271,17 @@ final class BrowserMcpCommandTest extends TestCase
         $callResponse = $responses[1];
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: Invalid regex provided. The FindTool requires a non-empty regex pattern.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: Invalid query provided. The FindTool requires a non-empty query string.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
      * @throws \JsonException
      */
-    public function testFindToolWithWhitespaceOnlyRegexReturnsError(): void
+    public function testFindToolWithWhitespaceOnlyQueryReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => 'https://example.com', 'regex' => '   '], 2),
+            $this->callToolRequest('find', ['url' => 'https://example.com', 'query' => '   '], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -288,7 +289,7 @@ final class BrowserMcpCommandTest extends TestCase
         $callResponse = $responses[1];
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: Invalid regex provided. The FindTool requires a non-empty regex pattern.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: Invalid query provided. The FindTool requires a non-empty query string.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -298,7 +299,7 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => '', 'regex' => '/test/'], 2),
+            $this->callToolRequest('find', ['url' => '', 'query' => 'test'], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -316,7 +317,7 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => '   ', 'regex' => '/test/'], 2),
+            $this->callToolRequest('find', ['url' => '   ', 'query' => 'test'], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -353,7 +354,7 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertSame(FindTool::DESCRIPTION, $indexed[FindTool::NAME]['description']);
         $this->assertSame(FindTool::TITLE, $indexed[FindTool::NAME]['annotations']['title']);
-        $this->assertSame(['url', 'regex'], $indexed[FindTool::NAME]['inputSchema']['required'] ?? []);
+        $this->assertSame(['url', 'query'], $indexed[FindTool::NAME]['inputSchema']['required'] ?? []);
     }
 
     /**

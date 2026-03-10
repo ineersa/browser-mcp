@@ -57,7 +57,7 @@ final readonly class OpenService
      */
     private function openUrl(string $url): ReadDocument
     {
-        $cacheKey = 'open.read_document.'.hash('sha256', $url);
+        $cacheKey = 'read_document.'.hash('sha256', $url);
 
         try {
             $document = $this->cache->get($cacheKey, function (ItemInterface $item) use ($url): ReadDocument {

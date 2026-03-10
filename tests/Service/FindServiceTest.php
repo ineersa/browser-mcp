@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Service\Backend\BackendInterface;
 use App\Service\BrowserState;
 use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
@@ -12,6 +11,7 @@ use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
 use App\Service\PageDisplayService;
+use App\Service\Reader\ReaderInterface;
 use PHPUnit\Framework\TestCase;
 
 final class FindServiceTest extends TestCase
@@ -30,11 +30,11 @@ final class FindServiceTest extends TestCase
         $state = new BrowserState();
         $state->addPage($page);
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
+        $reader = $this->createMock(ReaderInterface::class);
+        $reader->expects($this->never())->method('read');
 
         $pageDisplay = new PageDisplayService();
-        $service = new FindService($backend, $state, $pageDisplay);
+        $service = new FindService($reader, $state, $pageDisplay);
 
         $result = $service->__invoke(url: $page->url, regex: '/configure/i');
 
@@ -44,7 +44,7 @@ final class FindServiceTest extends TestCase
 
     public function testFindRequiresUrl(): void
     {
-        $backend = $this->createStub(BackendInterface::class);
+        $backend = $this->createStub(ReaderInterface::class);
         $state = new BrowserState();
         $service = new FindService($backend, $state, new PageDisplayService());
 
@@ -64,7 +64,7 @@ final class FindServiceTest extends TestCase
         );
         $state->addPage($searchPage);
 
-        $backend = $this->createStub(BackendInterface::class);
+        $backend = $this->createStub(ReaderInterface::class);
         $service = new FindService($backend, $state, new PageDisplayService());
 
         $this->expectException(ToolUsageError::class);
@@ -85,8 +85,16 @@ final class FindServiceTest extends TestCase
         );
         $state = new BrowserState();
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->once())->method('fetch')->with($page->url)->willReturn($page);
+        $backend = $this->createMock(ReaderInterface::class);
+        $backend->expects($this->once())->method('read')->willReturn(new \App\Domain\Read\ReadDocument(
+            url: $page->url,
+            canonicalUrl: $page->url,
+            title: $page->title,
+            markdown: $page->text,
+            references: $page->urls,
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        ));
 
         $resultUrl = $page->url.'/find?regex=%2Fmatch%2F';
 
@@ -119,8 +127,8 @@ final class FindServiceTest extends TestCase
         $state = new BrowserState();
         $state->addPage($page);
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
+        $backend = $this->createMock(ReaderInterface::class);
+        $backend->expects($this->never())->method('read');
 
         $service = new FindService($backend, $state, new PageDisplayService());
 

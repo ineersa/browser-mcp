@@ -11,6 +11,7 @@ use App\Domain\Search\SearchResultSet;
 use App\Service\Formatter\FormatterChain;
 use App\Service\Formatter\FormatterInterface;
 use App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter;
+use App\Service\Formatter\TextSearchOutputFormatter;
 use App\Service\PageDisplayService;
 use PHPUnit\Framework\TestCase;
 
@@ -60,10 +61,12 @@ final class LegacyDisplayFormatterPipelineAdapterTest extends TestCase
 
         $display = new PageDisplayService();
         $chain = new FormatterChain();
+        $chain->addFormatter(new TextSearchOutputFormatter());
         $chain->addFormatter(new LegacyDisplayFormatterPipelineAdapter($display));
 
         $result = $chain->format($context);
-        $expected = $display->renderStandalone($search->toPageContents(), 0, -1);
+        $asPage = (new TextSearchOutputFormatter())->format(new FormatContext(tool: 'search', document: $search));
+        $expected = $display->renderStandalone($asPage->document, 0, -1);
 
         $this->assertSame($expected, $result->output);
     }

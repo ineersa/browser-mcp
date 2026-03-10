@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Service\Backend\BackendInterface;
+use App\Domain\Format\FormatContext;
+use App\Domain\Search\SearchHit;
+use App\Domain\Search\SearchResultSet;
 use App\Service\BrowserState;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\ToolUsageError;
+use App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter;
+use App\Service\Formatter\TextSearchOutputFormatter;
 use App\Service\PageDisplayService;
+use App\Service\Searcher\SearcherInterface;
 use App\Service\SearchService;
 use PHPUnit\Framework\TestCase;
 
@@ -16,15 +21,23 @@ final class SearchServiceTest extends TestCase
 {
     public function testInvokeReturnsRenderedStandaloneOutput(): void
     {
-        $page = new PageContents(
-            url: '',
-            text: "Search results for \"foo\"\n\n1. Example — example.com\n   URL: https://example.com/article\n   Summary: Example summary.",
-            title: 'foo',
-            urls: [],
+        $resultSet = new SearchResultSet(
+            query: 'foo',
+            hits: [
+                new SearchHit(
+                    id: '1',
+                    url: 'https://example.com/article',
+                    title: 'Example',
+                    snippet: 'Example summary.',
+                    sourceDomain: 'example.com',
+                ),
+            ],
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
         );
 
-        $backend = $this->createStub(BackendInterface::class);
-        $backend->method('search')->willReturn($page);
+        $searcher = $this->createStub(SearcherInterface::class);
+        $searcher->method('search')->willReturn($resultSet);
 
         $state = new BrowserState();
         $state->addPage(new PageContents(
@@ -35,9 +48,15 @@ final class SearchServiceTest extends TestCase
         ));
 
         $display = new PageDisplayService();
-        $service = new SearchService($backend, $state, $display);
+        $service = new SearchService(
+            $searcher,
+            $state,
+            new TextSearchOutputFormatter(),
+            new LegacyDisplayFormatterPipelineAdapter($display),
+        );
 
-        $expected = $display->renderStandalone($page);
+        $searchText = (new TextSearchOutputFormatter())->format(new FormatContext(tool: 'search', document: $resultSet));
+        $expected = $display->renderStandalone($searchText->document, 0, -1);
         $result = $service('foo', 5);
 
         $this->assertSame($expected, $result);
@@ -46,9 +65,9 @@ final class SearchServiceTest extends TestCase
 
     public function testInvokeLeavesStateEmptyWhenDisplayFails(): void
     {
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->once())->method('search')->willReturn(
-            new PageContents(url: '', text: 'Search results content', title: 'query', urls: [])
+        $searcher = $this->createMock(SearcherInterface::class);
+        $searcher->expects($this->once())->method('search')->willReturn(
+            new SearchResultSet(query: 'query', hits: [], provider: 'searxng', fetchedAt: new \DateTimeImmutable())
         );
 
         $state = new BrowserState();
@@ -57,11 +76,16 @@ final class SearchServiceTest extends TestCase
             ->method('renderStandalone')
             ->willThrowException(new ToolUsageError('render failed'));
 
-        $service = new SearchService($backend, $state, $display);
+        $service = new SearchService(
+            $searcher,
+            $state,
+            new TextSearchOutputFormatter(),
+            new LegacyDisplayFormatterPipelineAdapter($display),
+        );
 
         try {
             $service('query');
-            $this->fail('SearchService should rethrow ToolUsageError from PageDisplayService');
+            $this->fail('SearchService should rethrow ToolUsageError from formatter pipeline');
         } catch (ToolUsageError $e) {
             $this->assertSame('render failed', $e->getMessage());
             $this->assertTrue($state->isEmpty(), 'BrowserState should be empty even when rendering fails.');

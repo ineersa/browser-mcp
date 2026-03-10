@@ -1,6 +1,10 @@
 services:
     App\Tests\Fixtures\Http\SearxFixtureHttpClient: ~
 
-    App\Service\Backend\BackendFactory:
+    App\Service\Searcher\SearcherFactory:
+        arguments:
+            $httpClient: '@App\Tests\Fixtures\Http\SearxFixtureHttpClient'
+
+    App\Service\Reader\ReaderFactory:
         arguments:
             $httpClient: '@App\Tests\Fixtures\Http\SearxFixtureHttpClient'

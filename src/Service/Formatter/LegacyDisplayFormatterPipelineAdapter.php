@@ -6,7 +6,6 @@ namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatContext;
 use App\Domain\Read\ReadDocument;
-use App\Domain\Search\SearchResultSet;
 use App\Service\DTO\PageContents;
 use App\Service\PageDisplayService;
 
@@ -35,7 +34,6 @@ final readonly class LegacyDisplayFormatterPipelineAdapter implements FormatterI
     private function resolvePage(mixed $document): PageContents
     {
         return match (true) {
-            $document instanceof SearchResultSet => $document->toPageContents(),
             $document instanceof ReadDocument => $document->toPageContents(),
             $document instanceof PageContents => $document,
             default => throw new \InvalidArgumentException(\sprintf('Unsupported document type `%s` for legacy formatter pipeline.', get_debug_type($document))),

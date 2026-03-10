@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Service\Backend\BackendInterface;
+use App\Domain\Read\ReadRequest;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
+use App\Service\Reader\ReaderInterface;
 
 final readonly class OpenService
 {
     public function __construct(
-        private BackendInterface $backend,
+        private ReaderInterface $reader,
         private BrowserState $state,
         private PageDisplayService $pageDisplay,
     ) {
@@ -59,7 +60,7 @@ final readonly class OpenService
     private function openUrl(string $url): PageContents
     {
         try {
-            return $this->backend->fetch($url);
+            return $this->reader->read(new ReadRequest(url: $url, canonicalUrl: $url))->toPageContents();
         } catch (\Throwable $e) {
             $msg = Utilities::maybeTruncate($e->getMessage());
             throw new BackendError(\sprintf('Error fetching URL `%s`: %s', Utilities::maybeTruncate($url, 256), $msg), previous: $e)->setHint('This may be a network timeout, server error, or the URL may be inaccessible. Try retrying the request or check if the URL is valid and accessible.');

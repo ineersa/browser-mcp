@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Service\Backend\BackendInterface;
-use App\Service\Backend\SearxNGBackend;
 use App\Service\BrowserState;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
 use App\Service\PageDisplayService;
+use App\Service\Reader\ReaderInterface;
+use App\Service\Reader\SearxNGReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -31,11 +31,11 @@ final class OpenServiceTest extends TestCase
 
             return new MockResponse($html);
         });
-        $backend = new SearxNGBackend('https://search.example', $httpClient);
+        $reader = new SearxNGReader($httpClient);
 
         $state = new BrowserState();
         $display = new PageDisplayService();
-        $service = new OpenService($backend, $state, $display);
+        $service = new OpenService($reader, $state, $display);
 
         $result = $service->__invoke($expectedUrl, 0, 50);
 
@@ -53,11 +53,11 @@ final class OpenServiceTest extends TestCase
         $state = new BrowserState();
         $state->addPage($page);
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
+        $reader = $this->createMock(ReaderInterface::class);
+        $reader->expects($this->never())->method('read');
 
         $display = new PageDisplayService();
-        $service = new OpenService($backend, $state, $display);
+        $service = new OpenService($reader, $state, $display);
 
         $startLine = 42;
         $output = $service->__invoke($page->url, $startLine, 10);
@@ -79,8 +79,16 @@ final class OpenServiceTest extends TestCase
             urls: [],
         );
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->once())->method('fetch')->with($articleUrl)->willReturn($articlePage);
+        $reader = $this->createMock(ReaderInterface::class);
+        $reader->expects($this->once())->method('read')->willReturn(new \App\Domain\Read\ReadDocument(
+            url: $articleUrl,
+            canonicalUrl: $articleUrl,
+            title: $articlePage->title,
+            markdown: $articlePage->text,
+            references: $articlePage->urls,
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        ));
 
         $state = new BrowserState();
 
@@ -89,7 +97,7 @@ final class OpenServiceTest extends TestCase
             ->method('showPage')
             ->willThrowException(new ToolUsageError('cannot display article'));
 
-        $service = new OpenService($backend, $state, $display);
+        $service = new OpenService($reader, $state, $display);
 
         try {
             $service->__invoke($articleUrl, 0, 50);

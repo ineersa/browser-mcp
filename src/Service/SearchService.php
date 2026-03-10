@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Service\Backend\BackendInterface;
+use App\Domain\Format\FormatContext;
+use App\Domain\Search\SearchRequest;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
+use App\Service\Formatter\FormatterChain;
+use App\Service\Formatter\LegacyDisplayFormatterPipelineAdapter;
+use App\Service\Formatter\TextSearchOutputFormatter;
+use App\Service\Searcher\SearcherInterface;
 
 final readonly class SearchService
 {
     public function __construct(
-        private BackendInterface $backend,
+        private SearcherInterface $searcher,
         private BrowserState $state,
-        private PageDisplayService $pageDisplay,
+        private TextSearchOutputFormatter $searchResultFormatter,
+        private LegacyDisplayFormatterPipelineAdapter $displayFormatter,
     ) {
     }
 
@@ -32,14 +38,25 @@ final readonly class SearchService
         }
 
         try {
-            $page = $this->backend->search($query, $topn);
+            $resultSet = $this->searcher->search(new SearchRequest(query: $query, limit: $topn));
         } catch (\Throwable $e) {
             $msg = Utilities::maybeTruncate($e->getMessage());
             throw new BackendError(\sprintf('Error during search for `%s`: %s', $query, $msg), previous: $e)->setHint('This may be a backend service error or network timeout. Try retrying the search request.');
         }
         $this->state->reset();
 
-        // Compute end location using Utilities::getEndLoc (numLines=-1)
-        return $this->pageDisplay->renderStandalone($page, 0, -1);
+        $chain = new FormatterChain();
+        $chain
+            ->addFormatter($this->searchResultFormatter)
+            ->addFormatter($this->displayFormatter);
+
+        $formatted = $chain->format(new FormatContext(
+            tool: 'search',
+            startLine: 0,
+            numberOfLines: -1,
+            document: $resultSet,
+        ));
+
+        return $formatted->output;
     }
 }

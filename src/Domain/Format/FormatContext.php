@@ -38,4 +38,20 @@ final readonly class FormatContext
             working: $this->working,
         );
     }
+
+    public function withDocument(mixed $document): self
+    {
+        return new self(
+            tool: $this->tool,
+            startLine: $this->startLine,
+            numberOfLines: $this->numberOfLines,
+            fetchAll: $this->fetchAll,
+            regex: $this->regex,
+            viewTokens: $this->viewTokens,
+            encodingName: $this->encodingName,
+            document: $document,
+            output: $this->output,
+            working: $this->working,
+        );
+    }
 }

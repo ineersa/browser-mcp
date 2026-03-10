@@ -45,11 +45,11 @@ services:
     App\Service\OpenService:
         public: true
         arguments:
-            $cache: '@cache.array_adapter'
+            $cache: '@cache.app'
     App\Service\FindService:
         public: true
         arguments:
-            $cache: '@cache.array_adapter'
+            $cache: '@cache.app'
 
     # Make ALL services in App\Tools\ public
     App\Tools\:
@@ -64,13 +64,7 @@ services:
     App\Command\BrowserMcpCommand:
         arguments:
             $projectDir: '%kernel.project_dir%'
-
-    # PSR-16 cache: wrap a PSR-6 pool (ArrayAdapter) with Psr16Cache and alias to Psr\SimpleCache\CacheInterface
-    cache.array_adapter:
-        class: Symfony\Component\Cache\Adapter\ArrayAdapter
-        arguments:
-            $defaultLifetime: 0
-            $storeSerialized: true
+            $appCache: '@cache.app'
 
     Psr\Container\ContainerInterface: '@service_container'
     Psr\Log\LoggerInterface:

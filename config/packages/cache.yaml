@@ -19,4 +19,4 @@ framework:
             #my.dedicated.cache: null
         app: cache.adapter.system
         #default_doctrine_dbal_provider: 'doctrine.dbal.default_connection'
-        system: cache.adapter.array
+        system: cache.adapter.filesystem

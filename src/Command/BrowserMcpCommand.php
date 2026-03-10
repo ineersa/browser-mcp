@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Config\AppConfig;
 use App\Server\ServerFactory;
 use App\Transport\LoggingStdioTransport;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -29,6 +30,7 @@ class BrowserMcpCommand extends Command
         private readonly LoggerInterface $logger,
         private readonly AppConfig $config,
         private readonly ServerFactory $serverFactory,
+        private readonly CacheItemPoolInterface $appCache,
         string $projectDir,
     ) {
         if (!is_dir($projectDir) && !$this->isPharPath($projectDir)) {
@@ -44,6 +46,8 @@ class BrowserMcpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->clearAppCache();
+
         $transport = $this->config->getTransport();
 
         try {
@@ -62,6 +66,17 @@ class BrowserMcpCommand extends Command
             ]));
 
             return Command::FAILURE;
+        }
+    }
+
+    private function clearAppCache(): void
+    {
+        try {
+            $this->appCache->clear();
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to clear application cache before startup.', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

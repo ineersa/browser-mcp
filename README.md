@@ -1,6 +1,6 @@
 # Browser MCP
 
-PHP/Symfony implementation of a simple browser MCP server with a pluggable backend (SearxNG).
+PHP/Symfony implementation of a simple browser MCP server with pluggable search backends (SearxNG, Jina AI).
 It provides three invokable services for `search`, `open`, and `find`, plus HTML→plaintext processing tailored for LLM consumption.
 
 ## Installing and running MCP
@@ -52,6 +52,8 @@ searchers:
   providers:
     searxng:
       url: http://server:8088
+    jinaai:
+      token: "%env(JINA_SEARCH_TOKEN)%"
 
 readers:
   selected: http

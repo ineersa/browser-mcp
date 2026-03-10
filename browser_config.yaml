@@ -9,10 +9,12 @@ display:
     search_encoding_name: o200k_base
 
 searchers:
-    selected: searxng
+    selected: jinaai
     providers:
         searxng:
             url: http://server:8088
+        jinaai:
+            token: "%env(JINA_SEARCH_TOKEN)%"
 
 readers:
     selected: http

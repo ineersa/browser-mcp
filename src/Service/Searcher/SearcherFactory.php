@@ -25,6 +25,10 @@ final readonly class SearcherFactory
 
         return match ($provider) {
             'searxng', 'searx' => new SearxNGSearcher('' !== $searcherUrl ? $searcherUrl : 'http://server:8088', $this->httpClient),
+            'jinaai', 'jina' => new JinaAISearcher(
+                token: trim((string) ($providerConfig['token'] ?? '')),
+                client: $this->httpClient,
+            ),
             default => throw new \UnhandledMatchError('Unknown search provider'),
         };
     }

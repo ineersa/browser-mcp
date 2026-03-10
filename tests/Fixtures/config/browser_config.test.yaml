@@ -13,6 +13,8 @@ searchers:
     providers:
         searxng:
             url: http://server:8088
+        jinaai:
+            token: test-jina-token
 
 readers:
     selected: http

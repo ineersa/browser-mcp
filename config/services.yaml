@@ -40,13 +40,7 @@ services:
         factory: ['@App\Service\Reader\ReaderFactory', 'create']
         public: true
 
-    App\Service\BrowserState:
-        public: true
-
     App\Service\SearchService:
-        public: true
-
-    App\Service\PageDisplayService:
         public: true
     App\Service\OpenService:
         public: true

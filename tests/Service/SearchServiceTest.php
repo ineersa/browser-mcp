@@ -6,8 +6,6 @@ namespace App\Tests\Service;
 
 use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchResultSet;
-use App\Service\BrowserState;
-use App\Service\DTO\PageContents;
 use App\Service\Searcher\SearcherInterface;
 use App\Service\SearchService;
 use HelgeSverre\Toon\Toon;
@@ -34,15 +32,7 @@ final class SearchServiceTest extends TestCase
         $searcher = $this->createStub(SearcherInterface::class);
         $searcher->method('search')->willReturn($resultSet);
 
-        $state = new BrowserState();
-        $state->addPage(new PageContents(
-            url: 'https://example.com/prev',
-            text: 'old',
-            title: 'old',
-            urls: [],
-        ));
-
-        $service = new SearchService($searcher, $state);
+        $service = new SearchService($searcher);
 
         $expected = Toon::encode([
             [
@@ -55,7 +45,6 @@ final class SearchServiceTest extends TestCase
         $result = $service('foo', 5);
 
         $this->assertSame($expected, $result);
-        $this->assertTrue($state->isEmpty(), 'Search should reset BrowserState cache.');
     }
 
     public function testInvokeReturnsEmptyArrayWhenNoHits(): void
@@ -65,12 +54,10 @@ final class SearchServiceTest extends TestCase
             new SearchResultSet(query: 'query', hits: [], provider: 'searxng', fetchedAt: new \DateTimeImmutable())
         );
 
-        $state = new BrowserState();
-        $service = new SearchService($searcher, $state);
+        $service = new SearchService($searcher);
 
         $result = $service('query');
 
         $this->assertSame(Toon::encode([]), $result);
-        $this->assertTrue($state->isEmpty(), 'BrowserState should be empty after search.');
     }
 }

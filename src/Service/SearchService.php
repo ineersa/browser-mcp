@@ -18,7 +18,6 @@ final readonly class SearchService
 {
     public function __construct(
         private SearcherInterface $searcher,
-        private BrowserState $state,
     ) {
     }
 
@@ -42,7 +41,6 @@ final readonly class SearchService
             $msg = Utilities::maybeTruncate($e->getMessage());
             throw new BackendError(\sprintf('Error during search for `%s`: %s', $query, $msg), previous: $e)->setHint('This may be a backend service error or network timeout. Try retrying the search request.');
         }
-        $this->state->reset();
 
         $chain = new FormatterChain();
         $chain

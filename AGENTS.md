@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Source: `src/` (Symfony Console app). Key areas: `Command/` (entry commands), `Tools/` (MCP tools), `Service/` (SearchService, OpenService, FindService, BrowserState, Utilities, PageProcessor), `Service/Backend/` (SearxNG backend), `reference/` (Python stubs). Autoload namespace: `App\\`.
+- Source: `src/` (Symfony Console app). Key areas: `Command/` (entry commands), `Tools/` (MCP tools), `Service/` (SearchService, OpenService, FindService, Utilities, PageProcessor), `Service/Backend/` (SearxNG backend), `reference/` (Python stubs). Autoload namespace: `App\\`.
 - Config: `config/` (DI, logging), env: `.env`, runtime files: `var/`.
 - Binaries: `bin/console` (generic) and `bin/browser-mcp` (runs default `browser-mcp` command).
 - Tests: `tests/` (PHPUnit), vendor deps in `vendor/`. Build artifacts in `dist/`.

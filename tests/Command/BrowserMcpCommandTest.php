@@ -147,8 +147,9 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($content[0]['text'] ?? '');
         $this->assertNotSame('', $payload, 'Find tool payload should not be empty.');
 
-        $this->assertStringContainsString('Find results for contains `Datetime`', $payload);
-        $this->assertStringContainsString('URL: https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html', $payload);
+        $this->assertStringContainsString('url: "https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html"', $payload);
+        $this->assertStringContainsString('query: Datetime', $payload);
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $payload);
     }
 
     /**

@@ -37,8 +37,10 @@ final class FindServiceTest extends TestCase
 
         $result = $service->__invoke(url: $url, query: 'configure', match: FindMatchMode::CONTAINS, contextLines: 5);
 
-        $this->assertStringContainsString('Find results for contains `configure`', $result);
-        $this->assertStringContainsString('URL: https://symfony.com/doc/current/scheduler.html', $result);
+        $this->assertStringContainsString('url: "https://symfony.com/doc/current/scheduler.html"', $result);
+        $this->assertStringContainsString('query: configure', $result);
+        $this->assertStringContainsString('match: contains', $result);
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $result);
     }
 
     public function testFindUsesCacheForRepeatedCalls(): void
@@ -104,9 +106,8 @@ final class FindServiceTest extends TestCase
 
         $output = $service->__invoke($url, 'missing', FindMatchMode::CONTAINS, 5);
 
-        $this->assertStringContainsString('Pattern not found for query: `missing` (match: `contains`)', $output);
-        $this->assertStringContainsString('Next steps:', $output);
-        $this->assertStringContainsString('browser.open', $output);
+        $this->assertStringContainsString('query: missing', $output);
+        $this->assertStringContainsString('matches[0]:', $output);
     }
 
     public function testFindWrapsReaderErrorsAsBackendError(): void

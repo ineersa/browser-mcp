@@ -15,7 +15,7 @@ final class FindTool
 {
     public const string NAME = 'find';
     public const string TITLE = 'Find text in page';
-    public const string DESCRIPTION = 'Finds text matches within the page at `url`. Provide `query` as plain text and optional `match` mode (`contains` or `exact`). `contains` is case-insensitive and behaves like grep/ctrl+f. `exact` is case-sensitive and punctuation-sensitive. Optional `context_lines` controls how many lines are shown per match (default 5). Both `url` and `query` are required; the page is fetched (and cached) by URL before searching, so call this directly whenever you already know the destination and phrase—no prior `search` or `open` call is needed. Results include a References section for inline markers, and when no matches are found the response explains that no visible matches exist (useful for JSON or structured data pages).';
+    public const string DESCRIPTION = 'Finds text matches within the page at `url`. Provide `query` as plain text and optional `match` mode (`contains` or `exact`). `contains` is case-insensitive and behaves like grep/ctrl+f. `exact` is case-sensitive and punctuation-sensitive. Optional `context_lines` controls how many lines are shown per match (default 5). Both `url` and `query` are required; the page is fetched (and cached) by URL before searching, so call this directly whenever you already know the destination and phrase—no prior `search` or `open` call is needed. Returns structured TOON output with `url`, `query`, `match`, and a `matches` list (`id`, `line`, `chunk`).';
 
     public function __construct(
         private readonly FindService $findService,

@@ -12,8 +12,9 @@ use App\Domain\Read\ReadDocument;
 use App\Domain\Read\ReadRequest;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
-use App\Service\Formatter\FindOutputFormatter;
+use App\Service\Formatter\FindResultToArrayFormatter;
 use App\Service\Formatter\FormatterChain;
+use App\Service\Formatter\ToonFormatter;
 use App\Service\Reader\ReaderInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -47,7 +48,9 @@ final readonly class FindService
         $findDocument = $this->findInDocument($document, $trimmedQuery, $match, $numShowLines);
 
         $chain = new FormatterChain();
-        $chain->addFormatter(new FindOutputFormatter());
+        $chain
+            ->addFormatter(new FindResultToArrayFormatter())
+            ->addFormatter(new ToonFormatter());
 
         $formatted = $chain->format(new FormatPayload(document: $findDocument));
 

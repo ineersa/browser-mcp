@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Domain\Format\FormatPayload;
+use App\Domain\Read\ReadDocument;
 use App\Domain\Read\ReadRequest;
-use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
+use App\Service\Formatter\FormatterChain;
+use App\Service\Formatter\LinedOutputFormatter;
+use App\Service\Formatter\NumLinesFormatter;
 use App\Service\Reader\ReaderInterface;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 final readonly class OpenService
 {
     public function __construct(
         private ReaderInterface $reader,
-        private BrowserState $state,
-        private PageDisplayService $pageDisplay,
+        private CacheInterface $cache,
+        private int $cacheTtlSeconds = 300,
     ) {
     }
 
@@ -32,38 +38,38 @@ final readonly class OpenService
         }
 
         $startLine = max($start_at_line, 0);
-        $numLines = $fetchAll ? -1 : ($number_of_lines > 0 ? $number_of_lines : 50);
+        $numLines = $number_of_lines > 0 ? $number_of_lines : 50;
 
-        $cachedPage = $this->state->getPageByUrl($canonicalUrl);
-        $addedNewPage = false;
-        if (null === $cachedPage) {
-            $fetched = $this->openUrl($canonicalUrl);
-            $this->state->addPage($fetched);
-            $addedNewPage = true;
-        } else {
-            $this->state->setCurrentUrl($canonicalUrl);
-        }
+        $document = $this->openUrl($canonicalUrl);
 
-        try {
-            return $this->pageDisplay->showPage($this->state, $startLine, $numLines, $canonicalUrl);
-        } catch (ToolUsageError $e) {
-            if ($addedNewPage) {
-                $this->state->remove($canonicalUrl);
-            }
-            throw $e;
-        }
+        $chain = new FormatterChain();
+        $chain
+            ->addFormatter(new NumLinesFormatter($startLine, $numLines, $fetchAll))
+            ->addFormatter(new LinedOutputFormatter());
+
+        $formatted = $chain->format(new FormatPayload(document: $document));
+
+        return $formatted->output;
     }
 
     /**
      * @throws BackendError
      */
-    private function openUrl(string $url): PageContents
+    private function openUrl(string $url): ReadDocument
     {
+        $cacheKey = 'open.read_document.'.hash('sha256', $url);
+
         try {
-            return $this->reader->read(new ReadRequest(url: $url, canonicalUrl: $url))->toPageContents();
+            $document = $this->cache->get($cacheKey, function (ItemInterface $item) use ($url): ReadDocument {
+                $item->expiresAfter($this->cacheTtlSeconds);
+
+                return $this->reader->read(new ReadRequest(url: $url, canonicalUrl: $url));
+            });
         } catch (\Throwable $e) {
             $msg = Utilities::maybeTruncate($e->getMessage());
             throw new BackendError(\sprintf('Error fetching URL `%s`: %s', Utilities::maybeTruncate($url, 256), $msg), previous: $e)->setHint('This may be a network timeout, server error, or the URL may be inaccessible. Try retrying the request or check if the URL is valid and accessible.');
         }
+
+        return $document;
     }
 }

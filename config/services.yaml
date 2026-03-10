@@ -12,6 +12,7 @@ parameters:
     app.search.view_tokens: '%env(int:SEARCH_VIEW_TOKENS)%'
     app.search.encoding_name: '%env(string:SEARCH_ENCODING_NAME)%'
     app.search.find_context_lines: '%env(int:FIND_CONTEXT_LINES)%'
+    app.open.cache_ttl_seconds: 300
 
 services:
     # default configuration for services in *this* file
@@ -61,6 +62,9 @@ services:
             $encodingName: '%app.search.encoding_name%'
     App\Service\OpenService:
         public: true
+        arguments:
+            $cache: '@cache.array_adapter'
+            $cacheTtlSeconds: '%app.open.cache_ttl_seconds%'
     App\Service\FindService:
         public: true
         arguments:

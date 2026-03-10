@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Config\AppConfig;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\ToolUsageError;
 
 readonly class PageDisplayService
 {
     public function __construct(
-        private int $viewTokens = 1024,
-        private string $encodingName = 'o200k_base',
+        private AppConfig $config,
     ) {
     }
 
@@ -50,7 +50,14 @@ readonly class PageDisplayService
         if ($loc >= $totalLines) {
             throw new ToolUsageError(\sprintf('Invalid start_at_line parameter: `%d`. Cannot exceed page maximum of %d.', $loc, max(0, $totalLines - 1)))->setHint('Choose a smaller `start_at_line` within the page line count.');
         }
-        $endLoc = Utilities::getEndLoc($loc, $numLines, $totalLines, $lines, $this->viewTokens, $this->encodingName);
+        $endLoc = Utilities::getEndLoc(
+            $loc,
+            $numLines,
+            $totalLines,
+            $lines,
+            $this->config->getSearchViewTokens(),
+            $this->config->getSearchEncodingName(),
+        );
         $linesToShow = \array_slice($lines, $loc, $endLoc - $loc);
         $body = Utilities::joinLines($linesToShow, true, $loc);
         $scrollbar = \sprintf('viewing lines [%d - %d] of %d', $loc, $endLoc - 1, $totalLines - 1);

@@ -4,15 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    app.searcher_provider: '%env(BROWSER_BACKEND)%'
-    app.searcher_url: '%env(BACKEND_URL)%'
     app.http_timeout: 30.0
-    app.use_puppeteer: '%env(bool:USE_PUPPETEER)%'
-    # SearchService tunable
-    app.search.view_tokens: '%env(int:SEARCH_VIEW_TOKENS)%'
-    app.search.encoding_name: '%env(string:SEARCH_ENCODING_NAME)%'
-    app.open.cache_ttl_seconds: 300
-    app.find.cache_ttl_seconds: 300
 
 services:
     # default configuration for services in *this* file
@@ -29,24 +21,23 @@ services:
 
     App\Service\Searcher\SearcherFactory: ~
 
+    App\Config\ConfigLoader:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Config\AppConfig:
+        factory: ['@App\Config\ConfigLoader', 'load']
+
     App\Service\Searcher\SearcherInterface:
         factory: ['@App\Service\Searcher\SearcherFactory', 'create']
-        arguments:
-            - '%app.searcher_provider%'
-            - '%app.searcher_url%'
         public: true
 
     App\Service\Reader\ReaderFactory:
         arguments:
-            $usePuppeteer: '%app.use_puppeteer%'
-            $puppeteerScriptPath: '%kernel.project_dir%/bin/puppeteer-fetch.js'
-            $puppeteerNodeBinary: '%env(string:PUPPETEER_NODE_BINARY)%'
-            $puppeteerTimeoutSeconds: '%env(int:PUPPETEER_TIMEOUT)%'
+            $projectDir: '%kernel.project_dir%'
 
     App\Service\Reader\ReaderInterface:
         factory: ['@App\Service\Reader\ReaderFactory', 'create']
-        arguments:
-            - '%app.searcher_provider%'
         public: true
 
     App\Service\BrowserState:
@@ -57,19 +48,14 @@ services:
 
     App\Service\PageDisplayService:
         public: true
-        arguments:
-            $viewTokens: '%app.search.view_tokens%'
-            $encodingName: '%app.search.encoding_name%'
     App\Service\OpenService:
         public: true
         arguments:
             $cache: '@cache.array_adapter'
-            $cacheTtlSeconds: '%app.open.cache_ttl_seconds%'
     App\Service\FindService:
         public: true
         arguments:
             $cache: '@cache.array_adapter'
-            $cacheTtlSeconds: '%app.find.cache_ttl_seconds%'
 
     # Make ALL services in App\Tools\ public
     App\Tools\:

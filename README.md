@@ -14,33 +14,55 @@ Thanks to amazing projects like [Static PHP](https://static-php.dev/en/) and [Fr
 
 The easiest way is to just download binary from releases for your platform.
 
-## Env variables
+## Configuration
+
+Primary runtime config now lives in YAML (`browser_config.yaml` by default).
+
+Set `CONFIG_FILE` to an absolute or relative path:
+
+- absolute path is used as-is
+- relative path is resolved from project root in normal mode, and from the binary directory when running from PHAR
+
+Minimal environment variables:
 
 ```dotenv
 ### Set log level, default INFO, with log action level ERROR
 LOG_LEVEL=info
 # Where to store data (logs, cache, sessions)
 APP_VAR_DIR="/tmp/mcp/browser-mcp"
-# Backend to use
-BROWSER_BACKEND=searxng
-# Backend URL
-BACKEND_URL=http://server:8088
-# Amount of tokens to return in page view
-SEARCH_VIEW_TOKENS=1024
-# Encoding to calculate tokens (TikToken)
-SEARCH_ENCODING_NAME=o200k_base
-# Lines to return near found results
-FIND_CONTEXT_LINES=4
-# Enable Puppeteer-based fetching for JS-heavy pages
-USE_PUPPETEER=false
-# Path to the node executable used by Puppeteer reader
-PUPPETEER_NODE_BINARY=node
-# Navigation timeout for Puppeteer (seconds)
-PUPPETEER_TIMEOUT=45
-# MCP transport: stdio (default) or http
-MCP_TRANSPORT=stdio
-# Port for HTTP transport
-MCP_PORT=8000
+# Runtime config file
+CONFIG_FILE=browser_config.yaml
+```
+
+Default `browser_config.yaml`:
+
+```yaml
+general:
+  transport: stdio
+  port: 8000
+  open_cache_ttl_seconds: 300
+  find_cache_ttl_seconds: 300
+
+display:
+  search_view_tokens: 1024
+  search_encoding_name: o200k_base
+
+searchers:
+  selected: searxng
+  providers:
+    searxng:
+      url: http://server:8088
+
+readers:
+  selected: http
+  providers:
+    http:
+      timeout_seconds: 30
+      max_retries: 2
+    puppeteer:
+      script_path: bin/puppeteer-fetch.js
+      node_binary: node
+      timeout_seconds: 45
 ```
 
 ## Puppeteer rendering (optional)
@@ -53,8 +75,8 @@ To render JavaScript-heavy pages you can delegate fetching to Puppeteer instead 
     ```
     from the project root (or provide compatible installations globally using `npm install -g`).
     The helper automatically enables the stealth plugin when present and falls back to vanilla Puppeteer otherwise.
-2. Ensure the `node` binary is on your `PATH`, or override `PUPPETEER_NODE_BINARY` with the full path to your Node.js executable.
-3. Enable Puppeteer by setting `USE_PUPPETEER=true` (e.g., in `.env.local`). Optional: adjust `PUPPETEER_TIMEOUT` to control how long the worker waits for pages to finish loading.
+2. Ensure the `node` binary is on your `PATH`, or set `readers.providers.puppeteer.node_binary` in `browser_config.yaml`.
+3. Enable Puppeteer by setting `readers.selected: puppeteer` in `browser_config.yaml`. Optional: adjust `readers.providers.puppeteer.timeout_seconds`.
 
 When enabled, the Puppeteer reader invokes `bin/puppeteer-fetch.js`, which launches a headless browser, waits for the network to settle, performs a short auto-scroll to trigger lazy content, and returns the rendered HTML to the backend.
 
@@ -85,13 +107,12 @@ To run the server with the HTTP transport, set the environment variables:
     "command": "./dist/browser-mcp",
     "args": [],
     "env": {
-        "MCP_TRANSPORT": "http",
-        "MCP_PORT": "8000"
+        "CONFIG_FILE": "/path/to/browser_config.yaml"
     }
 }
 ```
 
-Or simply start it with `MCP_TRANSPORT=http ./bin/browser-mcp` and point your MCP client to the HTTP endpoint (e.g. `http://127.0.0.1:8000`).
+Set `general.transport: http` and `general.port` in the YAML, then start `./bin/browser-mcp` and point your MCP client to the HTTP endpoint (e.g. `http://127.0.0.1:8000`).
 
 You can also use `browser-mcp.phar` PHAR file instead of `./dist/browser-mcp`.
 The server exposes tools: `browser.search`, `browser.open`, `browser.find`.

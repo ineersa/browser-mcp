@@ -368,11 +368,12 @@ final class BrowserMcpCommandTest extends TestCase
     private function runServer(array $messages): array
     {
         $process = Process::fromShellCommandline(
-            'php bin/browser-mcp',
+            'php -d opcache.enable_cli=0 bin/browser-mcp',
             \dirname(__DIR__, 2),
             [
                 'APP_ENV' => 'test',
-                'MCP_TRANSPORT' => 'stdio',
+                'APP_VAR_DIR' => sys_get_temp_dir().'/browser-mcp-tests-'.(string) getmypid(),
+                'CONFIG_FILE' => \dirname(__DIR__, 2).'/tests/Fixtures/config/browser_config.test.yaml',
             ],
             null,
             5.0

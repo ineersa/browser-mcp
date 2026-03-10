@@ -108,7 +108,9 @@ final class BrowserMcpHttpCommandTest extends TestCase
 
         $env = $_SERVER;
         $env['APP_ENV'] = 'test';
+        $env['APP_VAR_DIR'] = sys_get_temp_dir().'/browser-mcp-tests-'.(string) getmypid();
         $env['APP_PROJECT_DIR'] = $projectDir;
+        $env['CONFIG_FILE'] = $projectDir.'/tests/Fixtures/config/browser_config.test.yaml';
         foreach ($env as $key => $value) {
             if (!\is_scalar($value)) {
                 unset($env[$key]);
@@ -116,7 +118,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         }
 
         $this->serverProcess = new Process(
-            ['php', '-S', \sprintf('127.0.0.1:%d', $this->serverPort), $workerScript],
+            ['php', '-d', 'opcache.enable_cli=0', '-S', \sprintf('127.0.0.1:%d', $this->serverPort), $workerScript],
             $projectDir,
             $env,
         );

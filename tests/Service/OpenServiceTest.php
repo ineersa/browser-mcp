@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Config\AppConfig;
 use App\Domain\Read\ReadDocument;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
@@ -30,7 +31,7 @@ final class OpenServiceTest extends TestCase
         $reader = $this->createMock(ReaderInterface::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
-        $service = new OpenService($reader, new ArrayAdapter(), 300);
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
 
         $result = $service->__invoke($expectedUrl, 0, 2);
         $service->__invoke($expectedUrl, 0, 2);
@@ -55,7 +56,7 @@ final class OpenServiceTest extends TestCase
         $reader = $this->createMock(ReaderInterface::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
-        $service = new OpenService($reader, new ArrayAdapter(), 300);
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
 
         $output = $service->__invoke($url, 0, 1, true);
 
@@ -79,7 +80,7 @@ final class OpenServiceTest extends TestCase
         $reader = $this->createStub(ReaderInterface::class);
         $reader->method('read')->willReturn($document);
 
-        $service = new OpenService($reader, new ArrayAdapter(), 300);
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
         $service->__invoke($url, 5, 1);
@@ -94,9 +95,19 @@ final class OpenServiceTest extends TestCase
             ->method('read')
             ->willThrowException(new \RuntimeException('network timeout'));
 
-        $service = new OpenService($reader, new ArrayAdapter(), 300);
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
 
         $this->expectException(BackendError::class);
         $service->__invoke($articleUrl, 0, 50);
+}
+
+    private function config(): AppConfig
+    {
+        return new AppConfig([
+            'general' => [
+                'open_cache_ttl_seconds' => 300,
+                'find_cache_ttl_seconds' => 300,
+            ],
+        ]);
     }
 }

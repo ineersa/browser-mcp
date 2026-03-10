@@ -1,0 +1,26 @@
+general:
+    transport: stdio
+    port: 8000
+    open_cache_ttl_seconds: 300
+    find_cache_ttl_seconds: 300
+
+display:
+    search_view_tokens: 1024
+    search_encoding_name: o200k_base
+
+searchers:
+    selected: searxng
+    providers:
+        searxng:
+            url: http://server:8088
+
+readers:
+    selected: http
+    providers:
+        http:
+            timeout_seconds: 30
+            max_retries: 2
+        puppeteer:
+            script_path: bin/puppeteer-fetch.js
+            node_binary: node
+            timeout_seconds: 45

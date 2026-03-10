@@ -20,8 +20,10 @@ final class PuppeteerReader extends HttpReader
         private readonly string $scriptPath,
         private readonly string $nodeBinary,
         private readonly int $timeoutSeconds,
+        float $httpTimeoutSeconds = 30.0,
+        int $httpMaxRetries = 2,
     ) {
-        parent::__construct($client);
+        parent::__construct($client, $httpTimeoutSeconds, $httpMaxRetries);
     }
 
     protected function fetchHtml(string $url): string

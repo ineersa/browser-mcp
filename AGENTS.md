@@ -27,9 +27,9 @@
 - Run `composer tests` locally; keep tests green and deterministic.
 
 ## Configuration
-- Backend selection: set `BROWSER_BACKEND` to `searx` (default). Future values may be added.
-- SearxNG endpoint: set `SEARXNG_URL` (default `http://server:8088`).
-- All services read these via the container (see `config/services.yaml`).
+- Runtime config is loaded from `CONFIG_FILE` (default `browser_config.yaml`).
+- Searcher/reader selection and provider-specific options are defined in that YAML file.
+- Keep boot-level env variables such as `APP_VAR_DIR` and `LOG_LEVEL` in `.env`.
 
 ## Service Usage Examples
 - Search: `$search = $container->get(App\Service\SearchService::class); echo $search('rust book');`

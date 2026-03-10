@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Config\AppConfig;
 use App\Domain\Find\FindMatchMode;
 use App\Domain\Read\ReadDocument;
 use App\Service\Exception\BackendError;
@@ -33,7 +34,7 @@ final class FindServiceTest extends TestCase
         $reader = $this->createMock(ReaderInterface::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
-        $service = new FindService($reader, new ArrayAdapter(), 300);
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
 
         $result = $service->__invoke(url: $url, query: 'configure', match: FindMatchMode::CONTAINS, contextLines: 5);
 
@@ -59,7 +60,7 @@ final class FindServiceTest extends TestCase
         $reader = $this->createMock(ReaderInterface::class);
         $reader->expects($this->once())->method('read')->willReturn($document);
 
-        $service = new FindService($reader, new ArrayAdapter(), 300);
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
 
         $service->__invoke(url: $url, query: 'beta', match: FindMatchMode::CONTAINS, contextLines: 5);
         $service->__invoke(url: $url, query: 'gamma', match: FindMatchMode::CONTAINS, contextLines: 5);
@@ -70,7 +71,7 @@ final class FindServiceTest extends TestCase
     public function testFindRequiresUrl(): void
     {
         $backend = $this->createStub(ReaderInterface::class);
-        $service = new FindService($backend, new ArrayAdapter(), 300);
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
         $service->__invoke(url: '', query: 'test', match: FindMatchMode::CONTAINS, contextLines: 5);
@@ -79,7 +80,7 @@ final class FindServiceTest extends TestCase
     public function testFindRejectsEmptyQuery(): void
     {
         $backend = $this->createStub(ReaderInterface::class);
-        $service = new FindService($backend, new ArrayAdapter(), 300);
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
         $this->expectExceptionMessage('Find query cannot be empty.');
@@ -102,7 +103,7 @@ final class FindServiceTest extends TestCase
         $backend = $this->createMock(ReaderInterface::class);
         $backend->expects($this->once())->method('read')->willReturn($document);
 
-        $service = new FindService($backend, new ArrayAdapter(), 300);
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $output = $service->__invoke($url, 'missing', FindMatchMode::CONTAINS, 5);
 
@@ -115,10 +116,20 @@ final class FindServiceTest extends TestCase
         $backend = $this->createMock(ReaderInterface::class);
         $backend->expects($this->once())->method('read')->willThrowException(new \RuntimeException('network timeout'));
 
-        $service = new FindService($backend, new ArrayAdapter(), 300);
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(BackendError::class);
         $service->__invoke('https://example.com', 'test', FindMatchMode::CONTAINS, 5);
+    }
+
+    private function config(): AppConfig
+    {
+        return new AppConfig([
+            'general' => [
+                'open_cache_ttl_seconds' => 300,
+                'find_cache_ttl_seconds' => 300,
+            ],
+        ]);
     }
 
 }

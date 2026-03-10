@@ -80,18 +80,6 @@ final readonly class Utilities
         return trim($summary);
     }
 
-    public static function getEnv(string $key, string $default): string
-    {
-        $value = $_SERVER[$key] ?? $_ENV[$key] ?? getenv($key);
-        if (false === $value) {
-            return $default;
-        }
-
-        $str = trim((string) $value);
-
-        return '' !== $str ? $str : $default;
-    }
-
     public static function ensureUtf8(string $html): string
     {
         if (!mb_detect_encoding($html, 'UTF-8', true)) {

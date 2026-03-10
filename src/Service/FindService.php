@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Config\AppConfig;
 use App\Domain\Find\FindDocument;
 use App\Domain\Find\FindMatch;
 use App\Domain\Find\FindMatchMode;
@@ -22,9 +23,9 @@ use Symfony\Contracts\Cache\ItemInterface;
 final readonly class FindService
 {
     public function __construct(
+        private AppConfig $config,
         private ReaderInterface $reader,
         private CacheInterface $cache,
-        private int $cacheTtlSeconds = 300,
     ) {
     }
 
@@ -66,7 +67,7 @@ final readonly class FindService
 
         try {
             return $this->cache->get($cacheKey, function (ItemInterface $item) use ($url): ReadDocument {
-                $item->expiresAfter($this->cacheTtlSeconds);
+                $item->expiresAfter($this->config->getFindCacheTtlSeconds());
 
                 return $this->reader->read(new ReadRequest(url: $url, canonicalUrl: $url));
             });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Config\AppConfig;
 use App\Domain\Format\FormatPayload;
 use App\Domain\Read\ReadDocument;
 use App\Domain\Read\ReadRequest;
@@ -19,9 +20,9 @@ use Symfony\Contracts\Cache\ItemInterface;
 final readonly class OpenService
 {
     public function __construct(
+        private AppConfig $config,
         private ReaderInterface $reader,
         private CacheInterface $cache,
-        private int $cacheTtlSeconds = 300,
     ) {
     }
 
@@ -61,7 +62,7 @@ final readonly class OpenService
 
         try {
             $document = $this->cache->get($cacheKey, function (ItemInterface $item) use ($url): ReadDocument {
-                $item->expiresAfter($this->cacheTtlSeconds);
+                $item->expiresAfter($this->config->getOpenCacheTtlSeconds());
 
                 return $this->reader->read(new ReadRequest(url: $url, canonicalUrl: $url));
             });

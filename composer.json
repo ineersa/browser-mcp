@@ -33,6 +33,7 @@
         "symfony/http-client": "7.4.*",
         "symfony/monolog-bundle": "^3.11.1",
         "symfony/process": "7.4.*",
+        "symfony/property-access": "7.4.*",
         "symfony/runtime": "7.4.*",
         "symfony/yaml": "7.4.*",
         "yethee/tiktoken": "^0.11.1"

@@ -20,6 +20,8 @@ class HttpReader implements ReaderInterface
 {
     public function __construct(
         private readonly HttpClientInterface $client,
+        private readonly float $timeoutSeconds = 30.0,
+        private readonly int $maxRetries = 2,
     ) {
     }
 
@@ -77,6 +79,8 @@ class HttpReader implements ReaderInterface
         try {
             $response = $this->client->request('GET', $url, [
                 'max_redirects' => 10,
+                'timeout' => $this->timeoutSeconds > 0 ? $this->timeoutSeconds : 30.0,
+                'max_retries' => max(0, $this->maxRetries),
             ]);
 
             return $response->getContent();

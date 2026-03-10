@@ -85,4 +85,25 @@ final class HttpReaderTest extends TestCase
         $this->assertStringContainsString('URL: https://raw.githubusercontent.com/foo/bar/main/README.md', $page->text);
         $this->assertStringNotContainsString('```', $page->text);
     }
+
+    public function testReadUsesConfiguredHttpTimeoutAndRetries(): void
+    {
+        $url = 'https://example.com/article';
+        $optionsSeen = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $requestUrl, array $options) use (&$optionsSeen, $url): MockResponse {
+            if ('GET' !== $method || $url !== $requestUrl) {
+                throw new \RuntimeException('Unexpected request: '.$method.' '.$requestUrl);
+            }
+
+            $optionsSeen = $options;
+
+            return new MockResponse('<html><body><p>ok</p></body></html>');
+        });
+
+        $reader = new HttpReader($httpClient, 12.5, 4);
+        $reader->read(new ReadRequest(url: $url, canonicalUrl: $url));
+
+        $this->assertSame(12.5, $optionsSeen['timeout'] ?? null);
+        $this->assertSame(4, $optionsSeen['max_retries'] ?? null);
+    }
 }

@@ -33,7 +33,7 @@ SEARCH_ENCODING_NAME=o200k_base
 FIND_CONTEXT_LINES=4
 # Enable Puppeteer-based fetching for JS-heavy pages
 USE_PUPPETEER=false
-# Path to the node executable used by PuppeteerWorker
+# Path to the node executable used by Puppeteer reader
 PUPPETEER_NODE_BINARY=node
 # Navigation timeout for Puppeteer (seconds)
 PUPPETEER_TIMEOUT=45
@@ -56,7 +56,7 @@ To render JavaScript-heavy pages you can delegate fetching to Puppeteer instead 
 2. Ensure the `node` binary is on your `PATH`, or override `PUPPETEER_NODE_BINARY` with the full path to your Node.js executable.
 3. Enable Puppeteer by setting `USE_PUPPETEER=true` (e.g., in `.env.local`). Optional: adjust `PUPPETEER_TIMEOUT` to control how long the worker waits for pages to finish loading.
 
-When enabled, `PuppeteerWorker` invokes `bin/puppeteer-fetch.js`, which launches a headless browser, waits for the network to settle, performs a short auto-scroll to trigger lazy content, and returns the rendered HTML to the backend.
+When enabled, the Puppeteer reader invokes `bin/puppeteer-fetch.js`, which launches a headless browser, waits for the network to settle, performs a short auto-scroll to trigger lazy content, and returns the rendered HTML to the backend.
 
 ## MCP config:
 

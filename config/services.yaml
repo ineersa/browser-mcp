@@ -38,6 +38,9 @@ services:
     App\Service\Reader\ReaderFactory:
         arguments:
             $usePuppeteer: '%app.use_puppeteer%'
+            $puppeteerScriptPath: '%kernel.project_dir%/bin/puppeteer-fetch.js'
+            $puppeteerNodeBinary: '%env(string:PUPPETEER_NODE_BINARY)%'
+            $puppeteerTimeoutSeconds: '%env(int:PUPPETEER_TIMEOUT)%'
 
     App\Service\Reader\ReaderInterface:
         factory: ['@App\Service\Reader\ReaderFactory', 'create']
@@ -111,9 +114,3 @@ services:
         arguments:
             - '@http_client.retryable.inner'
             - '@http_client.retry_strategy'
-
-    App\Service\PuppeteerWorker:
-        arguments:
-            $scriptPath: '%kernel.project_dir%/bin/puppeteer-fetch.js'
-            $nodeBinary: '%env(string:PUPPETEER_NODE_BINARY)%'
-            $timeoutSeconds: '%env(int:PUPPETEER_TIMEOUT)%'

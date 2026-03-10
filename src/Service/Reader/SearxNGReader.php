@@ -9,7 +9,6 @@ use App\Domain\Read\ReadRequest;
 use App\Service\DTO\PageContents;
 use App\Service\Exception\BackendError;
 use App\Service\PageProcessor;
-use App\Service\PuppeteerWorker;
 use App\Service\Utilities;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -17,12 +16,10 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final class SearxNGReader implements ReaderInterface
+abstract class SearxNGReader implements ReaderInterface
 {
     public function __construct(
         private readonly HttpClientInterface $client,
-        private readonly ?PuppeteerWorker $puppeteerWorker = null,
-        private readonly bool $usePuppeteer = false,
     ) {
     }
 
@@ -57,14 +54,7 @@ final class SearxNGReader implements ReaderInterface
             return $githubPage;
         }
 
-        $html = null;
-        if ($this->usePuppeteer && null !== $this->puppeteerWorker) {
-            $html = $this->puppeteerWorker->fetch($url);
-        }
-
-        if (null === $html) {
-            $html = $this->httpGet($url);
-        }
+        $html = $this->fetchHtml($url);
 
         return PageProcessor::processHtml(
             html: $html,
@@ -74,10 +64,12 @@ final class SearxNGReader implements ReaderInterface
         );
     }
 
+    abstract protected function fetchHtml(string $url): string;
+
     /**
      * @throws BackendError
      */
-    private function httpGet(string $url): string
+    protected function httpGet(string $url): string
     {
         try {
             $response = $this->client->request('GET', $url, [

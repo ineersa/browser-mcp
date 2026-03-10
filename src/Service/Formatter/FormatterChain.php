@@ -6,7 +6,7 @@ namespace App\Service\Formatter;
 
 use App\Domain\Format\FormatPayload;
 
-final class FormatterChain implements FormatterPipelineInterface
+final class FormatterChain
 {
     /**
      * @var list<FormatterInterface>

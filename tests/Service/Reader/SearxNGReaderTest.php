@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\Reader;
 
 use App\Domain\Read\ReadRequest;
-use App\Service\Reader\SearxNGReader;
+use App\Service\Reader\HttpReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -18,7 +18,7 @@ final class SearxNGReaderTest extends TestCase
         $html = '<html><head><title>Article</title></head><body><p>Hello</p></body></html>';
         $httpClient = new MockHttpClient(static fn (): MockResponse => new MockResponse($html));
 
-        $reader = new SearxNGReader($httpClient);
+        $reader = new HttpReader($httpClient);
         $result = $reader->read(new ReadRequest(url: $url, canonicalUrl: $url));
 
         $this->assertSame($url, $result->url);
@@ -42,7 +42,7 @@ final class SearxNGReaderTest extends TestCase
             return new MockResponse($rawContent);
         });
 
-        $reader = new SearxNGReader($httpClient);
+        $reader = new HttpReader($httpClient);
         $page = $reader->read(new ReadRequest(
             url: 'https://github.com/foo/bar/blob/main/src/File.php',
             canonicalUrl: 'https://github.com/foo/bar/blob/main/src/File.php',
@@ -72,7 +72,7 @@ final class SearxNGReaderTest extends TestCase
             return new MockResponse($rawContent);
         });
 
-        $reader = new SearxNGReader($httpClient);
+        $reader = new HttpReader($httpClient);
         $page = $reader->read(new ReadRequest(
             url: 'https://raw.githubusercontent.com/foo/bar/main/README.md',
             canonicalUrl: 'https://raw.githubusercontent.com/foo/bar/main/README.md',

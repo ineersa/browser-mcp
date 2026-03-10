@@ -11,7 +11,7 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
 use App\Service\PageDisplayService;
 use App\Service\Reader\ReaderInterface;
-use App\Service\Reader\SearxNGReader;
+use App\Service\Reader\HttpReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -31,7 +31,7 @@ final class OpenServiceTest extends TestCase
 
             return new MockResponse($html);
         });
-        $reader = new SearxNGReader($httpClient);
+        $reader = new HttpReader($httpClient);
 
         $state = new BrowserState();
         $display = new PageDisplayService();

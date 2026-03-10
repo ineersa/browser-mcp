@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Tests\Service\Reader;
 
-use App\Service\PuppeteerWorker;
+use App\Domain\Read\ReadRequest;
+use App\Service\Reader\PuppeteerReader;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\Process\ExecutableFinder;
 
-final class PuppeteerWorkerTest extends TestCase
+final class PuppeteerReaderTest extends TestCase
 {
     public function testFetchesHtmlFromGithub(): void
     {
@@ -35,12 +37,14 @@ final class PuppeteerWorkerTest extends TestCase
             }
         }
 
-        $worker = new PuppeteerWorker($scriptPath, $resolvedNode, 60);
+        $reader = new PuppeteerReader(new MockHttpClient(), $scriptPath, $resolvedNode, 60);
 
-        $html = $worker->fetch('https://github.com/modelcontextprotocol/modelcontextprotocol');
+        $document = $reader->read(new ReadRequest(
+            url: 'https://github.com/modelcontextprotocol/modelcontextprotocol',
+            canonicalUrl: 'https://github.com/modelcontextprotocol/modelcontextprotocol',
+        ));
+        $html = $document->markdown;
 
         $this->assertNotEmpty($html, 'Puppeteer returned empty HTML.');
-
-        //                fwrite(fopen('test.html', 'w'), $html);
     }
 }

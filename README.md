@@ -72,6 +72,10 @@ readers:
       token: "%env(JINA_READER_TOKEN)%"
       timeout_seconds: 15
       max_retries: 1
+    tavily:
+      token: "%env(TAVILY_READER_TOKEN)%"
+      timeout_seconds: 15
+      max_retries: 1
 ```
 
 ## MCP config:

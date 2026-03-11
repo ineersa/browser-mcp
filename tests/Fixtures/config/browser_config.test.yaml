@@ -39,3 +39,7 @@ readers:
             token: test-jina-reader-token
             timeout_seconds: 15
             max_retries: 1
+        tavily:
+            token: test-tavily-reader-token
+            timeout_seconds: 15
+            max_retries: 1

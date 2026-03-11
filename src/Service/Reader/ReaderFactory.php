@@ -22,6 +22,7 @@ final readonly class ReaderFactory
         return match ($reader) {
             'http' => $this->createHttpReader(),
             'jina', 'jinaai' => $this->createJinaReader(),
+            'tavily' => $this->createTavilyReader(),
             default => throw new \UnhandledMatchError('Unknown reader provider'),
         };
     }
@@ -64,6 +65,18 @@ final readonly class ReaderFactory
         return new JinaReader(
             client: $this->httpClient,
             token: trim((string) ($config['token'] ?? '')),
+            timeoutSeconds: (float) ($config['timeout_seconds'] ?? 15.0),
+            maxRetries: max(0, (int) ($config['max_retries'] ?? 1)),
+        );
+    }
+
+    private function createTavilyReader(): TavilyReader
+    {
+        $config = $this->config->getReaderConfig('tavily');
+
+        return new TavilyReader(
+            token: trim((string) ($config['token'] ?? '')),
+            client: $this->httpClient,
             timeoutSeconds: (float) ($config['timeout_seconds'] ?? 15.0),
             maxRetries: max(0, (int) ($config['max_retries'] ?? 1)),
         );

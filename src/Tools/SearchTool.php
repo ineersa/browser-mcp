@@ -29,12 +29,12 @@ final class SearchTool
             $result = $this->searchService->__invoke($query, $topn);
             $content = new TextContent($result);
 
-            return new CallToolResult([$content], false, ['result' => $result]);
+            return new CallToolResult([$content], false);
         } catch (ToolUsageError|BackendError $exception) {
             $result = "Result: error\n Error Message: ".$exception->getMessage()."\n Hint: ".$exception->getHint();
             $content = new TextContent(text: $result);
 
-            return new CallToolResult([$content], true, ['result' => $result]);
+            return new CallToolResult([$content], true);
         }
     }
 }

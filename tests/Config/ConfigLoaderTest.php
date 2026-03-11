@@ -68,6 +68,32 @@ YAML
         }
     }
 
+    public function testLoadTreatsJinaReaderTokenAsOptional(): void
+    {
+        $dir = $this->makeTempDir();
+        file_put_contents($dir.'/config.yaml', <<<'YAML'
+readers:
+  selected: jinaai
+  providers:
+    jinaai:
+      token: "%env(JINA_READER_TOKEN)%"
+YAML
+);
+
+        $snapshot = $this->snapshotEnv(['CONFIG_FILE', 'JINA_READER_TOKEN']);
+
+        try {
+            $_SERVER['CONFIG_FILE'] = 'config.yaml';
+            unset($_ENV['JINA_READER_TOKEN'], $_SERVER['JINA_READER_TOKEN']);
+
+            $config = (new ConfigLoader($dir))->load();
+
+            $this->assertSame('', $config->getReaderConfig('jinaai')['token']);
+        } finally {
+            $this->restoreEnv($snapshot);
+        }
+    }
+
     private function makeTempDir(): string
     {
         $path = sys_get_temp_dir().'/browser-mcp-config-'.bin2hex(random_bytes(8));

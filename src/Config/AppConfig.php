@@ -83,7 +83,9 @@ final readonly class AppConfig
 
     public function getSelectedReader(): string
     {
-        return 'http';
+        $value = strtolower(trim((string) $this->getValue('readers.selected', 'http')));
+
+        return '' !== $value ? $value : 'http';
     }
 
     /**

@@ -34,3 +34,7 @@ readers:
                 - linenos
                 - line-numbers
                 - gutter
+        jinaai:
+            token: "%env(JINA_READER_TOKEN)%"
+            timeout_seconds: 15
+            max_retries: 1

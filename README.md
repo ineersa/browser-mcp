@@ -68,6 +68,10 @@ readers:
     http:
       timeout_seconds: 30
       max_retries: 2
+    jinaai:
+      token: "%env(JINA_READER_TOKEN)%"
+      timeout_seconds: 15
+      max_retries: 1
 ```
 
 ## MCP config:

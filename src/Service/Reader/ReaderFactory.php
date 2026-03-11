@@ -19,31 +19,53 @@ final readonly class ReaderFactory
     public function create(): ReaderContract
     {
         $reader = $this->config->getSelectedReader();
-        $httpConfig = $this->config->getReaderConfig('http');
+        return match ($reader) {
+            'http' => $this->createHttpReader(),
+            'jina', 'jinaai' => $this->createJinaReader(),
+            default => throw new \UnhandledMatchError('Unknown reader provider'),
+        };
+    }
 
-        $httpTimeoutSeconds = (float) ($httpConfig['timeout_seconds'] ?? 30.0);
-        if ($httpTimeoutSeconds <= 0) {
-            $httpTimeoutSeconds = 30.0;
+    private function createHttpReader(): HttpReader
+    {
+        $config = $this->config->getReaderConfig('http');
+
+        $timeoutSeconds = (float) ($config['timeout_seconds'] ?? 30.0);
+        if ($timeoutSeconds <= 0) {
+            $timeoutSeconds = 30.0;
         }
-        $httpMaxRetries = max(0, (int) ($httpConfig['max_retries'] ?? 2));
-        $httpUserAgent = trim((string) ($httpConfig['user_agent'] ?? HttpReader::DEFAULT_USER_AGENT));
-        if ('' === $httpUserAgent) {
-            $httpUserAgent = HttpReader::DEFAULT_USER_AGENT;
+
+        $userAgent = trim((string) ($config['user_agent'] ?? HttpReader::DEFAULT_USER_AGENT));
+        if ('' === $userAgent) {
+            $userAgent = HttpReader::DEFAULT_USER_AGENT;
         }
-        $httpNoiseClassTokens = array_values(array_filter(
-            is_array($httpConfig['noise_class_tokens'] ?? null) ? $httpConfig['noise_class_tokens'] : [],
+
+        $noiseClassTokens = array_values(array_filter(
+            is_array($config['noise_class_tokens'] ?? null) ? $config['noise_class_tokens'] : [],
             static fn (mixed $value): bool => is_string($value) && '' !== trim($value),
         ));
-        if ('http' !== $reader) {
-            throw new \UnhandledMatchError('Unknown reader provider');
-        }
 
         return new HttpReader(
                 client: $this->httpClient,
-                timeoutSeconds: $httpTimeoutSeconds,
-                maxRetries: $httpMaxRetries,
-                userAgent: $httpUserAgent,
-                noiseClassTokens: $httpNoiseClassTokens,
+                timeoutSeconds: $timeoutSeconds,
+                maxRetries: max(0, (int) ($config['max_retries'] ?? 2)),
+                userAgent: $userAgent,
+                noiseClassTokens: $noiseClassTokens,
             );
+    }
+
+    private function createJinaReader(): JinaReader
+    {
+        $config = $this->config->getReaderConfig('jinaai');
+        if ([] === $config) {
+            $config = $this->config->getReaderConfig('jina');
+        }
+
+        return new JinaReader(
+            client: $this->httpClient,
+            token: trim((string) ($config['token'] ?? '')),
+            timeoutSeconds: (float) ($config['timeout_seconds'] ?? 15.0),
+            maxRetries: max(0, (int) ($config['max_retries'] ?? 1)),
+        );
     }
 }

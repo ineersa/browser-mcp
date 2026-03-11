@@ -59,7 +59,7 @@ final readonly class ConfigLoader
 
     private function resolveEnvVarsInString(string $value): string
     {
-        return preg_replace_callback(
+        $resolved = preg_replace_callback(
             '/%env\(([^)]+)\)%/',
             function (array $matches): string {
                 $varName = trim($matches[1]);
@@ -69,13 +69,19 @@ final readonly class ConfigLoader
 
                 $resolved = $_ENV[$varName] ?? $_SERVER[$varName] ?? getenv($varName);
                 if (false === $resolved) {
+                    if ('JINA_READER_TOKEN' === $varName) {
+                        return '';
+                    }
+
                     throw new \RuntimeException(sprintf('Environment variable "%s" is not defined.', $varName));
                 }
 
                 return (string) $resolved;
             },
             $value,
-        ) ?: $value;
+        );
+
+        return null === $resolved ? $value : $resolved;
     }
 
     private function resolvePath(string $configFile): string

@@ -1,5 +1,6 @@
 general:
     transport: stdio
+    host: 127.0.0.1
     port: 8000
     search_cache_ttl_seconds: 600
     open_cache_ttl_seconds: 300

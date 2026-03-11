@@ -1,6 +1,7 @@
 general:
     transport: stdio
-    port: 8000
+    host: 0.0.0.0
+    port: 9001
     search_cache_ttl_seconds: 600
     open_cache_ttl_seconds: 300
 
@@ -23,7 +24,7 @@ searchers:
             user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
 
 readers:
-    selected: tavily
+    selected: http
     providers:
         http:
             timeout_seconds: 30

@@ -97,6 +97,7 @@ class BrowserMcpCommand extends Command
 
     private function runHttp(OutputInterface $output): int
     {
+        $host = $this->config->getHost();
         $port = $this->config->getPort();
         $workerPath = $this->resolveWorkerPath();
 
@@ -121,14 +122,14 @@ class BrowserMcpCommand extends Command
         $phpBinary = is_executable(\PHP_BINARY) ? \PHP_BINARY : 'php';
 
         $process = new Process(
-            [$phpBinary, '-S', \sprintf('127.0.0.1:%d', $port), $workerPath],
+            [$phpBinary, '-S', \sprintf('%s:%d', $host, $port), $workerPath],
             $cwd,
             $env,
         );
 
         $process->setTimeout(null);
 
-        $this->logger->info(\sprintf('Starting HTTP server on 127.0.0.1:%d', $port));
+        $this->logger->info(\sprintf('Starting HTTP server on %s:%d', $host, $port));
 
         \assert($output instanceof ConsoleOutputInterface);
         $errorOutput = $output->getErrorOutput();

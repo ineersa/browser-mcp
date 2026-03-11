@@ -112,6 +112,8 @@ To run the server with the HTTP transport, set the environment variables:
 
 Set `general.transport: http` and `general.port` in the YAML, then start `./bin/browser-mcp` and point your MCP client to the HTTP endpoint (e.g. `http://127.0.0.1:8000`).
 
+By default, HTTP binds to `127.0.0.1` (`general.host`) for local-only access. For LAN access, set `general.host: 0.0.0.0` and connect from other machines using your server IP (for example `http://192.168.2.38:8000`).
+
 You can also use `browser-mcp.phar` PHAR file instead of `./dist/browser-mcp`.
 The server exposes tools: `browser.search`, `browser.open`, `browser.find`.
 

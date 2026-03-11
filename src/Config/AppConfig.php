@@ -35,6 +35,13 @@ final readonly class AppConfig
         return $port > 0 ? $port : 8000;
     }
 
+    public function getHost(): string
+    {
+        $host = trim((string) $this->getValue('general.host', '127.0.0.1'));
+
+        return '' !== $host ? $host : '127.0.0.1';
+    }
+
     public function getSearchViewTokens(): int
     {
         $value = (int) $this->getValue('display.search_view_tokens', 1024);

@@ -88,8 +88,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->callToolRequest('search', ['query' => 'Test open page']),
             $this->callToolRequest('open', [
                 'url' => $targetUrl,
-                'start_at_line' => 0,
-                'number_of_lines' => 50,
+                'startAtLine' => 0,
+                'numberOfLines' => 50,
             ], 3),
         ]);
 
@@ -123,8 +123,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->callToolRequest('search', ['query' => 'Test open page']),
             $this->callToolRequest('open', [
                 'url' => $targetUrl,
-                'start_at_line' => 0,
-                'number_of_lines' => 50,
+                'startAtLine' => 0,
+                'numberOfLines' => 50,
             ], 3),
             $this->callToolRequest('find', [
                 'url' => $targetUrl,
@@ -161,8 +161,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => '',
-                'start_at_line' => 0,
-                'number_of_lines' => 50,
+                'startAtLine' => 0,
+                'numberOfLines' => 50,
             ], 2),
         ]);
 
@@ -184,8 +184,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => 'https://example.com',
-                'start_at_line' => -5,
-                'number_of_lines' => 50,
+                'startAtLine' => -5,
+                'numberOfLines' => 50,
             ], 2),
         ]);
 
@@ -195,7 +195,7 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: `start_at_line` must be zero or greater.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: `startAtLine` must be zero or greater.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -207,8 +207,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => 'https://example.com',
-                'start_at_line' => 0,
-                'number_of_lines' => 0,
+                'startAtLine' => 0,
+                'numberOfLines' => 0,
             ], 2),
         ]);
 
@@ -218,7 +218,7 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: `number_of_lines` must be greater than zero when `fetch_all` is false.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: `numberOfLines` must be greater than zero when `fetchAll` is false.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -232,8 +232,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => $targetUrl,
-                'start_at_line' => 0,
-                'fetch_all' => true,
+                'startAtLine' => 0,
+                'fetchAll' => true,
             ], 2),
         ]);
 
@@ -245,7 +245,7 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
 
         $payload = (string) ($callResponse['result']['content'][0]['text'] ?? '');
-        $this->assertNotSame('', $payload, 'Open tool payload should not be empty when fetch_all is enabled.');
+        $this->assertNotSame('', $payload, 'Open tool payload should not be empty when fetchAll is enabled.');
         $this->assertStringContainsString('**viewing lines [0 -', $payload);
 
         $pattern = '/\\*\\*viewing lines \\[(\\d+) - (\\d+)\\] of (\\d+)\\*\\*/';
@@ -254,7 +254,7 @@ final class BrowserMcpCommandTest extends TestCase
         preg_match($pattern, $payload, $match);
         $this->assertCount(4, $match);
         $windowSize = ((int) $match[2] - (int) $match[1]) + 1;
-        $this->assertGreaterThan(50, $windowSize, 'fetch_all should expand the visible window beyond the default 50 lines.');
+        $this->assertGreaterThan(50, $windowSize, 'fetchAll should expand the visible window beyond the default 50 lines.');
     }
 
     /**
@@ -348,10 +348,10 @@ final class BrowserMcpCommandTest extends TestCase
 
         $openSchema = $indexed[OpenTool::NAME]['inputSchema'] ?? [];
         $openProperties = $openSchema['properties'] ?? [];
-        $this->assertSame(['url', 'start_at_line'], $openSchema['required'] ?? []);
-        $this->assertSame(50, $openProperties['number_of_lines']['default'] ?? null);
-        $this->assertArrayHasKey('fetch_all', $openProperties);
-        $this->assertFalse($openProperties['fetch_all']['default'] ?? true);
+        $this->assertSame(['url'], $openSchema['required'] ?? []);
+        $this->assertSame(50, $openProperties['numberOfLines']['default'] ?? null);
+        $this->assertArrayHasKey('fetchAll', $openProperties);
+        $this->assertFalse($openProperties['fetchAll']['default'] ?? true);
 
         $this->assertSame(FindTool::DESCRIPTION, $indexed[FindTool::NAME]['description']);
         $this->assertSame(FindTool::TITLE, $indexed[FindTool::NAME]['annotations']['title']);

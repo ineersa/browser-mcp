@@ -73,8 +73,8 @@ final class BrowserMcpHttpCommandTest extends TestCase
         $output = $this->runInspector([
             '--method', 'tools/call',
             '--tool-name', 'open',
-            '--tool-arg', 'start_at_line=0',
-            '--tool-arg', 'number_of_lines=50',
+            '--tool-arg', 'startAtLine=0',
+            '--tool-arg', 'numberOfLines=50',
         ], true);
 
         $this->assertStringContainsString(

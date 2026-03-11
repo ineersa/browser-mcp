@@ -133,17 +133,21 @@ final class ReplCommand extends Command
      */
     private function runOpen(SymfonyStyle $io): string
     {
-        $io->writeln('<fg=gray>Input: URL, then either window params (start/count) or full.</>');
+        $io->writeln('<fg=gray>Input: URL, then choose auto/window/full.</>');
         $url = trim((string) $io->ask('URL', 'https://example.com'));
 
         $mode = $io->choice(
             question: 'Open mode',
-            choices: ['window', 'full'],
-            default: 'window',
+            choices: ['auto', 'window', 'full'],
+            default: 'auto',
         );
 
         if ('full' === $mode) {
             return $this->openService->__invoke($url, 0, -1, true);
+        }
+
+        if ('auto' === $mode) {
+            return $this->openService->__invoke($url);
         }
 
         $startAtLine = max(0, (int) $io->ask('Start at line (0-based)', '0'));

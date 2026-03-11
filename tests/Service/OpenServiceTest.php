@@ -12,6 +12,7 @@ use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 
 final class OpenServiceTest extends TestCase
 {
@@ -99,7 +100,70 @@ final class OpenServiceTest extends TestCase
 
         $this->expectException(BackendError::class);
         $service->__invoke($articleUrl, 0, 50);
-}
+    }
+
+    public function testOpenAutoSelectsSnippetWindowWhenStartAtLineMissing(): void
+    {
+        $url = 'https://example.com/article';
+        $lines = [];
+        for ($i = 0; $i < 140; ++$i) {
+            $lines[] = 'Line '.$i;
+        }
+        $lines[80] = 'General relativity describes gravity as geometry of spacetime.';
+
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Article',
+            markdown: implode("\n", $lines),
+            references: [],
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        );
+
+        $cache = new ArrayAdapter();
+        $snippetKey = 'search_snippets.'.hash('sha256', $url);
+        $cache->get($snippetKey, static function (ItemInterface $item): array {
+            $item->expiresAfter(600);
+
+            return ['gravity as geometry of spacetime'];
+        });
+
+        $reader = $this->createStub(ReaderContract::class);
+        $reader->method('read')->willReturn($document);
+
+        $service = new OpenService($this->config(), $reader, $cache);
+        $output = $service->__invoke($url);
+
+        $this->assertStringContainsString('viewing lines [70 - 120] of 139', $output);
+    }
+
+    public function testOpenAutoFallsBackToTopWindowWhenSnippetMissing(): void
+    {
+        $url = 'https://example.com/article';
+        $lines = [];
+        for ($i = 0; $i < 160; ++$i) {
+            $lines[] = 'Line '.$i;
+        }
+
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Article',
+            markdown: implode("\n", $lines),
+            references: [],
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        );
+
+        $reader = $this->createStub(ReaderContract::class);
+        $reader->method('read')->willReturn($document);
+
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
+        $output = $service->__invoke($url);
+
+        $this->assertStringContainsString('viewing lines [0 - 99] of 159', $output);
+    }
 
     private function config(): AppConfig
     {

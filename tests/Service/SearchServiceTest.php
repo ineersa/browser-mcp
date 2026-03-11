@@ -12,6 +12,7 @@ use App\Service\SearchService;
 use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 
 final class SearchServiceTest extends TestCase
 {
@@ -77,6 +78,36 @@ final class SearchServiceTest extends TestCase
         $second = $service('query', 5);
 
         $this->assertSame($first, $second);
+    }
+
+    public function testInvokeCachesSnippetsPerCanonicalUrl(): void
+    {
+        $resultSet = new SearchResultSet(
+            query: 'foo',
+            hits: [
+                new SearchHit(
+                    id: '1',
+                    url: 'https://example.com/article',
+                    title: 'Example',
+                    snippet: 'Gravity is geometry of spacetime.',
+                ),
+            ],
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        );
+
+        $searcher = $this->createStub(SearcherContract::class);
+        $searcher->method('search')->willReturn($resultSet);
+        $searcher->method('getProvider')->willReturn('searxng');
+
+        $cache = new ArrayAdapter();
+        $service = new SearchService($this->config(), $searcher, $cache);
+        $service('foo', 5);
+
+        $snippetKey = 'search_snippets.'.hash('sha256', 'https://example.com/article');
+        $snippets = $cache->get($snippetKey, static fn (ItemInterface $item): array => []);
+
+        $this->assertSame(['Gravity is geometry of spacetime.'], $snippets);
     }
 
     private function config(): AppConfig

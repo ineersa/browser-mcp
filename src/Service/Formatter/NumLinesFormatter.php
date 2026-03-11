@@ -36,7 +36,7 @@ final readonly class NumLinesFormatter implements FormatterContract
         $totalLines = \count($lines);
         $startLine = max(0, $this->startAtLine);
         if ($startLine >= $totalLines) {
-            throw new ToolUsageError(\sprintf('Invalid start_at_line parameter: `%d`. Cannot exceed page maximum of %d.', $startLine, max(0, $totalLines - 1)))->setHint('Choose a smaller `start_at_line` within the page line count.');
+            throw new ToolUsageError(\sprintf('Invalid startAtLine parameter: `%d`. Cannot exceed page maximum of %d.', $startLine, max(0, $totalLines - 1)))->setHint('Choose a smaller `startAtLine` within the page line count.');
         }
 
         $endLine = $this->fetchAll

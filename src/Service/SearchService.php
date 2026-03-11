@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Config\AppConfig;
 use App\Domain\Format\FormatPayload;
+use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchRequest;
 use App\Domain\Search\SearchResultSet;
 use App\Service\Exception\BackendError;
@@ -55,6 +56,8 @@ final readonly class SearchService
             throw new BackendError(\sprintf('Error during search for `%s`: %s', $trimmedQuery, $msg), previous: $e)->setHint('This may be a backend service error or network timeout. Try retrying the search request.');
         }
 
+        $this->cacheSnippetsByUrl($resultSet);
+
         $chain = new FormatterChain();
         $chain
             ->addFormatter(new NormalizeHitsFormatter())
@@ -64,5 +67,40 @@ final readonly class SearchService
         $formatted = $chain->format(new FormatPayload(document: $resultSet));
 
         return $formatted->output;
+    }
+
+    private function cacheSnippetsByUrl(SearchResultSet $resultSet): void
+    {
+        foreach ($resultSet->hits as $hit) {
+            if (!$hit instanceof SearchHit) {
+                continue;
+            }
+
+            $canonicalUrl = Utilities::canonicalizeUrl($hit->url);
+            $snippet = Utilities::normalizeSummary($hit->snippet);
+            if ('' === $canonicalUrl || '' === $snippet) {
+                continue;
+            }
+
+            $cacheKey = 'search_snippets.'.hash('sha256', $canonicalUrl);
+
+            try {
+                $existing = $this->cache->get($cacheKey, static fn (): array => []);
+                $existing = is_array($existing) ? $existing : [];
+
+                $merged = array_values(array_unique(array_filter(
+                    [...$existing, $snippet],
+                    static fn (mixed $value): bool => is_string($value) && '' !== trim($value),
+                )));
+
+                $this->cache->delete($cacheKey);
+                $this->cache->get($cacheKey, function (ItemInterface $item) use ($merged): array {
+                    $item->expiresAfter($this->config->getSearchCacheTtlSeconds());
+
+                    return $merged;
+                });
+            } catch (\Throwable) {
+            }
+        }
     }
 }

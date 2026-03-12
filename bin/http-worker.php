@@ -7,13 +7,13 @@ declare(strict_types=1);
  * HTTP worker script for the browser-mcp Streamable HTTP transport.
  *
  * Used as a router script for PHP's built-in web server:
- *   php -S 127.0.0.1:<port> /path/to/http-worker.php
+ *   php -S <host>:<port> /path/to/http-worker.php
  *
  * Booted by BrowserMcpCommand when MCP_TRANSPORT=http.
  */
 
 use App\Kernel;
-use App\Service\ServerFactory;
+use App\Server\ServerFactory;
 use App\Transport\LoggingStreamableHttpTransport;
 use App\Transport\ResponseEmitter;
 use Mcp\Server\Transport\StreamableHttpTransport;

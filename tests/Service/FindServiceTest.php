@@ -4,149 +4,174 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Service\Backend\BackendInterface;
-use App\Service\BrowserState;
-use App\Service\DTO\Extract;
-use App\Service\DTO\PageContents;
+use App\Config\AppConfig;
+use App\Domain\Find\FindMatchMode;
+use App\Domain\Read\ReadDocument;
+use App\Service\Contracts\ReaderContract;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\FindService;
-use App\Service\PageDisplayService;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 final class FindServiceTest extends TestCase
 {
     public function testFindProducesExpectedResult(): void
     {
-        $openFixture = $this->loadJson('new_page_contents.json');
-        $pageData = $openFixture['new_page'] ?? [];
-        $page = new PageContents(
-            url: (string) ($pageData['url'] ?? ''),
-            text: (string) ($pageData['text'] ?? ''),
-            title: (string) ($pageData['title'] ?? ''),
-            urls: (array) ($pageData['urls'] ?? []),
+        $url = 'https://symfony.com/doc/current/scheduler.html';
+        $markdown = "Intro\nThis section helps you configure triggers.\nOther line\nYou can also configure frequency dynamically.";
+
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: $url,
+            markdown: $markdown,
+            references: [],
+            provider: 'searxng',
         );
 
-        $state = new BrowserState();
-        $state->addPage($page);
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
 
-        $pageDisplay = new PageDisplayService();
-        $service = new FindService($backend, $state, $pageDisplay);
+        $result = $service->__invoke(url: $url, query: 'configure', match: FindMatchMode::CONTAINS, contextLines: 5);
 
-        $result = $service->__invoke(url: $page->url, regex: '/configure/i');
+        $this->assertStringContainsString('url: "https://symfony.com/doc/current/scheduler.html"', $result);
+        $this->assertStringContainsString('query: configure', $result);
+        $this->assertStringContainsString('match: contains', $result);
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $result);
+    }
 
-        $expected = (string) ($this->loadJson('find_result.json')['result'] ?? '');
-        $this->assertSame($expected, $result);
+    public function testFindUsesCacheForRepeatedCalls(): void
+    {
+        $url = 'https://example.com/article';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Article',
+            markdown: "Alpha\nBeta\nGamma",
+            references: [],
+            provider: 'searxng',
+        );
+
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
+
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
+
+        $service->__invoke(url: $url, query: 'beta', match: FindMatchMode::CONTAINS, contextLines: 5);
+        $service->__invoke(url: $url, query: 'gamma', match: FindMatchMode::CONTAINS, contextLines: 5);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testFindCanMatchAcrossLineBreaksInContainsMode(): void
+    {
+        $url = 'https://example.com/symfony';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Symfony',
+            markdown: "Intro\nSymfony\nMessenger integration details",
+            references: [],
+            provider: 'searxng',
+        );
+
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
+
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
+
+        $result = $service->__invoke(url: $url, query: 'Symfony Messenger', match: FindMatchMode::CONTAINS, contextLines: 3);
+
+        $this->assertStringContainsString('query: Symfony Messenger', $result);
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $result);
+    }
+
+    public function testFindContainsNormalizesWhitespaceAcrossLineBreaks(): void
+    {
+        $url = 'https://example.com/spacing';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Spacing',
+            markdown: "Intro\nSymfony \nMessenger details",
+            references: [],
+            provider: 'searxng',
+        );
+
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
+
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
+
+        $result = $service->__invoke(url: $url, query: 'symfony messenger', match: FindMatchMode::CONTAINS, contextLines: 2);
+
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $result);
     }
 
     public function testFindRequiresUrl(): void
     {
-        $backend = $this->createStub(BackendInterface::class);
-        $state = new BrowserState();
-        $service = new FindService($backend, $state, new PageDisplayService());
+        $backend = $this->createStub(ReaderContract::class);
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
-        $service->__invoke(url: '', regex: '/test/');
+        $service->__invoke(url: '', query: 'test', match: FindMatchMode::CONTAINS, contextLines: 5);
     }
 
-    public function testFindRejectsPageWithSnippets(): void
+    public function testFindRejectsEmptyQuery(): void
     {
-        $state = new BrowserState();
-        $searchPage = new PageContents(
-            url: 'https://example.com/results',
-            text: 'Search results',
-            title: 'Search results',
-            urls: ['0' => 'https://example.com/detail'], // @phpstan-ignore-line
-            snippets: ['0' => new Extract('https://example.com/detail', 'snippet', '#0', null)], // @phpstan-ignore-line
-        );
-        $state->addPage($searchPage);
-
-        $backend = $this->createStub(BackendInterface::class);
-        $service = new FindService($backend, $state, new PageDisplayService());
+        $backend = $this->createStub(ReaderContract::class);
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
         $this->expectException(ToolUsageError::class);
-        $this->expectExceptionMessage('Cannot run `find` on find results page');
-        $service->__invoke(url: $searchPage->url, regex: '/anything/');
-    }
-
-    /**
-     * @throws BackendError
-     */
-    public function testFindRemovesResultPageWhenDisplayFails(): void
-    {
-        $page = new PageContents(
-            url: 'https://example.com/article',
-            text: "First line\nMatch example\nLast line",
-            title: 'Article',
-            urls: [],
-        );
-        $state = new BrowserState();
-
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->once())->method('fetch')->with($page->url)->willReturn($page);
-
-        $resultUrl = $page->url.'/find?regex=%2Fmatch%2F';
-
-        $pageDisplay = $this->createMock(PageDisplayService::class);
-        $pageDisplay->expects($this->once())
-            ->method('showPage')
-            ->willThrowException(new ToolUsageError('cannot render find results'));
-
-        $service = new FindService($backend, $state, $pageDisplay);
-
-        try {
-            $service->__invoke(url: $page->url, regex: '/match/');
-            $this->fail('FindService should rethrow ToolUsageError from PageDisplayService');
-        } catch (ToolUsageError $e) {
-            $this->assertSame('cannot render find results', $e->getMessage());
-            $this->assertNull($state->getPageByUrl($resultUrl));
-            $this->assertNotNull($state->getPageByUrl($page->url));
-        }
+        $this->expectExceptionMessage('Find query cannot be empty.');
+        $service->__invoke(url: 'https://example.com', query: '', match: FindMatchMode::CONTAINS, contextLines: 5);
     }
 
     public function testFindProvidesNextStepsWhenNoMatches(): void
     {
-        $page = new PageContents(
-            url: 'https://example.com/page',
-            text: "Intro\nMore content",
+        $url = 'https://example.com/page';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
             title: 'Example Page',
-            urls: [],
+            markdown: "Intro\nMore content",
+            references: [],
+            provider: 'searxng',
         );
 
-        $state = new BrowserState();
-        $state->addPage($page);
+        $backend = $this->createMock(ReaderContract::class);
+        $backend->expects($this->once())->method('read')->willReturn($document);
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
-        $service = new FindService($backend, $state, new PageDisplayService());
+        $output = $service->__invoke($url, 'missing', FindMatchMode::CONTAINS, 5);
 
-        $output = $service->__invoke($page->url, '/missing/');
-
-        $this->assertStringContainsString('Pattern not found for regex: `/missing/`', $output);
-        $this->assertStringContainsString('Next steps:', $output);
-        $this->assertStringContainsString('browser.open', $output);
+        $this->assertStringContainsString('query: missing', $output);
+        $this->assertStringContainsString('matches[0]:', $output);
     }
 
-    /**
-     * @return array<string,mixed>
-     */
-    private function loadJson(string $filename): array
+    public function testFindWrapsReaderErrorsAsBackendError(): void
     {
-        $path = __DIR__.'/../dumps/SearxNG/'.$filename;
-        $raw = file_get_contents($path);
-        if (false === $raw) {
-            $this->fail('Failed to read fixture '.$filename);
-        }
+        $backend = $this->createMock(ReaderContract::class);
+        $backend->expects($this->once())->method('read')->willThrowException(new \RuntimeException('network timeout'));
 
-        $decoded = json_decode($raw, true);
-        if (!\is_array($decoded)) {
-            $this->fail('Fixture is not valid JSON: '.$filename);
-        }
+        $service = new FindService($this->config(), $backend, new ArrayAdapter());
 
-        return $decoded;
+        $this->expectException(BackendError::class);
+        $service->__invoke('https://example.com', 'test', FindMatchMode::CONTAINS, 5);
     }
+
+    private function config(): AppConfig
+    {
+        return new AppConfig([
+            'general' => [
+                'open_cache_ttl_seconds' => 300,
+                'find_cache_ttl_seconds' => 300,
+            ],
+        ]);
+    }
+
 }

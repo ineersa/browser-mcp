@@ -5,68 +5,38 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Service\DTO\PageContents;
-use App\Service\Exception\ToolUsageError;
 use App\Service\Utilities;
 use PHPUnit\Framework\TestCase;
 
 final class UtilitiesTest extends TestCase
 {
-    public function testRunFindInPageMatchesPlainStringCaseInsensitive(): void
+    public function testCanonicalizeUrlAddsSchemeAndNormalizesHost(): void
     {
-        $page = new PageContents(
-            url: 'https://example.com',
-            text: "Alpha\nBeta\nGamma",
-            title: 'Example',
-        );
+        $canonical = Utilities::canonicalizeUrl('Example.COM/docs');
 
-        $result = Utilities::runFindInPage(page: $page, regex: '/BETA/i', maxResults: 1, numShowLines: 1);
-
-        $this->assertSame('Find results for regex: `/BETA/i` in `Example`', $result->title);
-        $this->assertStringContainsString('Beta', $result->text);
-        $this->assertArrayHasKey('0', $result->urls);
-        $this->assertSame('https://example.com', $result->urls['0']); // @phpstan-ignore-line
-        $this->assertNotNull($result->snippets);
-        $this->assertArrayHasKey('0', $result->snippets);
-        $this->assertSame('Beta', $result->snippets['0']->text); // @phpstan-ignore-line
+        $this->assertSame('https://example.com/docs', $canonical);
     }
 
-    public function testRunFindInPageSupportsRegexLiteral(): void
+    public function testWrapLinesPreservesEmptyLines(): void
     {
-        $page = new PageContents(
-            url: 'https://example.com',
-            text: "Alpha\nVersion 1.42\nGamma",
-            title: 'Example',
-        );
+        $lines = Utilities::wrapLines("Alpha\n\nBeta", 80);
 
-        $result = Utilities::runFindInPage(page: $page, regex: '/\\d+\\.\\d+/', maxResults: 1, numShowLines: 1);
-
-        $this->assertSame('Find results for regex: `/\\d+\\.\\d+/` in `Example`', $result->title);
-        $this->assertStringContainsString('Version 1.42', $result->text);
-        $this->assertNotNull($result->snippets);
-        $this->assertArrayHasKey('0', $result->snippets);
-        $this->assertSame('Version 1.42', $result->snippets['0']->text); // @phpstan-ignore-line
+        $this->assertSame(['Alpha', '', 'Beta'], $lines);
     }
 
-    public function testRunFindInPageReportsInvalidRegex(): void
+    public function testMakeDisplayIncludesHeaderAndReferences(): void
     {
         $page = new PageContents(
-            url: 'https://example.com',
-            text: "Alpha\nVersion 1.42\nGamma",
-            title: 'Example',
+            url: 'https://example.com/article',
+            text: 'Body',
+            title: 'Article',
+            urls: ['0' => 'https://example.com/ref'], // @phpstan-ignore-line
         );
 
-        try {
-            Utilities::runFindInPage(page: $page, regex: '/unterminated', maxResults: 1, numShowLines: 1);
-            $this->fail('Expected ToolUsageError when regex is invalid');
-        } catch (ToolUsageError $error) {
-            $this->assertSame(
-                'Regex error for pattern `/unterminated`: Invalid regex pattern or internal PCRE error',
-                $error->getMessage()
-            );
-            $this->assertSame(
-                'Ensure the `regex` parameter is a valid PCRE pattern that includes delimiters, e.g. `/pattern/`.',
-                $error->getHint()
-            );
-        }
+        $display = Utilities::makeDisplay($page, 'L0: Body 【0†ref】', 'viewing lines [0 - 0] of 0');
+
+        $this->assertStringContainsString('Article (example.com)', $display);
+        $this->assertStringContainsString('URL: https://example.com/article', $display);
+        $this->assertStringContainsString('References:', $display);
     }
 }

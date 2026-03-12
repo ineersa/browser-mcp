@@ -1,0 +1,42 @@
+general:
+    transport: stdio
+    host: 127.0.0.1
+    port: 8000
+    search_cache_ttl_seconds: 600
+    open_cache_ttl_seconds: 300
+    find_cache_ttl_seconds: 300
+
+searchers:
+    selected: searxng
+    providers:
+        searxng:
+            url: http://server:8088
+        jinaai:
+            token: test-jina-token
+        tavily:
+            token: test-tavily-token
+        duckduckgo:
+            timeout_seconds: 5
+            max_retries: 1
+            user_agent: Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0
+
+readers:
+    selected: http
+    providers:
+        http:
+            timeout_seconds: 30
+            max_retries: 2
+            user_agent: Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0
+            noise_class_tokens:
+                - codeblock-lines
+                - linenos
+                - line-numbers
+                - gutter
+        jinaai:
+            token: test-jina-reader-token
+            timeout_seconds: 15
+            max_retries: 1
+        tavily:
+            token: test-tavily-reader-token
+            timeout_seconds: 15
+            max_retries: 1

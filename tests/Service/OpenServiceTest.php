@@ -4,139 +4,169 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
-use App\Service\Backend\BackendInterface;
-use App\Service\Backend\SearxNGBackend;
-use App\Service\BrowserState;
-use App\Service\DTO\PageContents;
+use App\Config\AppConfig;
+use App\Domain\Read\ReadDocument;
+use App\Service\Contracts\ReaderContract;
 use App\Service\Exception\BackendError;
 use App\Service\Exception\ToolUsageError;
 use App\Service\OpenService;
-use App\Service\PageDisplayService;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 
 final class OpenServiceTest extends TestCase
 {
-    public function testOpenFetchesPageAndCachesByUrl(): void
+    public function testOpenFetchesDocumentAndCachesByUrl(): void
     {
-        $expectedUrl = 'https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html';
-        $html = file_get_contents(__DIR__.'/../dumps/SearxNG/open_page.html');
-        $this->assertNotFalse($html, 'Failed to read HTML fixture');
+        $expectedUrl = 'https://example.com/article';
+        $document = new ReadDocument(
+            url: $expectedUrl,
+            canonicalUrl: $expectedUrl,
+            title: 'Example Article',
+            markdown: "Line one\nLine two\nLine three",
+            references: [],
+            provider: 'searxng',
+        );
 
-        $httpClient = new MockHttpClient(static function (string $method, string $url) use ($expectedUrl, $html) {
-            if ('GET' !== $method || $url !== $expectedUrl) {
-                throw new \RuntimeException('Unexpected request: '.$method.' '.$url);
-            }
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
 
-            return new MockResponse($html);
-        });
-        $backend = new SearxNGBackend('https://search.example', $httpClient);
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
 
-        $state = new BrowserState();
-        $display = new PageDisplayService();
-        $service = new OpenService($backend, $state, $display);
+        $result = $service->__invoke($expectedUrl, 0, 2);
+        $service->__invoke($expectedUrl, 0, 2);
 
-        $result = $service->__invoke($expectedUrl, 0, 50);
-
-        $expectedResponse = (string) ($this->loadJson('open_page_response.json')['result'] ?? '');
-        $this->assertSame($expectedResponse, $result);
-        $this->assertNotNull($state->getPageByUrl($expectedUrl));
-        $this->assertSame($expectedUrl, $state->getCurrentUrl());
+        $this->assertStringContainsString('Example Article (example.com)', $result);
+        $this->assertStringContainsString('viewing lines [0 - 1] of 2', $result);
     }
 
-    public function testOpenUsesCachedPageWithoutFetching(): void
+    public function testOpenSupportsFetchAll(): void
     {
-        $fixture = $this->loadJson('new_page_contents.json');
-        $page = $this->makePageContents($fixture['new_page'] ?? []);
+        $url = 'https://example.com/page';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Page',
+            markdown: "First\nSecond\nThird",
+            references: [],
+            provider: 'searxng',
+        );
 
-        $state = new BrowserState();
-        $state->addPage($page);
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->never())->method('fetch');
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
 
-        $display = new PageDisplayService();
-        $service = new OpenService($backend, $state, $display);
+        $output = $service->__invoke($url, 0, 1, true);
 
-        $startLine = 42;
-        $output = $service->__invoke($page->url, $startLine, 10);
-
-        $this->assertStringContainsString('viewing lines ['.$startLine.' -', $output);
-        $this->assertSame($page, $state->getPageByUrl($page->url));
+        $this->assertStringContainsString('viewing lines [0 - 2] of 2', $output);
+        $this->assertStringContainsString('L2: Third', $output);
     }
 
-    /**
-     * @throws BackendError
-     */
-    public function testOpenRemovesNewPageWhenDisplayFails(): void
+    public function testOpenThrowsWhenStartLineExceedsPage(): void
+    {
+        $url = 'https://example.com/page';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Page',
+            markdown: "First\nSecond",
+            references: [],
+            provider: 'searxng',
+        );
+
+        $reader = $this->createStub(ReaderContract::class);
+        $reader->method('read')->willReturn($document);
+
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
+
+        $this->expectException(ToolUsageError::class);
+        $service->__invoke($url, 5, 1);
+    }
+
+    public function testOpenWrapsReaderErrorsAsBackendError(): void
     {
         $articleUrl = 'https://example.com/article';
-        $articlePage = new PageContents(
-            url: $articleUrl,
-            text: "Article content\nline two",
+
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())
+            ->method('read')
+            ->willThrowException(new \RuntimeException('network timeout'));
+
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
+
+        $this->expectException(BackendError::class);
+        $service->__invoke($articleUrl, 0, 50);
+    }
+
+    public function testOpenAutoSelectsSnippetWindowWhenStartAtLineMissing(): void
+    {
+        $url = 'https://example.com/article';
+        $lines = [];
+        for ($i = 0; $i < 140; ++$i) {
+            $lines[] = 'Line '.$i;
+        }
+        $lines[80] = 'General relativity describes gravity as geometry of spacetime.';
+
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
             title: 'Article',
-            urls: [],
+            markdown: implode("\n", $lines),
+            references: [],
+            provider: 'searxng',
         );
 
-        $backend = $this->createMock(BackendInterface::class);
-        $backend->expects($this->once())->method('fetch')->with($articleUrl)->willReturn($articlePage);
+        $cache = new ArrayAdapter();
+        $snippetKey = 'search_snippets.'.hash('sha256', $url);
+        $cache->get($snippetKey, static function (ItemInterface $item): array {
+            $item->expiresAfter(600);
 
-        $state = new BrowserState();
+            return ['gravity as geometry of spacetime'];
+        });
 
-        $display = $this->createMock(PageDisplayService::class);
-        $display->expects($this->once())
-            ->method('showPage')
-            ->willThrowException(new ToolUsageError('cannot display article'));
+        $reader = $this->createStub(ReaderContract::class);
+        $reader->method('read')->willReturn($document);
 
-        $service = new OpenService($backend, $state, $display);
+        $service = new OpenService($this->config(), $reader, $cache);
+        $output = $service->__invoke($url);
 
-        try {
-            $service->__invoke($articleUrl, 0, 50);
-            $this->fail('OpenService should rethrow ToolUsageError from PageDisplayService');
-        } catch (ToolUsageError $e) {
-            $this->assertSame('cannot display article', $e->getMessage());
-            $this->assertNull($state->getPageByUrl($articleUrl));
-        }
+        $this->assertStringContainsString('viewing lines [70 - 120] of 139', $output);
     }
 
-    /**
-     * @param array<string,mixed> $data
-     */
-    private function makePageContents(array $data): PageContents
+    public function testOpenAutoFallsBackToTopWindowWhenSnippetMissing(): void
     {
-        /** @var array<string,string> $urls */
-        $urls = [];
-        if (isset($data['urls']) && \is_array($data['urls'])) {
-            foreach ($data['urls'] as $key => $value) {
-                $urls[(string) $key] = (string) $value;
-            }
+        $url = 'https://example.com/article';
+        $lines = [];
+        for ($i = 0; $i < 160; ++$i) {
+            $lines[] = 'Line '.$i;
         }
 
-        return new PageContents(
-            url: (string) ($data['url'] ?? ''),
-            text: (string) ($data['text'] ?? ''),
-            title: (string) ($data['title'] ?? ''),
-            urls: $urls,
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Article',
+            markdown: implode("\n", $lines),
+            references: [],
+            provider: 'searxng',
         );
+
+        $reader = $this->createStub(ReaderContract::class);
+        $reader->method('read')->willReturn($document);
+
+        $service = new OpenService($this->config(), $reader, new ArrayAdapter());
+        $output = $service->__invoke($url);
+
+        $this->assertStringContainsString('viewing lines [0 - 99] of 159', $output);
     }
 
-    /**
-     * @return array<string,mixed>
-     */
-    private function loadJson(string $filename): array
+    private function config(): AppConfig
     {
-        $path = __DIR__.'/../dumps/SearxNG/'.$filename;
-        $raw = file_get_contents($path);
-        if (false === $raw) {
-            $this->fail('Failed to read fixture '.$filename);
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!\is_array($decoded)) {
-            $this->fail('Fixture is not valid JSON: '.$filename);
-        }
-
-        return $decoded;
+        return new AppConfig([
+            'general' => [
+                'open_cache_ttl_seconds' => 300,
+                'find_cache_ttl_seconds' => 300,
+            ],
+        ]);
     }
 }

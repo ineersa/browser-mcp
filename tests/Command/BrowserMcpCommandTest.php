@@ -48,7 +48,7 @@ final class BrowserMcpCommandTest extends TestCase
     /**
      * @throws \JsonException
      */
-    public function testSearchToolCallReturnsFixtureDisplay(): void
+    public function testSearchToolCallReturnsToonPayload(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
@@ -72,8 +72,8 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($first['text'] ?? '');
         $this->assertNotSame('', $payload, 'Search tool payload should not be empty.');
 
-        $expectedResult = $this->loadFixture('search_tool_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $payload);
+        $this->assertStringContainsString('[5]{url,domain,title,summary}:', $payload);
+        $this->assertStringContainsString('https://docs.searxng.org/admin/installation-searxng.html', $payload);
     }
 
     /**
@@ -88,8 +88,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->callToolRequest('search', ['query' => 'Test open page']),
             $this->callToolRequest('open', [
                 'url' => $targetUrl,
-                'start_at_line' => 0,
-                'number_of_lines' => 50,
+                'startAtLine' => 0,
+                'numberOfLines' => 50,
             ], 3),
         ]);
 
@@ -123,12 +123,13 @@ final class BrowserMcpCommandTest extends TestCase
             $this->callToolRequest('search', ['query' => 'Test open page']),
             $this->callToolRequest('open', [
                 'url' => $targetUrl,
-                'start_at_line' => 0,
-                'number_of_lines' => 50,
+                'startAtLine' => 0,
+                'numberOfLines' => 50,
             ], 3),
             $this->callToolRequest('find', [
                 'url' => $targetUrl,
-                'regex' => '/Datetime/i',
+                'query' => 'Heading 1',
+                'match' => 'contains',
             ], 4),
         ]);
 
@@ -146,8 +147,10 @@ final class BrowserMcpCommandTest extends TestCase
         $payload = (string) ($content[0]['text'] ?? '');
         $this->assertNotSame('', $payload, 'Find tool payload should not be empty.');
 
-        $expectedResult = $this->loadFixture('find_open_page_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $payload);
+        $this->assertStringContainsString('url: "https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html"', $payload);
+        $this->assertStringContainsString('query: Heading 1', $payload);
+        $this->assertMatchesRegularExpression('/matches\[\d+\]\{id,line,chunk\}:/', $payload);
+        $this->assertStringContainsString('Heading 1', $payload);
     }
 
     /**
@@ -159,8 +162,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => '',
-                'start_at_line' => 0,
-                'number_of_lines' => 50,
+                'startAtLine' => 0,
+                'numberOfLines' => 50,
             ], 2),
         ]);
 
@@ -182,8 +185,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => 'https://example.com',
-                'start_at_line' => -5,
-                'number_of_lines' => 50,
+                'startAtLine' => -5,
+                'numberOfLines' => 50,
             ], 2),
         ]);
 
@@ -193,7 +196,7 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: `start_at_line` must be zero or greater.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: `startAtLine` must be zero or greater.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -205,8 +208,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => 'https://example.com',
-                'start_at_line' => 0,
-                'number_of_lines' => 0,
+                'startAtLine' => 0,
+                'numberOfLines' => 0,
             ], 2),
         ]);
 
@@ -216,7 +219,7 @@ final class BrowserMcpCommandTest extends TestCase
 
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: `number_of_lines` must be greater than zero when `fetch_all` is false.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: `numberOfLines` must be greater than zero when `fetchAll` is false.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -230,8 +233,8 @@ final class BrowserMcpCommandTest extends TestCase
             $this->initializeRequest(),
             $this->callToolRequest('open', [
                 'url' => $targetUrl,
-                'start_at_line' => 0,
-                'fetch_all' => true,
+                'startAtLine' => 0,
+                'fetchAll' => true,
             ], 2),
         ]);
 
@@ -243,7 +246,7 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
 
         $payload = (string) ($callResponse['result']['content'][0]['text'] ?? '');
-        $this->assertNotSame('', $payload, 'Open tool payload should not be empty when fetch_all is enabled.');
+        $this->assertNotSame('', $payload, 'Open tool payload should not be empty when fetchAll is enabled.');
         $this->assertStringContainsString('**viewing lines [0 -', $payload);
 
         $pattern = '/\\*\\*viewing lines \\[(\\d+) - (\\d+)\\] of (\\d+)\\*\\*/';
@@ -252,17 +255,17 @@ final class BrowserMcpCommandTest extends TestCase
         preg_match($pattern, $payload, $match);
         $this->assertCount(4, $match);
         $windowSize = ((int) $match[2] - (int) $match[1]) + 1;
-        $this->assertGreaterThan(50, $windowSize, 'fetch_all should expand the visible window beyond the default 50 lines.');
+        $this->assertGreaterThan(50, $windowSize, 'fetchAll should expand the visible window beyond the default 50 lines.');
     }
 
     /**
      * @throws \JsonException
      */
-    public function testFindToolWithEmptyRegexReturnsError(): void
+    public function testFindToolWithEmptyQueryReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => 'https://example.com', 'regex' => ''], 2),
+            $this->callToolRequest('find', ['url' => 'https://example.com', 'query' => ''], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -270,17 +273,17 @@ final class BrowserMcpCommandTest extends TestCase
         $callResponse = $responses[1];
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: Invalid regex provided. The FindTool requires a non-empty regex pattern.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: Invalid query provided. The FindTool requires a non-empty query string.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
      * @throws \JsonException
      */
-    public function testFindToolWithWhitespaceOnlyRegexReturnsError(): void
+    public function testFindToolWithWhitespaceOnlyQueryReturnsError(): void
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => 'https://example.com', 'regex' => '   '], 2),
+            $this->callToolRequest('find', ['url' => 'https://example.com', 'query' => '   '], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -288,7 +291,7 @@ final class BrowserMcpCommandTest extends TestCase
         $callResponse = $responses[1];
         $this->assertTrue($callResponse['result']['isError'] ?? false);
         $this->assertArrayHasKey('content', $callResponse['result'] ?? []);
-        $this->assertStringContainsString('Error Message: Invalid regex provided. The FindTool requires a non-empty regex pattern.', $callResponse['result']['content'][0]['text'] ?? '');
+        $this->assertStringContainsString('Error Message: Invalid query provided. The FindTool requires a non-empty query string.', $callResponse['result']['content'][0]['text'] ?? '');
     }
 
     /**
@@ -298,7 +301,7 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => '', 'regex' => '/test/'], 2),
+            $this->callToolRequest('find', ['url' => '', 'query' => 'test'], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -316,7 +319,7 @@ final class BrowserMcpCommandTest extends TestCase
     {
         $responses = $this->runServer([
             $this->initializeRequest(),
-            $this->callToolRequest('find', ['url' => '   ', 'regex' => '/test/'], 2),
+            $this->callToolRequest('find', ['url' => '   ', 'query' => 'test'], 2),
         ]);
 
         $this->assertCount(2, $responses, 'Expected initialize and find error responses.');
@@ -346,14 +349,14 @@ final class BrowserMcpCommandTest extends TestCase
 
         $openSchema = $indexed[OpenTool::NAME]['inputSchema'] ?? [];
         $openProperties = $openSchema['properties'] ?? [];
-        $this->assertSame(['url', 'start_at_line'], $openSchema['required'] ?? []);
-        $this->assertSame(50, $openProperties['number_of_lines']['default'] ?? null);
-        $this->assertArrayHasKey('fetch_all', $openProperties);
-        $this->assertFalse($openProperties['fetch_all']['default'] ?? true);
+        $this->assertSame(['url'], $openSchema['required'] ?? []);
+        $this->assertSame(50, $openProperties['numberOfLines']['default'] ?? null);
+        $this->assertArrayHasKey('fetchAll', $openProperties);
+        $this->assertFalse($openProperties['fetchAll']['default'] ?? true);
 
         $this->assertSame(FindTool::DESCRIPTION, $indexed[FindTool::NAME]['description']);
         $this->assertSame(FindTool::TITLE, $indexed[FindTool::NAME]['annotations']['title']);
-        $this->assertSame(['url', 'regex'], $indexed[FindTool::NAME]['inputSchema']['required'] ?? []);
+        $this->assertSame(['url', 'query'], $indexed[FindTool::NAME]['inputSchema']['required'] ?? []);
     }
 
     /**
@@ -366,11 +369,12 @@ final class BrowserMcpCommandTest extends TestCase
     private function runServer(array $messages): array
     {
         $process = Process::fromShellCommandline(
-            'php bin/browser-mcp',
+            'php -d opcache.enable_cli=0 bin/browser-mcp',
             \dirname(__DIR__, 2),
             [
                 'APP_ENV' => 'test',
-                'MCP_TRANSPORT' => 'stdio',
+                'APP_VAR_DIR' => sys_get_temp_dir().'/browser-mcp-tests-'.(string) getmypid(),
+                'CONFIG_FILE' => \dirname(__DIR__, 2).'/tests/Fixtures/config/browser_config.test.yaml',
             ],
             null,
             5.0
@@ -379,7 +383,10 @@ final class BrowserMcpCommandTest extends TestCase
         $process->setInput(implode("\n", $messages)."\n");
         $process->mustRun();
 
-        $lines = array_values(array_filter(array_map('trim', explode("\n", trim($process->getOutput())))));
+        $lines = array_values(array_filter(
+            array_map('trim', explode("\n", trim($process->getOutput()))),
+            static fn (string $line): bool => '' !== $line,
+        ));
 
         return array_map(static function (string $line): array {
             return json_decode($line, true, 512, \JSON_THROW_ON_ERROR);
@@ -413,7 +420,7 @@ final class BrowserMcpCommandTest extends TestCase
             ],
         ], \JSON_THROW_ON_ERROR);
 
-        return (string) $payload;
+        return $payload;
     }
 
     /**

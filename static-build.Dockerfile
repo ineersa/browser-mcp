@@ -16,4 +16,4 @@ ENV SPC_OPT_BUILD_ARGS="--no-strip --disable-opcache-jit"
 RUN /go/src/app/dist/static-php-cli/bin/spc doctor --auto-fix && \
     /go/src/app/dist/static-php-cli/bin/spc craft /work/app/craft.yml
 
-RUN /go/src/app/dist/static-php-cli/bin/spc micro:combine /work/app/dist/browser-mcp.phar -O /work/app/dist/browser-mcp
+RUN php -d memory_limit=-1 /go/src/app/dist/static-php-cli/bin/spc micro:combine /work/app/dist/browser-mcp.phar -O /work/app/dist/browser-mcp

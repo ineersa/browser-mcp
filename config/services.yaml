@@ -4,14 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    app.browser_backend: '%env(BROWSER_BACKEND)%'
-    app.backend_url: '%env(BACKEND_URL)%'
     app.http_timeout: 30.0
-    app.use_puppeteer: '%env(bool:USE_PUPPETEER)%'
-    # SearchService tunable
-    app.search.view_tokens: '%env(int:SEARCH_VIEW_TOKENS)%'
-    app.search.encoding_name: '%env(string:SEARCH_ENCODING_NAME)%'
-    app.search.find_context_lines: '%env(int:FIND_CONTEXT_LINES)%'
 
 services:
     # default configuration for services in *this* file
@@ -26,41 +19,44 @@ services:
         exclude:
             - '../src/Transport/'
 
-    App\Service\Backend\BackendInterface:
+    App\Service\Searcher\SearcherFactory: ~
+
+    App\Config\ConfigLoader:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Config\AppConfig:
+        factory: ['@App\Config\ConfigLoader', 'load']
+
+    App\Service\Contracts\SearcherContract:
+        factory: ['@App\Service\Searcher\SearcherFactory', 'create']
         public: true
-        factory: ['@App\Service\Backend\BackendFactory', 'create']
-        arguments:
-            - '%app.browser_backend%'
-            - '%app.backend_url%'
 
-    App\Service\Backend\BackendFactory:
-        arguments:
-            $usePuppeteer: '%app.use_puppeteer%'
+    App\Service\Reader\ReaderFactory: ~
 
-    App\Service\BrowserState:
+    App\Service\Contracts\ReaderContract:
+        factory: ['@App\Service\Reader\ReaderFactory', 'create']
         public: true
 
     App\Service\SearchService:
         public: true
-
-    App\Service\PageDisplayService:
-        public: true
         arguments:
-            $viewTokens: '%app.search.view_tokens%'
-            $encodingName: '%app.search.encoding_name%'
+            $cache: '@cache.app'
     App\Service\OpenService:
         public: true
+        arguments:
+            $cache: '@cache.app'
     App\Service\FindService:
         public: true
         arguments:
-            $findContextLines: '%app.search.find_context_lines%'
+            $cache: '@cache.app'
 
     # Make ALL services in App\Tools\ public
     App\Tools\:
         resource: '../src/Tools'
         public: true
 
-    App\Service\ServerFactory:
+    App\Server\ServerFactory:
         arguments:
             $sessionDir: '%env(string:APP_VAR_DIR)%/sessions'
         public: true
@@ -68,13 +64,7 @@ services:
     App\Command\BrowserMcpCommand:
         arguments:
             $projectDir: '%kernel.project_dir%'
-
-    # PSR-16 cache: wrap a PSR-6 pool (ArrayAdapter) with Psr16Cache and alias to Psr\SimpleCache\CacheInterface
-    cache.array_adapter:
-        class: Symfony\Component\Cache\Adapter\ArrayAdapter
-        arguments:
-            $defaultLifetime: 0
-            $storeSerialized: true
+            $appCache: '@cache.app'
 
     Psr\Container\ContainerInterface: '@service_container'
     Psr\Log\LoggerInterface:
@@ -103,9 +93,3 @@ services:
         arguments:
             - '@http_client.retryable.inner'
             - '@http_client.retry_strategy'
-
-    App\Service\PuppeteerWorker:
-        arguments:
-            $scriptPath: '%kernel.project_dir%/bin/puppeteer-fetch.js'
-            $nodeBinary: '%env(string:PUPPETEER_NODE_BINARY)%'
-            $timeoutSeconds: '%env(int:PUPPETEER_TIMEOUT)%'

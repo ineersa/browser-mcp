@@ -13,6 +13,7 @@ extensions:
     - dom
     - curl
     - libxml
+    - intl
 libs:
     - brotli
     - libavif
@@ -23,5 +24,5 @@ libs:
     - nghttp2
     - icu
 # optional:
-# ini:
-#   - memory_limit=256M
+ini:
+  - memory_limit=1024M

@@ -12,6 +12,7 @@
     "files": [
         "composer.json",
         "composer.lock",
+        "browser_config.yaml",
         ".env"
     ],
 

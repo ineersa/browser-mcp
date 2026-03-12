@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Service\ServerFactory;
+use App\Config\AppConfig;
+use App\Server\ServerFactory;
 use App\Transport\LoggingStdioTransport;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -26,7 +28,9 @@ class BrowserMcpCommand extends Command
 
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly AppConfig $config,
         private readonly ServerFactory $serverFactory,
+        private readonly CacheItemPoolInterface $appCache,
         string $projectDir,
     ) {
         if (!is_dir($projectDir) && !$this->isPharPath($projectDir)) {
@@ -42,7 +46,9 @@ class BrowserMcpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $transport = strtolower((string) ($_SERVER['MCP_TRANSPORT'] ?? 'stdio'));
+        $this->clearAppCache();
+
+        $transport = $this->config->getTransport();
 
         try {
             if ('http' === $transport) {
@@ -63,6 +69,17 @@ class BrowserMcpCommand extends Command
         }
     }
 
+    private function clearAppCache(): void
+    {
+        try {
+            $this->appCache->clear();
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to clear application cache before startup.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     private function runStdio(OutputInterface $output): int
     {
         $server = $this->serverFactory->create();
@@ -80,7 +97,8 @@ class BrowserMcpCommand extends Command
 
     private function runHttp(OutputInterface $output): int
     {
-        $port = (int) ($_SERVER['MCP_PORT'] ?? 8000);
+        $host = $this->config->getHost();
+        $port = $this->config->getPort();
         $workerPath = $this->resolveWorkerPath();
 
         $env = $_SERVER;
@@ -104,14 +122,14 @@ class BrowserMcpCommand extends Command
         $phpBinary = is_executable(\PHP_BINARY) ? \PHP_BINARY : 'php';
 
         $process = new Process(
-            [$phpBinary, '-S', \sprintf('127.0.0.1:%d', $port), $workerPath],
+            [$phpBinary, '-S', \sprintf('%s:%d', $host, $port), $workerPath],
             $cwd,
             $env,
         );
 
         $process->setTimeout(null);
 
-        $this->logger->info(\sprintf('Starting HTTP server on 127.0.0.1:%d', $port));
+        $this->logger->info(\sprintf('Starting HTTP server on %s:%d', $host, $port));
 
         \assert($output instanceof ConsoleOutputInterface);
         $errorOutput = $output->getErrorOutput();
@@ -143,7 +161,8 @@ class BrowserMcpCommand extends Command
             throw new \RuntimeException(\sprintf('Unable to read HTTP worker script from PHAR at %s', $pharPath));
         }
 
-        $baseDir = $_SERVER['APP_VAR_DIR'] ?? $_ENV['APP_VAR_DIR'] ?? getenv('APP_VAR_DIR') ?: sys_get_temp_dir();
+        $appVarDir = $_SERVER['APP_VAR_DIR'] ?? $_ENV['APP_VAR_DIR'] ?? getenv('APP_VAR_DIR');
+        $baseDir = is_string($appVarDir) && '' !== $appVarDir ? $appVarDir : sys_get_temp_dir();
         $tmpPath = rtrim($baseDir, '/\\').'/browser-mcp-'.sha1($pharPath).'-http-worker.php';
 
         $filesystem = new Filesystem();

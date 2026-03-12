@@ -47,7 +47,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         );
     }
 
-    public function testSearchToolCallReturnsFixtureDisplay(): void
+    public function testSearchToolCallReturnsToonPayload(): void
     {
         $output = $this->runInspector([
             '--method', 'tools/call',
@@ -64,8 +64,8 @@ final class BrowserMcpHttpCommandTest extends TestCase
         $this->assertSame('text', $first['type'] ?? null);
         $this->assertNotSame('', $first['text'] ?? '');
 
-        $expectedResult = $this->loadFixture('search_tool_response')['result'] ?? '';
-        $this->assertEquals($expectedResult, $first['text']);
+        $this->assertStringContainsString('[5]{url,domain,title,summary}:', (string) $first['text']);
+        $this->assertStringContainsString('https://docs.searxng.org/admin/installation-searxng.html', (string) $first['text']);
     }
 
     public function testOpenToolWithEmptyUrlReturnsError(): void
@@ -73,8 +73,8 @@ final class BrowserMcpHttpCommandTest extends TestCase
         $output = $this->runInspector([
             '--method', 'tools/call',
             '--tool-name', 'open',
-            '--tool-arg', 'start_at_line=0',
-            '--tool-arg', 'number_of_lines=50',
+            '--tool-arg', 'startAtLine=0',
+            '--tool-arg', 'numberOfLines=50',
         ], true);
 
         $this->assertStringContainsString(
@@ -83,7 +83,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         );
     }
 
-    public function testFindToolWithEmptyRegexReturnsError(): void
+    public function testFindToolWithEmptyQueryReturnsError(): void
     {
         $output = $this->runInspector([
             '--method', 'tools/call',
@@ -92,7 +92,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         ], true);
 
         $this->assertStringContainsString(
-            'Missing required properties: `regex`',
+            'Missing required properties: `query`',
             $output
         );
     }
@@ -108,7 +108,9 @@ final class BrowserMcpHttpCommandTest extends TestCase
 
         $env = $_SERVER;
         $env['APP_ENV'] = 'test';
+        $env['APP_VAR_DIR'] = sys_get_temp_dir().'/browser-mcp-tests-'.(string) getmypid();
         $env['APP_PROJECT_DIR'] = $projectDir;
+        $env['CONFIG_FILE'] = $projectDir.'/tests/Fixtures/config/browser_config.test.yaml';
         foreach ($env as $key => $value) {
             if (!\is_scalar($value)) {
                 unset($env[$key]);
@@ -116,7 +118,7 @@ final class BrowserMcpHttpCommandTest extends TestCase
         }
 
         $this->serverProcess = new Process(
-            ['php', '-S', \sprintf('127.0.0.1:%d', $this->serverPort), $workerScript],
+            ['php', '-d', 'opcache.enable_cli=0', '-S', \sprintf('127.0.0.1:%d', $this->serverPort), $workerScript],
             $projectDir,
             $env,
         );
@@ -190,18 +192,4 @@ final class BrowserMcpHttpCommandTest extends TestCase
         return $allowFailure ? $process->getOutput()."\n".$process->getErrorOutput() : $process->getOutput();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function loadFixture(string $name): array
-    {
-        $path = __DIR__.'/../dumps/SearxNG/'.$name.'.json';
-        $contents = file_get_contents($path);
-        $this->assertNotFalse($contents, 'Failed to read fixture '.$name);
-
-        $decoded = json_decode($contents, true);
-        $this->assertIsArray($decoded, 'Fixture '.$name.' is not valid JSON.');
-
-        return $decoded;
-    }
 }

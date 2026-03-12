@@ -4,19 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Service\DTO\Extract;
 use App\Service\DTO\PageContents;
-use App\Service\Exception\ToolUsageError;
-use Yethee\Tiktoken\EncoderProvider;
 
 final readonly class Utilities
 {
-    private const FIND_PAGE_LINK_FORMAT = '# 【%s†%s】';
-    private const FALLBACK_CHARS_PER_TOKEN = 3.37;
-    // Tighter PCRE limits for regex-based find to avoid runaway backtracking.
-    private const FIND_REGEX_BACKTRACK_LIMIT = 100000;
-    private const FIND_REGEX_RECURSION_LIMIT = 1000;
-
     public static function canonicalizeUrl(string $url): string
     {
         $trimmed = trim($url);
@@ -32,7 +23,7 @@ final readonly class Utilities
         }
 
         $parts = parse_url($decoded);
-        if (false === $parts || !isset($parts['host']) || '' === (string) $parts['host']) {
+        if (false === $parts || !isset($parts['host']) || '' === $parts['host']) {
             return $decoded;
         }
 
@@ -58,6 +49,32 @@ final readonly class Utilities
         }
 
         return $text;
+    }
+
+    public static function getDomain(string $url): string
+    {
+        if ('' === $url) {
+            return '';
+        }
+        if (!str_contains($url, 'http')) {
+            $url = 'http://'.$url;
+        }
+        $parts = parse_url($url);
+
+        return $parts['host'] ?? '';
+    }
+
+    public static function normalizeSummary(string $summary): string
+    {
+        $summary = trim($summary);
+        if ('' === $summary) {
+            return '';
+        }
+
+        $summary = html_entity_decode(strip_tags($summary), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+        $summary = preg_replace('/\s+/u', ' ', $summary) ?? $summary;
+
+        return trim($summary);
     }
 
     public static function ensureUtf8(string $html): string
@@ -112,7 +129,7 @@ final readonly class Utilities
             $i = 0;
             $n = \count($tokens);
             while ($i < $n) {
-                $t = (string) $tokens[$i];
+                $t = $tokens[$i];
                 $candidate = $current.$t;
                 if (mb_strlen($candidate) <= $width) {
                     $current = $candidate;
@@ -191,52 +208,9 @@ final readonly class Utilities
         return $text;
     }
 
-    /**
-     * Compute token-based end location using tiktoken-php to mirror Python behavior.
-     *
-     * @param string[] $lines
-     */
-    public static function getEndLoc(int $loc, int $numLines, int $totalLines, array $lines, int $viewTokens, string $encodingName): int
-    {
-        if ($numLines <= 0) {
-            $txt = self::joinLines(\array_slice($lines, $loc), true, $loc);
-            if (mb_strlen($txt) > $viewTokens) {
-                try {
-                    $provider = new EncoderProvider();
-                    $encoder = $provider->get($encodingName);
-                    // Tokenize the text (we can pass the whole string; provider caches vocab)
-                    $tokens = $encoder->encode($txt);
-                    if (\count($tokens) > $viewTokens) {
-                        // Build char-offsets per token by decoding single-token chunks
-                        $tok2idx = [0];
-                        $sum = 0;
-                        $limit = min(\count($tokens), $viewTokens + 1);
-                        for ($i = 0; $i < $limit; ++$i) {
-                            $piece = $encoder->decode([$tokens[$i]]);
-                            $sum += mb_strlen($piece);
-                            $tok2idx[] = $sum;
-                        }
-                        $endIdx = $tok2idx[$viewTokens] ?? $sum;
-                        $sub = mb_substr($txt, 0, $endIdx);
-                        $numLines = substr_count($sub, "\n") + 1; // round up
-                    } else {
-                        $numLines = $totalLines;
-                    }
-                } catch (\Throwable $e) {
-                    // Fallback: estimate using a chars/token heuristic when we cannot load vocab data.
-                    $numLines = self::estimateNumLinesFallback($txt, $totalLines, $viewTokens);
-                }
-            } else {
-                $numLines = $totalLines;
-            }
-        }
-
-        return min($loc + $numLines, $totalLines);
-    }
-
     public static function makeDisplay(PageContents $page, string $body, string $scrollbar): string
     {
-        $domain = PageProcessor::getDomain($page->url);
+        $domain = self::getDomain($page->url);
         $header = $page->title;
         if ('' !== $domain) {
             $header .= \sprintf(' (%s)', $domain);
@@ -260,101 +234,22 @@ final readonly class Utilities
     }
 
     /**
-     * Build a find results PageContents by scanning the page text for regex matches.
-     *
-     * @throws ToolUsageError
-     */
-    public static function runFindInPage(
-        PageContents $page,
-        ?string $regex = null,
-        int $maxResults = 50,
-        int $numShowLines = 4,
-    ): PageContents {
-        $lines = self::wrapLines($page->text);
-        $txt = self::joinLines($lines);
-        $withoutLinks = self::stripLinks($txt);
-        $lines = explode("\n", $withoutLinks);
-
-        $query = (string) $regex;
-        $regexError = null;
-
-        $resultChunks = [];
-        $snippets = [];
-        $lineIdx = 0;
-        $matchIdx = 0;
-        while ($lineIdx < \count($lines)) {
-            $line = $lines[$lineIdx];
-            $matched = self::regexMatches($query, $line, $regexError);
-            if (null !== $regexError) {
-                break;
-            }
-
-            if (!$matched) {
-                ++$lineIdx;
-                continue;
-            }
-            $snippet = implode("\n", \array_slice($lines, $lineIdx, $numShowLines));
-            $linkTitle = \sprintf(self::FIND_PAGE_LINK_FORMAT, (string) $matchIdx, \sprintf('match at L%d', $lineIdx));
-            $resultChunks[] = $linkTitle."\n".$snippet;
-            $snippets[(string) $matchIdx] = new Extract($page->url, $snippet, \sprintf('#%d', $matchIdx), $lineIdx);
-            if (\count($resultChunks) === $maxResults) {
-                break;
-            }
-            ++$matchIdx;
-            $lineIdx += $numShowLines;
-        }
-
-        if (null !== $regexError) {
-            $message = \sprintf('Regex error for pattern `%s`: %s', $query, $regexError);
-            $hint = 'Ensure the `regex` parameter is a valid PCRE pattern that includes delimiters, e.g. `/pattern/`.';
-            if (\in_array($regexError, ['PCRE backtrack limit reached', 'PCRE recursion limit reached'], true)) {
-                $hint = 'Simplify the regex pattern so it requires less backtracking or recursion.';
-            }
-
-            $exception = new ToolUsageError($message);
-            $exception->setHint($hint);
-
-            throw $exception;
-        }
-
-        $urlsMap = [];
-        for ($i = 0; $i < \count($resultChunks); ++$i) {
-            $urlsMap[(string) $i] = $page->url;
-        }
-
-        $displayText = !empty($resultChunks)
-            ? implode("\n\n", $resultChunks)
-            : \sprintf(
-                "Pattern not found for regex: `%s`\n\nNo visible matches were found on this page. The content may be structured data (e.g. JSON) or outside the scanned range. Adjust the regex if appropriate or inspect the page manually.\n\nNext steps: use `browser.open` to review the surrounding page manually, or refine the `regex` before responding.",
-                $query
-            );
-
-        return new PageContents(
-            url: $page->url.'/find?regex='.rawurlencode($query),
-            text: $displayText,
-            title: \sprintf('Find results for regex: `%s` in `%s`', $query, $page->title),
-            urls: $urlsMap,
-            snippets: $snippets,
-        );
-    }
-
-    /**
      * @param array<string,string> $urls
      *
      * @return array<string,string>
      */
     private static function filterVisibleUrls(array $urls, string $body, string $pageUrl): array
     {
-        if (empty($urls)) {
+        if ([] === $urls) {
             return [];
         }
 
         $matches = [];
         preg_match_all('/【(?P<id>\d+)†/u', $body, $matches);
-        /** @var string[] $ids */
+        /** @var list<numeric-string> $ids */
         $ids = array_map(static fn (string $id): string => $id, array_unique($matches['id']));
 
-        if (!empty($ids)) {
+        if ([] !== $ids) {
             return array_intersect_key($urls, array_flip($ids));
         }
 
@@ -370,7 +265,7 @@ final readonly class Utilities
      */
     private static function formatReferences(array $urls): string
     {
-        if (empty($urls)) {
+        if ([] === $urls) {
             return '';
         }
 
@@ -381,72 +276,6 @@ final readonly class Utilities
         }
 
         return implode("\n", $lines);
-    }
-
-    private static function regexMatches(string $pattern, string $subject, ?string &$error = null): bool
-    {
-        $error = null;
-        $result = self::withPcreLimits(static function () use ($pattern, $subject, &$error) {
-            $match = @preg_match($pattern, $subject);
-            if (false === $match) {
-                $error = self::describePregError(preg_last_error());
-
-                return false;
-            }
-
-            return 1 === $match;
-        });
-
-        return (bool) $result;
-    }
-
-    private static function withPcreLimits(callable $callback): mixed
-    {
-        $backtrack = \ini_get('pcre.backtrack_limit');
-        $recursion = \ini_get('pcre.recursion_limit');
-
-        try {
-            ini_set('pcre.backtrack_limit', (string) self::FIND_REGEX_BACKTRACK_LIMIT);
-            ini_set('pcre.recursion_limit', (string) self::FIND_REGEX_RECURSION_LIMIT);
-
-            return $callback();
-        } finally {
-            if (false !== $backtrack) {
-                ini_set('pcre.backtrack_limit', (string) $backtrack);
-            } else {
-                ini_restore('pcre.backtrack_limit');
-            }
-
-            if (false !== $recursion) {
-                ini_set('pcre.recursion_limit', (string) $recursion);
-            } else {
-                ini_restore('pcre.recursion_limit');
-            }
-        }
-    }
-
-    private static function describePregError(int $code): string
-    {
-        return match ($code) {
-            \PREG_BACKTRACK_LIMIT_ERROR => 'PCRE backtrack limit reached',
-            \PREG_RECURSION_LIMIT_ERROR => 'PCRE recursion limit reached',
-            \PREG_BAD_UTF8_ERROR, \PREG_BAD_UTF8_OFFSET_ERROR => 'Invalid UTF-8 data in subject',
-            \PREG_INTERNAL_ERROR => 'Invalid regex pattern or internal PCRE error',
-            \PREG_JIT_STACKLIMIT_ERROR => 'PCRE JIT stack limit reached',
-            default => 'Unknown PCRE error (code '.$code.')',
-        };
-    }
-
-    private static function estimateNumLinesFallback(string $text, int $totalLines, int $viewTokens): int
-    {
-        $maxChars = (int) ceil($viewTokens * self::FALLBACK_CHARS_PER_TOKEN);
-        if (mb_strlen($text) <= $maxChars) {
-            return $totalLines;
-        }
-
-        $sub = mb_substr($text, 0, $maxChars);
-
-        return min(substr_count($sub, "\n") + 1, $totalLines);
     }
 
     private static function mb_strrpos(string $haystack, string $needle): int|false

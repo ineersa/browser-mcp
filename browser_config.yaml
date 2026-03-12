@@ -1,0 +1,70 @@
+# Main runtime configuration file.
+# Path is controlled via the `CONFIG_FILE` environment variable (defaults to `browser_config.yaml`).
+
+general:
+    # Transport used by the server:
+    # - `stdio`: MCP over stdin/stdout (recommended for local tools)
+    # - `http`:  MCP over HTTP (network endpoint)
+    transport: http
+    # Bind host for HTTP transport. Ignored for STDIO.
+    # Use `127.0.0.1` for local-only, `0.0.0.0` to listen on all interfaces.
+    host: 0.0.0.0
+    # Bind port for HTTP transport. Ignored for STDIO.
+    port: 9001
+    # Cache TTL (seconds) for `browser.search` results/state.
+    search_cache_ttl_seconds: 600
+    # Cache TTL (seconds) for `browser.open` page fetches/content.
+    open_cache_ttl_seconds: 300
+
+searchers:
+    # Which search provider implementation to use (must exist under `providers`).
+    selected: searxng
+    providers:
+        searxng:
+            # Base URL of a SearxNG instance.
+            url: http://server:8088
+        jinaai:
+            # Jina Search API token. Best set via env and referenced here.
+            token: "%env(JINA_SEARCH_TOKEN)%"
+        tavily:
+            # Tavily Search API token. Best set via env and referenced here.
+            token: "%env(TAVILY_SEARCH_TOKEN)%"
+        duckduckgo:
+            # Request timeout (seconds) per query attempt.
+            timeout_seconds: 5
+            # Retry count for transient failures.
+            max_retries: 1
+            # User-Agent header for DuckDuckGo requests.
+            user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
+
+readers:
+    # Which reader (page fetch + extraction) provider to use (must exist under `providers`).
+    selected: http
+    providers:
+        http:
+            # Request timeout (seconds) when fetching pages over HTTP(S).
+            timeout_seconds: 30
+            # Retry count for transient fetch/extraction failures.
+            max_retries: 2
+            # User-Agent header used when fetching pages.
+            user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
+            # HTML/CSS class names considered "noise" and deprioritized/removed during extraction.
+            noise_class_tokens:
+                - codeblock-lines
+                - linenos
+                - line-numbers
+                - gutter
+        jinaai:
+            # Jina Reader API token. Best set via env and referenced here.
+            token: "%env(JINA_READER_TOKEN)%"
+            # Request timeout (seconds) per read/extract attempt.
+            timeout_seconds: 15
+            # Retry count for transient failures.
+            max_retries: 1
+        tavily:
+            # Tavily Extract/Reader API token. Best set via env and referenced here.
+            token: "%env(TAVILY_READER_TOKEN)%"
+            # Request timeout (seconds) per read/extract attempt.
+            timeout_seconds: 15
+            # Retry count for transient failures.
+            max_retries: 1

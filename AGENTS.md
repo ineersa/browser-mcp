@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Source: `src/` (Symfony Console app). Key areas: `Command/` (entry commands), `Tools/` (MCP tools), `Service/` (SearchService, OpenService, FindService, BrowserState, Utilities, PageProcessor), `Service/Backend/` (SearxNG backend), `reference/` (Python stubs). Autoload namespace: `App\\`.
+- Source: `src/` (Symfony Console app). Key areas: `Command/` (entry commands), `Tools/` (MCP tools), `Service/` (SearchService, OpenService, FindService, Utilities), `Service/Reader/Processors/` (page processing), `Service/Backend/` (SearxNG backend), `reference/` (Python stubs). Autoload namespace: `App\\`.
 - Config: `config/` (DI, logging), env: `.env`, runtime files: `var/`.
 - Binaries: `bin/console` (generic) and `bin/browser-mcp` (runs default `browser-mcp` command).
 - Tests: `tests/` (PHPUnit), vendor deps in `vendor/`. Build artifacts in `dist/`.
@@ -27,9 +27,9 @@
 - Run `composer tests` locally; keep tests green and deterministic.
 
 ## Configuration
-- Backend selection: set `BROWSER_BACKEND` to `searx` (default). Future values may be added.
-- SearxNG endpoint: set `SEARXNG_URL` (default `http://server:8088`).
-- All services read these via the container (see `config/services.yaml`).
+- Runtime config is loaded from `CONFIG_FILE` (default `browser_config.yaml`).
+- Searcher/reader selection and provider-specific options are defined in that YAML file.
+- Keep boot-level env variables such as `APP_VAR_DIR` and `LOG_LEVEL` in `.env`.
 
 ## Service Usage Examples
 - Search: `$search = $container->get(App\Service\SearchService::class); echo $search('rust book');`
@@ -38,6 +38,13 @@
 
 ## MCP Tools
 - Exposed tools: `browser.search`, `browser.open`, `browser.find`.
+
+## Web Research Policy
+- For any web research task, always load the `web-research` skill first.
+- All web research execution must go through `Task` with `subagent_type: "web-researcher"`.
+- Do not perform web research directly from the main agent using browser/websearch tools.
+- The main agent should coordinate requirements and present results returned by the subagent.
+- Exception: simple one-off `search`/`open`/`find` lookups are allowed directly without subagent orchestration.
 
 ## Commit & Pull Request Guidelines
 - Commits: imperative mood, concise scope (e.g., "Add SearchTool input validation"). Group related changes.

@@ -15,7 +15,14 @@ final class OpenTool
     public const string NAME = 'open';
     public const string TITLE = 'Open a page';
     public const string DESCRIPTION = <<<'DESC'
-Loads `url` and returns a window of page text. The response starts with metadata: title (with domain), optional `URL: <canonical URL>`, and a bold `viewing lines [start - end] of total` progress line. The body contains numbered `L{n}:` lines only. `startAtLine` is optional; when omitted, the tool auto-selects a useful window from recent search snippets for this URL. If no snippet can be located, it falls back to top-of-page output. `numberOfLines` controls window size (default `50`) unless `fetchAll: true`, which returns the entire page body in one call. References are metadata and never count toward line totals.
+Loads `url` and returns a window of page text. Output begins with metadata (title + domain, optional canonical `URL:` line), then a bold progress header `viewing lines [start - end] of total`, then numbered body lines (`L{n}: ...`). Line numbers are zero-based.
+
+Window selection:
+- If `startAtLine` is provided, windowing is deterministic: start there and show `numberOfLines` (default `50`).
+- If `startAtLine` is omitted, the tool first tries to anchor near recent `search` snippets for the same URL; otherwise it falls back to top-of-page.
+- Auto-selected windows are larger (about 100 lines) to provide scanning context.
+
+`fetchAll: true` ignores window size and returns the full page body in one call. Use this sparingly on very long pages. References are metadata and do not affect line counts.
 DESC;
 
     public function __construct(

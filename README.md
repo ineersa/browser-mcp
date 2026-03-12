@@ -82,6 +82,220 @@ readers:
 
 The server supports **STDIO** (default) and **HTTP** transports.
 
+### OpenCode (`opencode.json`) examples
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "websearch": {
+      "type": "remote",
+      "url": "http://127.0.0.1:9001/mcp",
+      "enabled": true
+    },
+    "browser-cli": {
+      "type": "local",
+      "command": "php",
+      "args": [
+        "bin/browser-mcp"
+      ],
+      "env": {
+        "APP_ENV": "prod",
+        "APP_DEBUG": "false",
+        "LOG_LEVEL": "info",
+        "APP_VAR_DIR": "/tmp/mcp/browser-mcp",
+        "CONFIG_FILE": "browser_config.yaml",
+        "JINA_SEARCH_TOKEN": "",
+        "JINA_READER_TOKEN": "",
+        "TAVILY_SEARCH_TOKEN": "",
+        "TAVILY_READER_TOKEN": ""
+      },
+      "enabled": true
+    }
+  },
+  "experimental": {
+    "mcp_timeout": 3600000
+  }
+}
+```
+
+`websearch` shows a remote Streamable HTTP connection (`/mcp`), while `browser-cli` runs this server locally via CLI.
+Some clients also work with root (`/`) as the MCP endpoint, but `/mcp` is the recommended explicit URL.
+
+### Cursor (`.cursor/mcp.json`) examples
+
+Cursor uses `mcpServers` (not `mcp`) and server entries differ slightly from OpenCode.
+
+```json
+{
+  "mcpServers": {
+    "websearch": {
+      "url": "http://127.0.0.1:9001/mcp"
+    },
+    "browser-cli": {
+      "type": "stdio",
+      "command": "php",
+      "args": [
+        "bin/browser-mcp"
+      ],
+      "env": {
+        "APP_ENV": "prod",
+        "APP_DEBUG": "false",
+        "LOG_LEVEL": "info",
+        "APP_VAR_DIR": "/tmp/mcp/browser-mcp",
+        "CONFIG_FILE": "browser_config.yaml",
+        "JINA_SEARCH_TOKEN": "",
+        "JINA_READER_TOKEN": "",
+        "TAVILY_SEARCH_TOKEN": "",
+        "TAVILY_READER_TOKEN": ""
+      }
+    }
+  }
+}
+```
+
+Project-level location: `.cursor/mcp.json`. Global location: `~/.cursor/mcp.json`.
+
+### OpenCode web research subagent
+
+This repository includes a project-local subagent at `.opencode/agents/web-researcher.md` and a skill at `.opencode/skills/web-research/SKILL.md`.
+
+- Purpose: mandatory path for web research tasks with strict evidence workflow.
+- Model: `llama.cpp/flash` (local) with `temperature: 0.6`.
+- Tools: only `websearch_*` and `skill`.
+- Behavior: run multiple queries, follow links, verify claims, and cite URL + line numbers.
+
+Use it manually with `@web-researcher`; treat it as required for web research tasks. For one-off web queries, direct `websearch_*` calls are fine.
+
+### Run server with all env vars
+
+Set all runtime env vars explicitly before starting the server:
+
+```bash
+export APP_ENV=prod
+export APP_DEBUG=false
+export LOG_LEVEL=info
+export APP_VAR_DIR=/tmp/mcp/browser-mcp
+export CONFIG_FILE=/absolute/path/to/browser_config.yaml
+export JINA_SEARCH_TOKEN=""
+export JINA_READER_TOKEN=""
+export TAVILY_SEARCH_TOKEN=""
+export TAVILY_READER_TOKEN=""
+```
+
+Run as local CLI/STDIO MCP server:
+
+```bash
+php bin/browser-mcp
+```
+
+Run as PHAR (same env vars):
+
+```bash
+php dist/browser-mcp.phar
+```
+
+Run as native binary (same env vars):
+
+```bash
+./dist/browser-mcp
+```
+
+Example script (exports envs and starts `dist/browser-mcp`):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+export APP_ENV=prod
+export APP_DEBUG=false
+export LOG_LEVEL=info
+export APP_VAR_DIR=/tmp/mcp/browser-mcp
+export CONFIG_FILE="${CONFIG_FILE:-$(pwd)/browser_config.yaml}"
+export JINA_SEARCH_TOKEN="${JINA_SEARCH_TOKEN:-}"
+export JINA_READER_TOKEN="${JINA_READER_TOKEN:-}"
+export TAVILY_SEARCH_TOKEN="${TAVILY_SEARCH_TOKEN:-}"
+export TAVILY_READER_TOKEN="${TAVILY_READER_TOKEN:-}"
+
+exec ./dist/browser-mcp
+```
+
+You can also use the ready example script in this repository:
+
+```bash
+chmod +x scripts/run-dist-browser-mcp.sh
+./scripts/run-dist-browser-mcp.sh
+```
+
+To expose a network MCP endpoint, set HTTP transport in `browser_config.yaml`:
+
+```yaml
+general:
+  transport: http
+  host: 127.0.0.1
+  port: 8000
+```
+
+Then start the server with the same env vars and connect your MCP client to `http://127.0.0.1:8000`.
+
+### Run as systemd user service (HTTP)
+
+Create an env file (tokens optional):
+
+```bash
+mkdir -p ~/.config/browser-mcp
+cat > ~/.config/browser-mcp/browser-mcp.env <<'EOF'
+APP_ENV=prod
+APP_DEBUG=false
+LOG_LEVEL=info
+APP_VAR_DIR=/tmp/mcp/browser-mcp
+CONFIG_FILE=/absolute/path/to/browser_config.yaml
+JINA_SEARCH_TOKEN=
+JINA_READER_TOKEN=
+TAVILY_SEARCH_TOKEN=
+TAVILY_READER_TOKEN=
+EOF
+```
+
+Create `~/.config/systemd/user/browser-mcp.service`:
+
+```ini
+[Unit]
+Description=Browser MCP HTTP server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/absolute/path/to/browser-mcp
+EnvironmentFile=%h/.config/browser-mcp/browser-mcp.env
+ExecStart=/absolute/path/to/browser-mcp/dist/browser-mcp
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+```
+
+Enable and start:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now browser-mcp.service
+systemctl --user status browser-mcp.service
+```
+
+View logs:
+
+```bash
+journalctl --user -u browser-mcp.service -f
+```
+
+Optional (keep it running after logout):
+
+```bash
+loginctl enable-linger "$USER"
+```
+
 ### STDIO
 
 Just add entry to `mcp.json` with a path to binary:

@@ -68,6 +68,53 @@ final class FindServiceTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    public function testFindCanMatchAcrossLineBreaksInContainsMode(): void
+    {
+        $url = 'https://example.com/symfony';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Symfony',
+            markdown: "Intro\nSymfony\nMessenger integration details",
+            references: [],
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        );
+
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
+
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
+
+        $result = $service->__invoke(url: $url, query: 'Symfony Messenger', match: FindMatchMode::CONTAINS, contextLines: 3);
+
+        $this->assertStringContainsString('query: Symfony Messenger', $result);
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $result);
+    }
+
+    public function testFindContainsNormalizesWhitespaceAcrossLineBreaks(): void
+    {
+        $url = 'https://example.com/spacing';
+        $document = new ReadDocument(
+            url: $url,
+            canonicalUrl: $url,
+            title: 'Spacing',
+            markdown: "Intro\nSymfony \nMessenger details",
+            references: [],
+            provider: 'searxng',
+            fetchedAt: new \DateTimeImmutable(),
+        );
+
+        $reader = $this->createMock(ReaderContract::class);
+        $reader->expects($this->once())->method('read')->willReturn($document);
+
+        $service = new FindService($this->config(), $reader, new ArrayAdapter());
+
+        $result = $service->__invoke(url: $url, query: 'symfony messenger', match: FindMatchMode::CONTAINS, contextLines: 2);
+
+        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $result);
+    }
+
     public function testFindRequiresUrl(): void
     {
         $backend = $this->createStub(ReaderContract::class);

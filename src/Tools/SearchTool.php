@@ -14,7 +14,9 @@ final class SearchTool
 {
     public const string NAME = 'search';
     public const string TITLE = 'Search for information';
-    public const string DESCRIPTION = 'Runs a web search for `query` and lists up to `topn` results. Each entry is numbered and includes a canonical `URL:` plus a short summary—use that URL with `browser.open` or `browser.find`. A References section maps each result number to its canonical URL for citations. Avoid quoting more than 10 words from any single result.';
+    public const string DESCRIPTION = <<<'DESC'
+Runs web search for `query` and returns ranked results with canonical URLs and short summaries. Use this tool for discovery (finding candidate sources) before deep reading. Query tips: include specific nouns, version numbers, product/library names, and error strings for higher precision; avoid very long natural-language prompts. `topn` controls recall (default 5): use 3-5 for focused lookup, 8-10 when coverage matters. After choosing a result URL, use `open` to inspect page text and `find` to verify exact phrases/snippets. Response includes numbered results and a References map (`[id] -> URL`) for citation-friendly follow-up.
+DESC;
 
     public function __construct(
         private readonly SearchService $searchService,

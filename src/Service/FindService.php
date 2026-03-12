@@ -84,25 +84,82 @@ final readonly class FindService
     {
         $lines = Utilities::wrapLines(Utilities::stripLinks($document->markdown));
         $matches = [];
-        $lineIdx = 0;
         $matchIdx = 0;
+        $nextAllowedLine = 0;
         $maxResults = 50;
+        $lineStartOffsets = $this->buildLineStartOffsets($lines);
+        $searchText = implode("\n", $lines);
 
-        while ($lineIdx < \count($lines)) {
-            if (!$this->lineMatches($lines[$lineIdx], $query, $match)) {
-                ++$lineIdx;
-                continue;
+        if ('' === $searchText) {
+            return new FindDocument(
+                readDocument: $document,
+                query: $query,
+                match: $match,
+                matches: $matches,
+            );
+        }
+
+        if (FindMatchMode::EXACT === $match) {
+            $offset = 0;
+            $searchQuery = $query;
+            if ('' === $searchQuery) {
+                return new FindDocument(
+                    readDocument: $document,
+                    query: $query,
+                    match: $match,
+                    matches: $matches,
+                );
             }
 
-            $snippet = implode("\n", \array_slice($lines, $lineIdx, $numShowLines));
-            $matches[] = new FindMatch(index: $matchIdx, lineNumber: $lineIdx, snippet: $snippet);
+            $searchTextLength = mb_strlen($searchText);
 
-            if (\count($matches) === $maxResults) {
-                break;
+            while ($offset <= $searchTextLength) {
+                $position = mb_strpos($searchText, $searchQuery, $offset);
+                if (false === $position) {
+                    break;
+                }
+
+                $lineIdx = $this->lineIndexFromOffset($lineStartOffsets, $position);
+                if ($lineIdx < $nextAllowedLine) {
+                    $offset = $position + 1;
+                    continue;
+                }
+
+                $snippet = implode("\n", \array_slice($lines, $lineIdx, $numShowLines));
+                $matches[] = new FindMatch(index: $matchIdx, lineNumber: $lineIdx, snippet: $snippet);
+
+                if (\count($matches) === $maxResults) {
+                    break;
+                }
+
+                ++$matchIdx;
+                $nextAllowedLine = $lineIdx + $numShowLines;
+                $offset = $position + 1;
             }
+        } else {
+            $pattern = $this->containsPattern($query);
+            if (null !== $pattern) {
+                $byteOffset = 0;
+                while (1 === preg_match($pattern, $searchText, $matchCapture, \PREG_OFFSET_CAPTURE, $byteOffset)) {
+                    $matchByteOffset = (int) $matchCapture[0][1];
+                    $lineIdx = $this->lineIndexFromOffset($lineStartOffsets, $this->byteOffsetToCharOffset($searchText, $matchByteOffset));
+                    if ($lineIdx < $nextAllowedLine) {
+                        $byteOffset = $matchByteOffset + 1;
+                        continue;
+                    }
 
-            ++$matchIdx;
-            $lineIdx += $numShowLines;
+                    $snippet = implode("\n", \array_slice($lines, $lineIdx, $numShowLines));
+                    $matches[] = new FindMatch(index: $matchIdx, lineNumber: $lineIdx, snippet: $snippet);
+
+                    if (\count($matches) === $maxResults) {
+                        break;
+                    }
+
+                    ++$matchIdx;
+                    $nextAllowedLine = $lineIdx + $numShowLines;
+                    $byteOffset = $matchByteOffset + 1;
+                }
+            }
         }
 
         return new FindDocument(
@@ -113,24 +170,59 @@ final readonly class FindService
         );
     }
 
-    private function lineMatches(string $line, string $query, FindMatchMode $match): bool
+    /**
+     * @param string[] $lines
+     *
+     * @return int[]
+     */
+    private function buildLineStartOffsets(array $lines): array
     {
-        if (FindMatchMode::EXACT === $match) {
-            return str_contains($line, $query);
+        $offsets = [];
+        $offset = 0;
+
+        foreach ($lines as $line) {
+            $offsets[] = $offset;
+            $offset += mb_strlen($line) + 1;
         }
 
-        return str_contains(
-            $this->normalizeContainsValue($line),
-            $this->normalizeContainsValue($query),
-        );
+        return $offsets;
     }
 
-    private function normalizeContainsValue(string $value): string
+    /**
+     * @param int[] $lineStartOffsets
+     */
+    private function lineIndexFromOffset(array $lineStartOffsets, int $offset): int
     {
-        $trimmed = trim($value);
-        $withoutEdgePunctuation = (string) preg_replace('/^\p{P}++|\p{P}++$/u', '', $trimmed);
-        $normalized = '' !== $withoutEdgePunctuation ? $withoutEdgePunctuation : $trimmed;
+        $left = 0;
+        $right = \count($lineStartOffsets) - 1;
 
-        return mb_strtolower($normalized);
+        while ($left <= $right) {
+            $mid = intdiv($left + $right, 2);
+            if ($lineStartOffsets[$mid] <= $offset) {
+                $left = $mid + 1;
+                continue;
+            }
+
+            $right = $mid - 1;
+        }
+
+        return max(0, $right);
+    }
+
+    private function containsPattern(string $query): ?string
+    {
+        $tokens = preg_split('/\s+/u', trim($query), -1, \PREG_SPLIT_NO_EMPTY);
+        if (!\is_array($tokens) || [] === $tokens) {
+            return null;
+        }
+
+        $escapedTokens = array_map(static fn (string $token): string => preg_quote($token, '/'), $tokens);
+
+        return '/'.implode('\s+', $escapedTokens).'/iu';
+    }
+
+    private function byteOffsetToCharOffset(string $text, int $byteOffset): int
+    {
+        return mb_strlen(substr($text, 0, $byteOffset));
     }
 }

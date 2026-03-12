@@ -39,6 +39,13 @@
 ## MCP Tools
 - Exposed tools: `browser.search`, `browser.open`, `browser.find`.
 
+## Web Research Policy
+- For any web research task, always load the `web-research` skill first.
+- All web research execution must go through `Task` with `subagent_type: "web-researcher"`.
+- Do not perform web research directly from the main agent using browser/websearch tools.
+- The main agent should coordinate requirements and present results returned by the subagent.
+- Exception: simple one-off `search`/`open`/`find` lookups are allowed directly without subagent orchestration.
+
 ## Commit & Pull Request Guidelines
 - Commits: imperative mood, concise scope (e.g., "Add SearchTool input validation"). Group related changes.
 - PRs: include summary, rationale, and how to verify (commands/output). Link issues. Update docs if behavior changes.

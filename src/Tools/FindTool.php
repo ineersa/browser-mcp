@@ -15,7 +15,7 @@ final class FindTool
 {
     public const string NAME = 'find';
     public const string TITLE = 'Find text in page';
-    public const string DESCRIPTION = 'Finds text matches within the page at `url`. Provide `query` as plain text and optional `match` mode (`contains` or `exact`). `contains` is case-insensitive and behaves like grep/ctrl+f. `exact` is case-sensitive and punctuation-sensitive. Optional `context_lines` controls how many lines are shown per match (default 5). Both `url` and `query` are required; the page is fetched (and cached) by URL before searching, so call this directly whenever you already know the destination and phrase—no prior `search` or `open` call is needed. Returns structured TOON output with `url`, `query`, `match`, and a `matches` list (`id`, `line`, `chunk`).';
+    public const string DESCRIPTION = 'Find text in a single page at `url` using `query` and `match` mode. Choose mode carefully: `contains` (default) is case-insensitive and whitespace-flexible (spaces/newlines can match each other), good for broad discovery and paraphrased casing, e.g. query `symfony messenger` can match `Symfony` on one line and `Messenger` on the next. `exact` is strict: case-sensitive and whitespace/punctuation-sensitive, good when you must verify literal text, identifiers, flags, headings, or code snippets; it only matches the exact characters (including newlines if present). `context_lines` controls chunk size around each hit (default 5). Both `url` and `query` are required. Returns TOON output with `url`, `query`, `match`, and `matches` (`id`, `line`, `chunk`).';
 
     public function __construct(
         private readonly FindService $findService,

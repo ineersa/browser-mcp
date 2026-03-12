@@ -12,7 +12,8 @@
     "files": [
         "composer.json",
         "composer.lock",
-        "browser_config.yaml"
+        "browser_config.yaml",
+        ".env"
     ],
 
     "compactors": [

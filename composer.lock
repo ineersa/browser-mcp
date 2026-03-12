@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "be472dfed7f26a3b7a45687d9f82d968",
+    "content-hash": "c7a8f4f638b9ff21a7764f4d2be63c71",
     "packages": [
         {
             "name": "doctrine/deprecations",
@@ -120,16 +120,16 @@
             "time": "2025-12-06T05:24:46+00:00"
         },
         {
-            "name": "ineersa/html2text",
+            "name": "ineersa/html2markdown",
             "version": "v1.0.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/ineersa/html2text.git",
+                "url": "https://github.com/ineersa/html2markdown.git",
                 "reference": "1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ineersa/html2text/zipball/1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f",
+                "url": "https://api.github.com/repos/ineersa/html2markdown/zipball/1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f",
                 "reference": "1813f1424ecd14c8ac65e11e7e3ff81b5172fe6f",
                 "shasum": ""
             },
@@ -162,8 +162,8 @@
             ],
             "description": "`html2text` converts a page of HTML into clean, easy-to-read plain ASCII text. Better yet, that ASCII also happens to be valid Markdown (a text-to-HTML format).",
             "support": {
-                "issues": "https://github.com/ineersa/html2text/issues",
-                "source": "https://github.com/ineersa/html2text/tree/v1.0.0"
+                "issues": "https://github.com/ineersa/html2markdown/issues",
+                "source": "https://github.com/ineersa/html2markdown/tree/v1.0.0"
             },
             "time": "2025-10-01T14:13:03+00:00"
         },

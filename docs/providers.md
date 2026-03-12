@@ -95,7 +95,7 @@ It's great as it provides larger snippets, and we cache pages from search result
 - API key not required
 - Supports retries, timeouts, custom user agent, and noise-class cleanup hints
 
-Markdown conversion done with [https://github.com/ineersa/html2text](https://github.com/ineersa/html2text).
+Markdown conversion done with [https://github.com/ineersa/html2markdown](https://github.com/ineersa/html2markdown).
 It supports Github links with custom opening rules.
 It cleans up context from navigation and non-important blocks.
 

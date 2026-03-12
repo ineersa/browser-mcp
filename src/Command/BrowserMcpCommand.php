@@ -117,12 +117,15 @@ class BrowserMcpCommand extends Command
             }
         }
 
+        // Do not leak parent PHP runtime config into the spawned HTTP worker.
+        // When running from static binaries these can point to non-system ini paths
+        // and make `/usr/bin/php` miss extensions (for example session).
+        unset($env['PHPRC'], $env['PHP_INI_SCAN_DIR']);
+
         $cwd = $this->isPharPath($this->projectDir) ? null : $this->projectDir;
 
-        $phpBinary = is_executable(\PHP_BINARY) ? \PHP_BINARY : 'php';
-
         $process = new Process(
-            [$phpBinary, '-S', \sprintf('%s:%d', $host, $port), $workerPath],
+            ['php', '-S', \sprintf('%s:%d', $host, $port), $workerPath],
             $cwd,
             $env,
         );
@@ -162,7 +165,7 @@ class BrowserMcpCommand extends Command
         }
 
         $appVarDir = $_SERVER['APP_VAR_DIR'] ?? $_ENV['APP_VAR_DIR'] ?? getenv('APP_VAR_DIR');
-        $baseDir = is_string($appVarDir) && '' !== $appVarDir ? $appVarDir : sys_get_temp_dir();
+        $baseDir = \is_string($appVarDir) && '' !== $appVarDir ? $appVarDir : sys_get_temp_dir();
         $tmpPath = rtrim($baseDir, '/\\').'/browser-mcp-'.sha1($pharPath).'-http-worker.php';
 
         $filesystem = new Filesystem();

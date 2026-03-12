@@ -3,7 +3,19 @@
 Use this mode when you need an HTTP endpoint over STDIO.
 Underneath it's running php dev server for streamable HTTP, so it's not for production, but it's good enough for general usage.
 
-Example startup shell script: [scripts/run-dist-browser-mcp.sh](../scripts/run-dist-browser-mcp.sh).
+## Recommended runtime for HTTP
+
+Use PHAR with system PHP for HTTP mode:
+
+- `php browser-mcp.phar`
+- or `php /absolute/path/to/dist/browser-mcp.phar`
+- example script: [scripts/run-dist-browser-mcp.sh](../scripts/run-dist-browser-mcp.sh)
+
+IMPORTANT:
+
+- STDIO mode can run as a single binary.
+- HTTP mode should be started via PHAR (`php ...browser-mcp.phar`) with system PHP `8.4+`.
+
 
 ## 1) Enable HTTP transport
 
@@ -33,10 +45,10 @@ export TAVILY_READER_TOKEN=""
 ## 3) Start server
 
 ```bash
-./dist/browser-mcp
+php /absolute/path/to/browser-mcp.phar
 ```
 
-Or use the example script:
+Or use the example script from repo root:
 
 ```bash
 ./scripts/run-dist-browser-mcp.sh
@@ -105,7 +117,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/absolute/path/to/browser-mcp
 EnvironmentFile=%h/.config/browser-mcp/browser-mcp.env
-ExecStart=/absolute/path/to/browser-mcp/dist/browser-mcp
+ExecStart=/usr/bin/php /absolute/path/to/browser-mcp/browser-mcp.phar
 Restart=always
 RestartSec=2
 

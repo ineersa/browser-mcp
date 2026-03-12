@@ -8,11 +8,26 @@ Architecture overview: [docs/architecture.md](docs/architecture.md)
 
 ## Installation
 
-1. Download binary (latest release)
+1. Download release artifacts (latest release)
 
-Download the binary for your platform from the latest release:
+Download from the latest release:
 
 - [https://github.com/ineersa/browser-mcp/releases/latest](https://github.com/ineersa/browser-mcp/releases/latest)
+
+For HTTP mode, download both files and keep them in the same directory:
+
+- `browser-mcp` (native binary)
+- `browser-mcp.phar`
+
+Why this is required: HTTP mode starts a separate PHP worker process; that worker loads app files via `phar://...` and needs the `.phar` artifact available next to the binary.
+
+IMPORTANT:
+
+- STDIO mode works as a standalone binary (no system PHP required, no sibling `.phar` required).
+- For HTTP mode, use `php browser-mcp.phar` (or `php dist/browser-mcp.phar`) with system PHP `8.4+`.
+- Example HTTP launcher script: [scripts/run-dist-browser-mcp.sh](scripts/run-dist-browser-mcp.sh)
+
+Alternative (if PHP `8.4+` is installed): clone the repo and run from source with `php bin/browser-mcp` (or `./bin/browser-mcp`).
 
 2. Download `browser_config.yaml`
 
@@ -54,7 +69,7 @@ export APP_VAR_DIR=/tmp/mcp/browser-mcp
 export CONFIG_FILE=/absolute/path/to/browser_config.yaml
 ```
 
-### Running over HTTP and systemd setup (includes `.sh` example): [docs/http-server-systemd.md](docs/http-server-systemd.md)
+### Running over HTTP and systemd setup: [docs/http-server-systemd.md](docs/http-server-systemd.md)
 
 ### Configuration and client setups: [docs/configuration.md](docs/configuration.md)
 

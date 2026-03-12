@@ -17,6 +17,7 @@ final class FindTool
     public const string TITLE = 'Find text in page';
     public const string DESCRIPTION = 'Find text in a single page at `url` using `query` and `match` mode. Choose mode carefully: `contains` (default) is case-insensitive and whitespace-flexible (spaces/newlines can match each other), good for broad discovery and paraphrased casing, e.g. query `symfony messenger` can match `Symfony` on one line and `Messenger` on the next. `exact` is strict: case-sensitive and whitespace/punctuation-sensitive, good when you must verify literal text, identifiers, flags, headings, or code snippets; it only matches the exact characters (including newlines if present). `context_lines` controls chunk size around each hit (default 5). Both `url` and `query` are required. Returns TOON output with `url`, `query`, `match`, and `matches` (`id`, `line`, `chunk`).';
 
+    // @phpstan-ignore shipmonk.deadMethod
     public function __construct(
         private readonly FindService $findService,
     ) {

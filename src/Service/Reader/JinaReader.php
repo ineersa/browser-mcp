@@ -44,7 +44,6 @@ final class JinaReader implements ReaderContract
             markdown: $markdown,
             references: [],
             provider: $this->getProvider(),
-            fetchedAt: new \DateTimeImmutable(),
         );
     }
 
@@ -79,14 +78,19 @@ final class JinaReader implements ReaderContract
 
     private function extractTitle(string $markdown): ?string
     {
-        foreach (preg_split('/\R/u', $markdown) ?: [] as $line) {
+        $lines = preg_split('/\R/u', $markdown);
+        if (false === $lines) {
+            return null;
+        }
+
+        foreach ($lines as $line) {
             $trimmed = trim($line);
             if ('' === $trimmed) {
                 continue;
             }
 
             if (1 === preg_match('/^#{1,6}\s+(.*)$/u', $trimmed, $matches)) {
-                $heading = trim((string) ($matches[1] ?? ''));
+                $heading = trim($matches[1]);
 
                 return '' !== $heading ? $heading : null;
             }

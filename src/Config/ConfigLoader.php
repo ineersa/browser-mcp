@@ -15,13 +15,14 @@ final readonly class ConfigLoader
 
     public function load(): AppConfig
     {
-        $configFile = $_SERVER['CONFIG_FILE'] ?? $_ENV['CONFIG_FILE'] ?? getenv('CONFIG_FILE') ?: 'browser_config.yaml';
-        $resolvedPath = $this->resolvePath((string) $configFile);
+        $envConfigFile = $_SERVER['CONFIG_FILE'] ?? $_ENV['CONFIG_FILE'] ?? getenv('CONFIG_FILE');
+        $configFile = is_string($envConfigFile) && '' !== $envConfigFile ? $envConfigFile : 'browser_config.yaml';
+        $resolvedPath = $this->resolvePath($configFile);
 
         if (!is_file($resolvedPath) || !is_readable($resolvedPath)) {
             throw new \RuntimeException(sprintf(
                 'Config file `%s` not found at `%s`.',
-                (string) $configFile,
+                $configFile,
                 $resolvedPath,
             ));
         }

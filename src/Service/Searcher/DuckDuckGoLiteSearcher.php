@@ -47,13 +47,13 @@ final readonly class DuckDuckGoLiteSearcher implements SearcherContract
         $seen = [];
 
         foreach ($items as $item) {
-            $canonicalUrl = Utilities::canonicalizeUrl((string) $item['url']);
+            $canonicalUrl = Utilities::canonicalizeUrl($item['url']);
             if ('' === $canonicalUrl || in_array($canonicalUrl, $seen, true)) {
                 continue;
             }
             $seen[] = $canonicalUrl;
 
-            $title = trim((string) $item['title']);
+            $title = trim($item['title']);
             if ('' === $title) {
                 $title = $canonicalUrl;
             }
@@ -62,7 +62,7 @@ final readonly class DuckDuckGoLiteSearcher implements SearcherContract
                 id: (string) (count($hits) + 1),
                 url: $canonicalUrl,
                 title: $title,
-                snippet: Utilities::normalizeSummary((string) $item['summary']),
+                snippet: Utilities::normalizeSummary($item['summary']),
             );
         }
 
@@ -126,7 +126,7 @@ final readonly class DuckDuckGoLiteSearcher implements SearcherContract
                 continue;
             }
 
-            $href = trim((string) $linkNode->getAttribute('href'));
+            $href = trim($linkNode->getAttribute('href'));
             $url = $this->extractActualUrl($href);
             if ('' === $url) {
                 continue;
@@ -175,7 +175,7 @@ final readonly class DuckDuckGoLiteSearcher implements SearcherContract
             return $href;
         }
 
-        parse_str((string) $parts['query'], $query);
+        parse_str($parts['query'], $query);
 
         return isset($query['uddg']) ? urldecode((string) $query['uddg']) : $href;
     }

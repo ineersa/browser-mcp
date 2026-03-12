@@ -7,16 +7,13 @@ namespace App\Service\DTO;
 final readonly class PageContents
 {
     /**
-     * @param array<string,string>       $urls
-     * @param array<string,Extract>|null $snippets
+     * @param array<string,string> $urls
      */
     public function __construct(
         public string $url,
         public string $text,
         public string $title,
         public array $urls = [],
-        public ?array $snippets = null,
-        public ?string $errorMessage = null,
     ) {
     }
 }

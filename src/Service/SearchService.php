@@ -6,7 +6,6 @@ namespace App\Service;
 
 use App\Config\AppConfig;
 use App\Domain\Format\FormatPayload;
-use App\Domain\Search\SearchHit;
 use App\Domain\Search\SearchRequest;
 use App\Domain\Search\SearchResultSet;
 use App\Service\Exception\BackendError;
@@ -34,7 +33,8 @@ final readonly class SearchService
      */
     public function __invoke(string $query, int $topn = 5): string
     {
-        if (empty($query)) {
+        $trimmedQuery = trim($query);
+        if ('' === $trimmedQuery) {
             throw new ToolUsageError('query cannot be empty')->setHint('Provide query to search');
         }
 
@@ -42,7 +42,6 @@ final readonly class SearchService
             throw new ToolUsageError("topn can't be less than 1 and more than 10")->setHint('Provide topn in range 1-10');
         }
 
-        $trimmedQuery = trim($query);
         $cacheKey = 'search_result_set.'.hash('sha256', $this->searcher->getProvider().'|'.$topn.'|'.$trimmedQuery);
 
         try {
@@ -72,10 +71,6 @@ final readonly class SearchService
     private function cacheSnippetsByUrl(SearchResultSet $resultSet): void
     {
         foreach ($resultSet->hits as $hit) {
-            if (!$hit instanceof SearchHit) {
-                continue;
-            }
-
             $canonicalUrl = Utilities::canonicalizeUrl($hit->url);
             $snippet = Utilities::normalizeSummary($hit->snippet);
             if ('' === $canonicalUrl || '' === $snippet) {
@@ -86,12 +81,18 @@ final readonly class SearchService
 
             try {
                 $existing = $this->cache->get($cacheKey, static fn (): array => []);
-                $existing = is_array($existing) ? $existing : [];
 
-                $merged = array_values(array_unique(array_filter(
-                    [...$existing, $snippet],
-                    static fn (mixed $value): bool => is_string($value) && '' !== trim($value),
-                )));
+                $merged = [];
+                foreach ([...$existing, $snippet] as $value) {
+                    $normalized = trim($value);
+                    if ('' === $normalized) {
+                        continue;
+                    }
+
+                    $merged[] = $normalized;
+                }
+
+                $merged = array_values(array_unique($merged));
 
                 $this->cache->delete($cacheKey);
                 $this->cache->get($cacheKey, function (ItemInterface $item) use ($merged): array {

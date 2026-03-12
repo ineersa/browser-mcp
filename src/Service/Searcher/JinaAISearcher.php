@@ -40,13 +40,13 @@ final readonly class JinaAISearcher implements SearcherContract
         $seen = [];
 
         foreach ($items as $item) {
-            $canonicalUrl = Utilities::canonicalizeUrl((string) $item['url']);
+            $canonicalUrl = Utilities::canonicalizeUrl($item['url']);
             if ('' === $canonicalUrl || in_array($canonicalUrl, $seen, true)) {
                 continue;
             }
             $seen[] = $canonicalUrl;
 
-            $title = trim((string) $item['title']);
+            $title = trim($item['title']);
             if ('' === $title) {
                 $title = $canonicalUrl;
             }
@@ -55,7 +55,7 @@ final readonly class JinaAISearcher implements SearcherContract
                 id: (string) (count($hits) + 1),
                 url: $canonicalUrl,
                 title: $title,
-                snippet: Utilities::normalizeSummary((string) $item['summary']),
+                snippet: Utilities::normalizeSummary($item['summary']),
             );
         }
 

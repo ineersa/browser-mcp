@@ -161,7 +161,8 @@ class BrowserMcpCommand extends Command
             throw new \RuntimeException(\sprintf('Unable to read HTTP worker script from PHAR at %s', $pharPath));
         }
 
-        $baseDir = $_SERVER['APP_VAR_DIR'] ?? $_ENV['APP_VAR_DIR'] ?? getenv('APP_VAR_DIR') ?: sys_get_temp_dir();
+        $appVarDir = $_SERVER['APP_VAR_DIR'] ?? $_ENV['APP_VAR_DIR'] ?? getenv('APP_VAR_DIR');
+        $baseDir = is_string($appVarDir) && '' !== $appVarDir ? $appVarDir : sys_get_temp_dir();
         $tmpPath = rtrim($baseDir, '/\\').'/browser-mcp-'.sha1($pharPath).'-http-worker.php';
 
         $filesystem = new Filesystem();

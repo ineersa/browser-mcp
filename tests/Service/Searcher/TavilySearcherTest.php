@@ -61,10 +61,9 @@ final class TavilySearcherTest extends TestCase
         $this->assertSame('Symfony AI integrates AI capabilities into PHP apps.', $result->hits[0]->snippet);
 
         $cacheKey = 'read_document.'.hash('sha256', 'https://symfony.com/blog/kicking-off-the-symfony-ai-initiative');
-        $cachedDocument = $cache->get($cacheKey, static fn () => null);
-        $this->assertInstanceOf(ReadDocument::class, $cachedDocument);
-        /** @var ReadDocument $cachedDocument */
-        $this->assertSame("# Raw page\n\nFull markdown body", $cachedDocument->markdown);
+        $cachedValue = $cache->get($cacheKey, static fn (): mixed => null);
+        $this->assertInstanceOf(ReadDocument::class, $cachedValue);
+        $this->assertSame("# Raw page\n\nFull markdown body", $cachedValue->markdown);
     }
 
     public function testSearchThrowsWhenTokenIsMissing(): void

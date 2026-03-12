@@ -50,7 +50,6 @@ class HttpReader implements ReaderContract
             markdown: $page->text,
             references: $page->urls,
             provider: $this->getProvider(),
-            fetchedAt: new \DateTimeImmutable(),
         );
     }
 
@@ -174,7 +173,7 @@ class HttpReader implements ReaderContract
         if (!is_array($parts)) {
             return null;
         }
-        $path = (string) ($parts['path'] ?? '');
+        $path = $parts['path'] ?? '';
         $segments = array_values(array_filter(explode('/', $path), static fn (string $segment): bool => '' !== $segment));
         if (count($segments) < 4) {
             return null;
@@ -192,7 +191,7 @@ class HttpReader implements ReaderContract
 
         return [
             'raw_url' => 'https://raw.githubusercontent.com/'.$owner.'/'.$repo.'/'.implode('/', $encodedTail),
-            'file_name' => (string) end($tailSegments),
+            'file_name' => $tailSegments[count($tailSegments) - 1] ?? '',
         ];
     }
 
@@ -203,12 +202,12 @@ class HttpReader implements ReaderContract
             return null;
         }
 
-        $path = trim((string) ($parts['path'] ?? ''), '/');
+        $path = trim($parts['path'] ?? '', '/');
         if ('' === $path) {
             return null;
         }
 
-        $host = strtolower((string) ($parts['host'] ?? ''));
+        $host = strtolower($parts['host'] ?? '');
         $segments = array_values(array_filter(explode('/', $path), static fn (string $segment): bool => '' !== $segment));
         if ('github.com' === $host && isset($segments[2]) && in_array(strtolower($segments[2]), ['blob', 'raw'], true)) {
             $segments = array_merge([$segments[0], $segments[1]], array_slice($segments, 3));
@@ -217,14 +216,15 @@ class HttpReader implements ReaderContract
         $decoded = array_map(static fn (string $segment): string => urldecode($segment), $segments);
         $filtered = array_filter($decoded, static fn (string $segment): bool => '' !== trim($segment));
 
-        return empty($filtered) ? null : implode('/', $filtered);
+        return [] === $filtered ? null : implode('/', $filtered);
     }
 
     private function getFileNameFromUrl(string $url): string
     {
-        $path = (string) parse_url($url, \PHP_URL_PATH);
+        $parsedPath = parse_url($url, \PHP_URL_PATH);
+        $path = is_string($parsedPath) ? $parsedPath : '';
 
-        return '' === $path ? '' : (string) basename($path);
+        return '' === $path ? '' : basename($path);
     }
 
     private function isMarkdownFile(string $fileName): bool
@@ -234,7 +234,7 @@ class HttpReader implements ReaderContract
             return true;
         }
 
-        $ext = strtolower((string) pathinfo($lower, \PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($lower, \PATHINFO_EXTENSION));
 
         return '' !== $ext && in_array($ext, ['md', 'markdown', 'mdown', 'mkd', 'mkdn'], true);
     }
@@ -251,7 +251,7 @@ class HttpReader implements ReaderContract
             return $special[$lower];
         }
 
-        $ext = strtolower((string) pathinfo($lower, \PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($lower, \PATHINFO_EXTENSION));
         if ('' === $ext) {
             return null;
         }

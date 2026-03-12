@@ -44,7 +44,6 @@ final class TavilyReader implements ReaderContract
             markdown: $payload['markdown'],
             references: [],
             provider: $this->getProvider(),
-            fetchedAt: new \DateTimeImmutable(),
         );
     }
 

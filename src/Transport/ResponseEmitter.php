@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 
 final class ResponseEmitter
 {
+    // @phpstan-ignore shipmonk.deadMethod
     public function emit(ResponseInterface $response): void
     {
         http_response_code($response->getStatusCode());

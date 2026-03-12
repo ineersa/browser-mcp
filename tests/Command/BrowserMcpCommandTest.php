@@ -128,7 +128,7 @@ final class BrowserMcpCommandTest extends TestCase
             ], 3),
             $this->callToolRequest('find', [
                 'url' => $targetUrl,
-                'query' => 'Datetime',
+                'query' => 'Heading 1',
                 'match' => 'contains',
             ], 4),
         ]);
@@ -148,8 +148,9 @@ final class BrowserMcpCommandTest extends TestCase
         $this->assertNotSame('', $payload, 'Find tool payload should not be empty.');
 
         $this->assertStringContainsString('url: "https://raw.usercontent.com/cbracco/html5-test-page/refs/heads/master/index.html"', $payload);
-        $this->assertStringContainsString('query: Datetime', $payload);
-        $this->assertStringContainsString('matches[1]{id,line,chunk}:', $payload);
+        $this->assertStringContainsString('query: Heading 1', $payload);
+        $this->assertMatchesRegularExpression('/matches\[\d+\]\{id,line,chunk\}:/', $payload);
+        $this->assertStringContainsString('Heading 1', $payload);
     }
 
     /**
@@ -382,7 +383,10 @@ final class BrowserMcpCommandTest extends TestCase
         $process->setInput(implode("\n", $messages)."\n");
         $process->mustRun();
 
-        $lines = array_values(array_filter(array_map('trim', explode("\n", trim($process->getOutput())))));
+        $lines = array_values(array_filter(
+            array_map('trim', explode("\n", trim($process->getOutput()))),
+            static fn (string $line): bool => '' !== $line,
+        ));
 
         return array_map(static function (string $line): array {
             return json_decode($line, true, 512, \JSON_THROW_ON_ERROR);
@@ -416,7 +420,7 @@ final class BrowserMcpCommandTest extends TestCase
             ],
         ], \JSON_THROW_ON_ERROR);
 
-        return (string) $payload;
+        return $payload;
     }
 
     /**

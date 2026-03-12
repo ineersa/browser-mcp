@@ -37,13 +37,13 @@ final readonly class SearxNGSearcher implements SearcherContract
         $seen = [];
 
         foreach ($items as $index => $item) {
-            $canonicalUrl = Utilities::canonicalizeUrl((string) $item['url']);
+            $canonicalUrl = Utilities::canonicalizeUrl($item['url']);
             if ('' === $canonicalUrl || in_array($canonicalUrl, $seen, true)) {
                 continue;
             }
             $seen[] = $canonicalUrl;
 
-            $title = trim((string) $item['title']);
+            $title = trim($item['title']);
             if ('' === $title) {
                 $title = $canonicalUrl;
             }
@@ -52,7 +52,7 @@ final readonly class SearxNGSearcher implements SearcherContract
                 id: (string) ($index + 1),
                 url: $canonicalUrl,
                 title: $title,
-                snippet: (string) $item['summary'],
+                snippet: $item['summary'],
             );
         }
 

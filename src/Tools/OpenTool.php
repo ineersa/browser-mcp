@@ -25,6 +25,7 @@ Window selection:
 `fetchAll: true` ignores window size and returns the full page body in one call. Use this sparingly on very long pages. References are metadata and do not affect line counts.
 DESC;
 
+    // @phpstan-ignore shipmonk.deadMethod
     public function __construct(
         private readonly OpenService $openService,
     ) {

@@ -57,7 +57,8 @@ class LogsCommand extends Command
         }
 
         // We use FILE_IGNORE_NEW_LINES but keep empty lines to maintain line number mapping
-        $lines = @file($logFile, \FILE_IGNORE_NEW_LINES) ?: [];
+        $linesRaw = @file($logFile, \FILE_IGNORE_NEW_LINES);
+        $lines = false === $linesRaw ? [] : $linesRaw;
         if ([] === $lines) {
             $io->note(\sprintf('Log file "%s" is empty.', $logFile));
 
@@ -102,7 +103,8 @@ class LogsCommand extends Command
                 $id = $i + 1;
                 $levelName = (string) ($entry['level_name'] ?? ($entry['level'] ?? ''));
                 $message = $this->stringify($entry['message'] ?? '');
-                if ($contextPreview = $this->getContextPreview($entry['context'] ?? [])) {
+                $contextPreview = $this->getContextPreview($entry['context'] ?? []);
+                if ('' !== $contextPreview) {
                     $message .= "\n<fg=gray>".$contextPreview.'</>';
                 }
 
@@ -138,14 +140,16 @@ class LogsCommand extends Command
             ['datetime' => (string) ($entry['datetime'] ?? '')],
         );
 
-        if (!empty($entry['context'])) {
+        $context = $entry['context'] ?? null;
+        if (is_array($context) && [] !== $context) {
             $io->section('context');
-            $io->writeln($this->prettyJson($entry['context']));
+            $io->writeln($this->prettyJson($context));
         }
 
-        if (!empty($entry['extra'])) {
+        $extra = $entry['extra'] ?? null;
+        if (is_array($extra) && [] !== $extra) {
             $io->section('extra');
-            $io->writeln($this->prettyJson($entry['extra']));
+            $io->writeln($this->prettyJson($extra));
         }
     }
 
@@ -157,12 +161,15 @@ class LogsCommand extends Command
         // Candidates: env.log (current) and rotated env-YYYY-MM-DD.log files
         $candidates = [];
         $patternRotated = \sprintf('%s/%s-*.log', rtrim($logsDir, '/'), $env);
-        foreach (glob($patternRotated) ?: [] as $file) {
-            $candidates[$file] = filemtime($file) ?: 0;
+        $rotatedFiles = glob($patternRotated);
+        foreach (false === $rotatedFiles ? [] : $rotatedFiles as $file) {
+            $mtime = filemtime($file);
+            $candidates[$file] = false === $mtime ? 0 : $mtime;
         }
         $currentPath = \sprintf('%s/%s.log', rtrim($logsDir, '/'), $env);
         if (file_exists($currentPath)) {
-            $candidates[$currentPath] = filemtime($currentPath) ?: 0;
+            $mtime = filemtime($currentPath);
+            $candidates[$currentPath] = false === $mtime ? 0 : $mtime;
         }
 
         if ([] === $candidates) {
@@ -185,7 +192,9 @@ class LogsCommand extends Command
 
     private function prettyJson(mixed $value): string
     {
-        return json_encode($value, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) ?: '';
+        $encoded = json_encode($value, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+
+        return false === $encoded ? '' : $encoded;
     }
 
     private function getStyledLevelName(string $levelName): string

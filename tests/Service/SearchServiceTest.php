@@ -105,7 +105,8 @@ final class SearchServiceTest extends TestCase
         $service('foo', 5);
 
         $snippetKey = 'search_snippets.'.hash('sha256', 'https://example.com/article');
-        $snippets = $cache->get($snippetKey, static fn (ItemInterface $item): array => []);
+        $snippets = $cache->get($snippetKey, static fn (ItemInterface $item): mixed => null);
+        $this->assertIsArray($snippets);
 
         $this->assertSame(['Gravity is geometry of spacetime.'], $snippets);
     }

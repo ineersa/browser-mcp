@@ -6,10 +6,6 @@ general:
     open_cache_ttl_seconds: 300
     find_cache_ttl_seconds: 300
 
-display:
-    search_view_tokens: 1024
-    search_encoding_name: o200k_base
-
 searchers:
     selected: searxng
     providers:

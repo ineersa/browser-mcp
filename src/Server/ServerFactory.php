@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 
 final readonly class ServerFactory
 {
+    // @phpstan-ignore shipmonk.deadMethod
     public function __construct(
         private LoggerInterface $logger,
         private ContainerInterface $container,

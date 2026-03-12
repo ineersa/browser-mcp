@@ -29,7 +29,7 @@ final readonly class NumLinesFormatter implements FormatterContract
         }
 
         $lines = Utilities::wrapLines($payload->document->markdown);
-        while (!empty($lines) && '' === $lines[\count($lines) - 1]) {
+        while ([] !== $lines && '' === $lines[\count($lines) - 1]) {
             array_pop($lines);
         }
 

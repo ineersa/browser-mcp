@@ -32,7 +32,7 @@ class Kernel extends BaseKernel
             ?? $_ENV['APP_VAR_DIR']
             ?? getenv('APP_VAR_DIR');
 
-        if ($dir) {
+        if (is_string($dir) && '' !== $dir) {
             return rtrim($dir, '/');
         }
 

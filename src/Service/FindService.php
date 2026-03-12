@@ -141,7 +141,7 @@ final readonly class FindService
             if (null !== $pattern) {
                 $byteOffset = 0;
                 while (1 === preg_match($pattern, $searchText, $matchCapture, \PREG_OFFSET_CAPTURE, $byteOffset)) {
-                    $matchByteOffset = (int) $matchCapture[0][1];
+                    $matchByteOffset = $matchCapture[0][1];
                     $lineIdx = $this->lineIndexFromOffset($lineStartOffsets, $this->byteOffsetToCharOffset($searchText, $matchByteOffset));
                     if ($lineIdx < $nextAllowedLine) {
                         $byteOffset = $matchByteOffset + 1;

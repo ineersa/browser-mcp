@@ -1,81 +1,120 @@
 # Browser MCP
 
-PHP/Symfony implementation of a simple browser MCP server with pluggable search backends (SearxNG, Jina AI, Tavily, DuckDuckGo Lite).
-It provides three invokable services for `search`, `open`, and `find`, plus HTML→plaintext processing tailored for LLM consumption.
+PHP/Symfony implementation of a simple browser MCP server with pluggable search backends (SearxNG, Jina AI, Tavily, DuckDuckGo).
 
-## Installing and running MCP
+### Table of Contents
 
-To generate binary run `./prepare_binary.sh`, it should work on Linux.
-
-To build binary, you have to install [box-project/box](https://github.com/box-project/box/blob/main/doc/installation.md#composer)
-to generate PHAR.
-
-Thanks to amazing projects like [Static PHP](https://static-php.dev/en/) and [FrankenPHP](https://frankenphp.dev/docs/embed/) we are able to run PHP applications as a single binary now.
-
-The easiest way is to just download binary from releases for your platform.
+- [Configuration](#configuration)
+  - [ENV configuration](#env-configuration)
+- [MCP config](#mcp-config)
+  - [OpenCode (`opencode.json`) examples](#opencode-opencodejson-examples)
+  - [Cursor (`.cursor/mcp.json`) examples](#cursor-cursormcpjson-examples)
+  - [Run server with all env vars](#run-server-with-all-env-vars)
+  - [Run as systemd user service (HTTP)](#run-as-systemd-user-service-http)
+- [MCP tools](#mcp-tools)
+- [OpenCode web research subagent](#opencode-web-research-subagent)
+- [Development](#development)
+- [Binary generation](#binary-generation)
+- [Debug](#debug)
 
 ## Configuration
 
-Primary runtime config now lives in YAML (`browser_config.yaml` by default).
+Primary runtime config lives in YAML ([`browser_config.yaml`](browser_config.yaml) by default).
 
-Set `CONFIG_FILE` to an absolute or relative path:
+<details>
+<summary>Show <code>browser_config.yaml</code> (full)</summary>
 
-- absolute path is used as-is
-- relative path is resolved from project root in normal mode, and from the binary directory when running from PHAR
+```yaml
+# Main runtime configuration file.
+# Path is controlled via the `CONFIG_FILE` environment variable (defaults to `browser_config.yaml`).
+
+general:
+    # Transport used by the server:
+    # - `stdio`: MCP over stdin/stdout (recommended for local tools)
+    # - `http`:  MCP over HTTP (network endpoint)
+    transport: http
+    # Bind host for HTTP transport. Ignored for STDIO.
+    # Use `127.0.0.1` for local-only, `0.0.0.0` to listen on all interfaces.
+    host: 0.0.0.0
+    # Bind port for HTTP transport. Ignored for STDIO.
+    port: 9001
+    # Cache TTL (seconds) for `browser.search` results/state.
+    search_cache_ttl_seconds: 600
+    # Cache TTL (seconds) for `browser.open` page fetches/content.
+    open_cache_ttl_seconds: 300
+
+searchers:
+    # Which search provider implementation to use (must exist under `providers`).
+    selected: searxng
+    providers:
+        searxng:
+            # Base URL of a SearxNG instance.
+            url: http://server:8088
+        jinaai:
+            # Jina Search API token. Best set via env and referenced here.
+            token: "%env(JINA_SEARCH_TOKEN)%"
+        tavily:
+            # Tavily Search API token. Best set via env and referenced here.
+            token: "%env(TAVILY_SEARCH_TOKEN)%"
+        duckduckgo:
+            # Request timeout (seconds) per query attempt.
+            timeout_seconds: 5
+            # Retry count for transient failures.
+            max_retries: 1
+            # User-Agent header for DuckDuckGo requests.
+            user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
+
+readers:
+    # Which reader (page fetch + extraction) provider to use (must exist under `providers`).
+    selected: http
+    providers:
+        http:
+            # Request timeout (seconds) when fetching pages over HTTP(S).
+            timeout_seconds: 30
+            # Retry count for transient fetch/extraction failures.
+            max_retries: 2
+            # User-Agent header used when fetching pages.
+            user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
+            # HTML/CSS class names considered "noise" and deprioritized/removed during extraction.
+            noise_class_tokens:
+                - codeblock-lines
+                - linenos
+                - line-numbers
+                - gutter
+        jinaai:
+            # Jina Reader API token. Best set via env and referenced here.
+            token: "%env(JINA_READER_TOKEN)%"
+            # Request timeout (seconds) per read/extract attempt.
+            timeout_seconds: 15
+            # Retry count for transient failures.
+            max_retries: 1
+        tavily:
+            # Tavily Extract/Reader API token. Best set via env and referenced here.
+            token: "%env(TAVILY_READER_TOKEN)%"
+            # Request timeout (seconds) per read/extract attempt.
+            timeout_seconds: 15
+            # Retry count for transient failures.
+            max_retries: 1
+```
+
+</details>
+
+Set `CONFIG_FILE` as follows:
+
+- when running as a PHP script (`php bin/browser-mcp` / `php bin/console browser-mcp`): you can use an absolute or relative path
+- when running the packaged PHAR/binary (`dist/browser-mcp.phar`): use an absolute path
 
 Minimal environment variables:
 
+### ENV configuration
+
 ```dotenv
-### Set log level, default INFO, with log action level ERROR
-LOG_LEVEL=info
-# Where to store data (logs, cache, sessions)
+# Set log level, default WARNING, with log action level ERROR
+LOG_LEVEL=warning
+# Where to store data (logs, cache, sessions), must be absolute path for PHAR/Binary
 APP_VAR_DIR="/tmp/mcp/browser-mcp"
-# Runtime config file
+# Runtime config file, absolute path for PHAR/BINARY
 CONFIG_FILE=browser_config.yaml
-```
-
-Default `browser_config.yaml`:
-
-```yaml
-general:
-  transport: stdio
-  port: 8000
-  search_cache_ttl_seconds: 600
-  open_cache_ttl_seconds: 300
-  find_cache_ttl_seconds: 300
-
-display:
-  search_view_tokens: 1024
-  search_encoding_name: o200k_base
-
-searchers:
-  selected: searxng
-  providers:
-    searxng:
-      url: http://server:8088
-    jinaai:
-      token: "%env(JINA_SEARCH_TOKEN)%"
-    tavily:
-      token: "%env(TAVILY_SEARCH_TOKEN)%"
-    duckduckgo:
-      timeout_seconds: 5
-      max_retries: 1
-      user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
-
-readers:
-  selected: http
-  providers:
-    http:
-      timeout_seconds: 30
-      max_retries: 2
-    jinaai:
-      token: "%env(JINA_READER_TOKEN)%"
-      timeout_seconds: 15
-      max_retries: 1
-    tavily:
-      token: "%env(TAVILY_READER_TOKEN)%"
-      timeout_seconds: 15
-      max_retries: 1
 ```
 
 ## MCP config:
@@ -84,40 +123,43 @@ The server supports **STDIO** (default) and **HTTP** transports.
 
 ### OpenCode (`opencode.json`) examples
 
+<details>
+<summary>Show OpenCode MCP config example</summary>
+
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "websearch": {
-      "type": "remote",
-      "url": "http://127.0.0.1:9001/mcp",
-      "enabled": true
+    "$schema": "https://opencode.ai/config.json",
+    "mcp": {
+        "websearch": {
+            "type": "remote",
+            "url": "http://127.0.0.1:9001/mcp",
+            "enabled": true
+        },
+        "browser-cli": {
+            "type": "local",
+            "command": "php",
+            "args": ["bin/browser-mcp"],
+            "env": {
+                "APP_ENV": "prod",
+                "APP_DEBUG": "false",
+                "LOG_LEVEL": "info",
+                "APP_VAR_DIR": "/tmp/mcp/browser-mcp",
+                "CONFIG_FILE": "browser_config.yaml",
+                "JINA_SEARCH_TOKEN": "",
+                "JINA_READER_TOKEN": "",
+                "TAVILY_SEARCH_TOKEN": "",
+                "TAVILY_READER_TOKEN": ""
+            },
+            "enabled": true
+        }
     },
-    "browser-cli": {
-      "type": "local",
-      "command": "php",
-      "args": [
-        "bin/browser-mcp"
-      ],
-      "env": {
-        "APP_ENV": "prod",
-        "APP_DEBUG": "false",
-        "LOG_LEVEL": "info",
-        "APP_VAR_DIR": "/tmp/mcp/browser-mcp",
-        "CONFIG_FILE": "browser_config.yaml",
-        "JINA_SEARCH_TOKEN": "",
-        "JINA_READER_TOKEN": "",
-        "TAVILY_SEARCH_TOKEN": "",
-        "TAVILY_READER_TOKEN": ""
-      },
-      "enabled": true
+    "experimental": {
+        "mcp_timeout": 3600000
     }
-  },
-  "experimental": {
-    "mcp_timeout": 3600000
-  }
 }
 ```
+
+</details>
 
 `websearch` shows a remote Streamable HTTP connection (`/mcp`), while `browser-cli` runs this server locally via CLI.
 Some clients also work with root (`/`) as the MCP endpoint, but `/mcp` is the recommended explicit URL.
@@ -126,50 +168,43 @@ Some clients also work with root (`/`) as the MCP endpoint, but `/mcp` is the re
 
 Cursor uses `mcpServers` (not `mcp`) and server entries differ slightly from OpenCode.
 
+<details>
+<summary>Show Cursor MCP config example</summary>
+
 ```json
 {
-  "mcpServers": {
-    "websearch": {
-      "url": "http://127.0.0.1:9001/mcp"
-    },
-    "browser-cli": {
-      "type": "stdio",
-      "command": "php",
-      "args": [
-        "bin/browser-mcp"
-      ],
-      "env": {
-        "APP_ENV": "prod",
-        "APP_DEBUG": "false",
-        "LOG_LEVEL": "info",
-        "APP_VAR_DIR": "/tmp/mcp/browser-mcp",
-        "CONFIG_FILE": "browser_config.yaml",
-        "JINA_SEARCH_TOKEN": "",
-        "JINA_READER_TOKEN": "",
-        "TAVILY_SEARCH_TOKEN": "",
-        "TAVILY_READER_TOKEN": ""
-      }
+    "mcpServers": {
+        "websearch": {
+            "url": "http://127.0.0.1:9001/mcp"
+        },
+        "browser-cli": {
+            "type": "stdio",
+            "command": "php",
+            "args": ["bin/browser-mcp"],
+            "env": {
+                "APP_ENV": "prod",
+                "APP_DEBUG": "false",
+                "LOG_LEVEL": "info",
+                "APP_VAR_DIR": "/tmp/mcp/browser-mcp",
+                "CONFIG_FILE": "browser_config.yaml",
+                "JINA_SEARCH_TOKEN": "",
+                "JINA_READER_TOKEN": "",
+                "TAVILY_SEARCH_TOKEN": "",
+                "TAVILY_READER_TOKEN": ""
+            }
+        }
     }
-  }
 }
 ```
 
-Project-level location: `.cursor/mcp.json`. Global location: `~/.cursor/mcp.json`.
-
-### OpenCode web research subagent
-
-This repository includes a project-local subagent at `.opencode/agents/web-researcher.md` and a skill at `.opencode/skills/web-research/SKILL.md`.
-
-- Purpose: mandatory path for web research tasks with strict evidence workflow.
-- Model: `llama.cpp/flash` (local) with `temperature: 0.6`.
-- Tools: only `websearch_*` and `skill`.
-- Behavior: run multiple queries, follow links, verify claims, and cite URL + line numbers.
-
-Use it manually with `@web-researcher`; treat it as required for web research tasks. For one-off web queries, direct `websearch_*` calls are fine.
+</details>
 
 ### Run server with all env vars
 
 Set all runtime env vars explicitly before starting the server:
+
+<details>
+<summary>Show full env var exports</summary>
 
 ```bash
 export APP_ENV=prod
@@ -183,7 +218,12 @@ export TAVILY_SEARCH_TOKEN=""
 export TAVILY_READER_TOKEN=""
 ```
 
+</details>
+
 Run as local CLI/STDIO MCP server:
+
+<details>
+<summary>Show run commands (CLI / PHAR / binary)</summary>
 
 ```bash
 php bin/browser-mcp
@@ -201,7 +241,12 @@ Run as native binary (same env vars):
 ./dist/browser-mcp
 ```
 
+</details>
+
 Example script (exports envs and starts `dist/browser-mcp`):
+
+<details>
+<summary>Show example wrapper script</summary>
 
 ```bash
 #!/usr/bin/env bash
@@ -220,27 +265,42 @@ export TAVILY_READER_TOKEN="${TAVILY_READER_TOKEN:-}"
 exec ./dist/browser-mcp
 ```
 
+</details>
+
 You can also use the ready example script in this repository:
+
+<details>
+<summary>Show ready script commands</summary>
 
 ```bash
 chmod +x scripts/run-dist-browser-mcp.sh
 ./scripts/run-dist-browser-mcp.sh
 ```
 
+</details>
+
 To expose a network MCP endpoint, set HTTP transport in `browser_config.yaml`:
+
+<details>
+<summary>Show HTTP transport config snippet</summary>
 
 ```yaml
 general:
-  transport: http
-  host: 127.0.0.1
-  port: 8000
+    transport: http
+    host: 127.0.0.1
+    port: 8000
 ```
+
+</details>
 
 Then start the server with the same env vars and connect your MCP client to `http://127.0.0.1:8000`.
 
 ### Run as systemd user service (HTTP)
 
 Create an env file (tokens optional):
+
+<details>
+<summary>Show systemd env file creation</summary>
 
 ```bash
 mkdir -p ~/.config/browser-mcp
@@ -257,7 +317,12 @@ TAVILY_READER_TOKEN=
 EOF
 ```
 
+</details>
+
 Create `~/.config/systemd/user/browser-mcp.service`:
+
+<details>
+<summary>Show systemd unit file</summary>
 
 ```ini
 [Unit]
@@ -276,7 +341,12 @@ RestartSec=2
 WantedBy=default.target
 ```
 
+</details>
+
 Enable and start:
+
+<details>
+<summary>Show systemd commands</summary>
 
 ```bash
 systemctl --user daemon-reload
@@ -284,58 +354,41 @@ systemctl --user enable --now browser-mcp.service
 systemctl --user status browser-mcp.service
 ```
 
+</details>
+
 View logs:
+
+<details>
+<summary>Show journalctl command</summary>
 
 ```bash
 journalctl --user -u browser-mcp.service -f
 ```
 
-Optional (keep it running after logout):
+</details>
 
-```bash
-loginctl enable-linger "$USER"
-```
+## MCP tools
 
-### STDIO
+The server exposes three MCP tools:
 
-Just add entry to `mcp.json` with a path to binary:
+| Tool | Brief description | Required params | Optional params |
+| --- | --- | --- | --- |
+| `browser.search` | Search the web via SearxNG and return ranked results. Resets cached pages for a fresh session. | `query` | `topn` (default `5`, range `1-10`) |
+| `browser.open` | Open a URL and render readable page text with line numbers (windowed or full-page). | `url` | `startAtLine`, `numberOfLines` (default `50`), `fetchAll` |
+| `browser.find` | Run a PCRE regex against an opened page and return matches with nearby context. | `url`, `regex` | _none_ |
 
-```json
-{
-    "command": "./dist/browser-mcp",
-    "args": [],
-    "env": {
-        "APP_VAR_DIR": "/tmp/.symfony/browser-mcp"
-    }
-}
-```
+All tools return text output with references when links are present. Errors follow a machine-readable format starting with `Result: error` and include `Error Message` and `Hint`.
 
-### HTTP
+## OpenCode web research subagent
 
-To run the server with the HTTP transport, set the environment variables:
+This repository includes a project-local subagent at `.opencode/agents/web-researcher.md` and a skill at `.opencode/skills/web-research/SKILL.md` as an example.
 
-```json
-{
-    "command": "./dist/browser-mcp",
-    "args": [],
-    "env": {
-        "CONFIG_FILE": "/path/to/browser_config.yaml"
-    }
-}
-```
+- Purpose: mandatory path for web research tasks with strict evidence workflow.
+- Model: `llama.cpp/flash` (local) with `temperature: 0.6`.
+- Tools: only `websearch_*` and `skill`.
+- Behavior: run multiple queries, follow links, verify claims, and cite URL + line numbers.
 
-Set `general.transport: http` and `general.port` in the YAML, then start `./bin/browser-mcp` and point your MCP client to the HTTP endpoint (e.g. `http://127.0.0.1:8000`).
-
-By default, HTTP binds to `127.0.0.1` (`general.host`) for local-only access. For LAN access, set `general.host: 0.0.0.0` and connect from other machines using your server IP (for example `http://192.168.2.38:8000`).
-
-You can also use `browser-mcp.phar` PHAR file instead of `./dist/browser-mcp`.
-The server exposes tools: `browser.search`, `browser.open`, `browser.find`.
-
-If you want to use other transports use some wrapper for now, for example, [MCPO](https://github.com/open-webui/mcpo)
-
-```bash
-uvx mcpo --port 8000 -- ~/dist/browser-mcp
-```
+Use it manually with `@web-researcher`; treat it as required for web research tasks. For one-off web queries, direct `websearch_*` calls are fine.
 
 ## Development
 
@@ -345,44 +398,24 @@ If you need to modify or want to run/debug a server locally, you should:
 - run `composer install`
 - `./bin/browser-mcp` contains server, while `./bin/console` holds Symfony console
 
+## Binary generation
+
+To generate a native binary run `./prepare_binary.sh` (Linux).
+
+To build PHAR, you have to install [box-project/box](https://github.com/box-project/box/blob/main/doc/installation.md#composer).
+
+Thanks to amazing projects like [Static PHP](https://static-php.dev/en/) and [FrankenPHP](https://frankenphp.dev/docs/embed/) we are able to run PHP applications as a single binary now.
+
+The easiest way is to just download a prebuilt binary from releases for your platform.
+
 To debug server you should use `npx @modelcontextprotocol/inspector`
 
 - Lint/format: `composer cs-fix`
 - Static analysis: `composer phpstan`
 - Tests: `composer tests`
 
-### Debug
+## Debug
 
 ```bash
 php -d xdebug.mode=debug -d xdebug.client_host=127.0.0.1 -d xdebug.client_port=9003 -d xdebug.start_with_request=yes ~/mcp-servers/browser-mcp/bin/browser-mcp
 ```
-
-## Tools definitions and logic
-
-### Response contract
-
-- Every tool reply is a single text block (`TextContent`) that starts with the page title (the domain is appended in parentheses) and, when available, an explicit `URL: ...` line.
-- A bold status line such as `**viewing lines [12 - 61] of 420**` shows what portion of the page is rendered; bodies are token-limited and lines are prefixed with `L<index>` when scrolling output (`browser.open`/`browser.find`).
-- Citations inside the body follow the `【id†excerpt†domain】` convention and always map to a trailing `References:` section where `[id]` resolves to a canonical URL.
-- If a tool fails validation or the backend errors, the response stays machine-readable: it begins with `Result: error`, followed by `Error Message:` and a `Hint:` string to help recover.
-
-### `browser.search`
-
-- **Purpose**: Run SearxNG-backed web search and seed later `open`/`find` calls.
-- **Parameters**: `query` (string, required); `topn` (int, optional, default `5`, bounds `1-10`).
-- **Output shape**: Numbered list where each entry shows the title (with domain), a canonical `URL:` line, and a trimmed `Summary:`. The `References` table reuses the same numbers, so `[1]` matches result `1.` above.
-- **State**: Clears any cached pages in the browser state before returning fresh results.
-
-### `browser.open`
-
-- **Purpose**: Fetch and render a slice of a page for reading or scrolling.
-- **Parameters**: `url` (string, required absolute URL). Optional: `startAtLine` (int, 0-based; when omitted the tool auto-selects a relevant window using cached search snippets), `numberOfLines` (int, default `50`, minimum `1`), `fetchAll` (bool, default `false`; when `true`, ignores `numberOfLines` and returns the entire page body).
-- **Output shape**: Page text rendered with prefixed line numbers (`L42:`) and capped by the token budget; the scrollbar line reports the viewed window. Inline citations map to the page’s outbound links, and the `References` section lists every discovered URL. When `fetchAll` is used, the same header/footer rules apply and references still do not count toward line totals.
-- **State**: Pages are cached by canonical URL so subsequent `open` or `find` calls reuse the fetched copy unless an error occurs.
-
-### `browser.find`
-
-- **Purpose**: Locate regex matches within a previously opened page (or fetch it once).
-- **Parameters**: `url` (string, required), `regex` (string, required, PCRE syntax with delimiters such as `/pattern/iu`).
-- **Output shape**: Each match is rendered as `# 【id†match at L<line>】` followed by a few context lines; when no match exists the tool explains next steps. The `References` list keeps a single entry pointing back to the source page.
-- **State**: Uses the cached page if available and refuses to run on existing `find` result URLs to avoid recursion. Results are stored so you can scroll them with `browser.open`.

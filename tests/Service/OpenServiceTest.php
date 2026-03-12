@@ -26,7 +26,6 @@ final class OpenServiceTest extends TestCase
             markdown: "Line one\nLine two\nLine three",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createMock(ReaderContract::class);
@@ -51,7 +50,6 @@ final class OpenServiceTest extends TestCase
             markdown: "First\nSecond\nThird",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createMock(ReaderContract::class);
@@ -75,7 +73,6 @@ final class OpenServiceTest extends TestCase
             markdown: "First\nSecond",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createStub(ReaderContract::class);
@@ -118,7 +115,6 @@ final class OpenServiceTest extends TestCase
             markdown: implode("\n", $lines),
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $cache = new ArrayAdapter();
@@ -153,7 +149,6 @@ final class OpenServiceTest extends TestCase
             markdown: implode("\n", $lines),
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createStub(ReaderContract::class);

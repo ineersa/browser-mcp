@@ -24,6 +24,7 @@ final readonly class SearcherFactory
         $providerConfig = $this->config->getSearcherConfig($provider);
 
         $searcherUrl = trim((string) ($providerConfig['url'] ?? 'http://server:8088'));
+        $duckDuckGoUserAgent = trim((string) ($providerConfig['user_agent'] ?? ''));
 
         return match ($provider) {
             'searxng', 'searx' => new SearxNGSearcher('' !== $searcherUrl ? $searcherUrl : 'http://server:8088', $this->httpClient),
@@ -41,7 +42,7 @@ final readonly class SearcherFactory
                 timeoutSeconds: max(1, (int) ($providerConfig['timeout_seconds'] ?? 5)),
                 maxRetries: max(0, (int) ($providerConfig['max_retries'] ?? 1)),
                 client: $this->httpClient,
-                userAgent: trim((string) ($providerConfig['user_agent'] ?? '')) ?: DuckDuckGoLiteSearcher::DEFAULT_USER_AGENT,
+                userAgent: '' !== $duckDuckGoUserAgent ? $duckDuckGoUserAgent : DuckDuckGoLiteSearcher::DEFAULT_USER_AGENT,
             ),
             default => throw new \UnhandledMatchError('Unknown search provider'),
         };

@@ -1,5 +1,11 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/shipmonk/dead-code-detector/rules.neon
+
 parameters:
     level: 6
+    treatPhpDocTypesAsCertain: false
     paths:
         - src/
         - tests/
@@ -8,3 +14,7 @@ parameters:
         - tests/bootstrap.php
     parallel:
         maximumNumberOfProcesses: 1
+    ignoreErrors:
+        -
+            identifier: staticMethod.dynamicCall
+            path: tests/**

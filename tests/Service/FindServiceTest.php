@@ -28,7 +28,6 @@ final class FindServiceTest extends TestCase
             markdown: $markdown,
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createMock(ReaderContract::class);
@@ -54,7 +53,6 @@ final class FindServiceTest extends TestCase
             markdown: "Alpha\nBeta\nGamma",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createMock(ReaderContract::class);
@@ -78,7 +76,6 @@ final class FindServiceTest extends TestCase
             markdown: "Intro\nSymfony\nMessenger integration details",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createMock(ReaderContract::class);
@@ -102,7 +99,6 @@ final class FindServiceTest extends TestCase
             markdown: "Intro\nSymfony \nMessenger details",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $reader = $this->createMock(ReaderContract::class);
@@ -144,7 +140,6 @@ final class FindServiceTest extends TestCase
             markdown: "Intro\nMore content",
             references: [],
             provider: 'searxng',
-            fetchedAt: new \DateTimeImmutable(),
         );
 
         $backend = $this->createMock(ReaderContract::class);

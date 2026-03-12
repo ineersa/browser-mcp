@@ -42,20 +42,6 @@ final readonly class AppConfig
         return '' !== $host ? $host : '127.0.0.1';
     }
 
-    public function getSearchViewTokens(): int
-    {
-        $value = (int) $this->getValue('display.search_view_tokens', 1024);
-
-        return $value > 0 ? $value : 1024;
-    }
-
-    public function getSearchEncodingName(): string
-    {
-        $value = trim((string) $this->getValue('display.search_encoding_name', 'o200k_base'));
-
-        return '' !== $value ? $value : 'o200k_base';
-    }
-
     public function getOpenCacheTtlSeconds(): int
     {
         $value = (int) $this->getValue('general.open_cache_ttl_seconds', 300);

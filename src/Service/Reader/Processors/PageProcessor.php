@@ -60,9 +60,13 @@ final class PageProcessor
         self::replaceImages($dom, $xpath);
         self::removeMath($dom, $xpath);
 
-        $cleanHtml = $root instanceof \DOMElement
-            ? (string) ($dom->saveHTML($root) ?: '')
-            : (string) ($dom->saveHTML() ?: '');
+        if ($root instanceof \DOMElement) {
+            $rootHtml = $dom->saveHTML($root);
+            $cleanHtml = false === $rootHtml ? '' : $rootHtml;
+        } else {
+            $docHtml = $dom->saveHTML();
+            $cleanHtml = false === $docHtml ? '' : $docHtml;
+        }
         $text = self::normalizeText(self::htmlToText($cleanHtml));
 
         $top = $displayUrls ? "\nURL: $url\n" : '';
@@ -120,7 +124,10 @@ final class PageProcessor
             if (!$img instanceof \DOMElement) {
                 continue;
             }
-            $name = $img->getAttribute('alt') ?: $img->getAttribute('title');
+            $name = $img->getAttribute('alt');
+            if ('' === $name) {
+                $name = $img->getAttribute('title');
+            }
             $replacement = '' !== $name ? \sprintf('[Image %d: %s]', $i, $name) : \sprintf('[Image %d]', $i);
             self::replaceNodeWithText($dom, $img, $replacement);
             ++$i;
@@ -203,10 +210,6 @@ final class PageProcessor
     {
         $tokens = [];
         foreach (array_merge(self::DEFAULT_NOISE_CLASS_TOKENS, $noiseClassTokens) as $token) {
-            if (!is_string($token)) {
-                continue;
-            }
-
             $normalized = strtolower(trim($token));
             if ('' === $normalized) {
                 continue;
@@ -225,10 +228,10 @@ final class PageProcessor
             return true;
         }
 
-        $className = strtolower(trim((string) $node->getAttribute('class')));
-        $id = strtolower(trim((string) $node->getAttribute('id')));
-        $role = strtolower(trim((string) $node->getAttribute('role')));
-        $ariaLabel = strtolower(trim((string) $node->getAttribute('aria-label')));
+        $className = strtolower(trim($node->getAttribute('class')));
+        $id = strtolower(trim($node->getAttribute('id')));
+        $role = strtolower(trim($node->getAttribute('role')));
+        $ariaLabel = strtolower(trim($node->getAttribute('aria-label')));
         $hints = trim(implode(' ', array_filter([$className, $id, $role, $ariaLabel], static fn (string $value): bool => '' !== $value)));
         if ('' === $hints || 1 !== preg_match(self::NEGATIVE_HINT_RE, $hints)) {
             return false;
@@ -260,7 +263,10 @@ final class PageProcessor
         $paragraphs = $xpath->query('.//p', $node);
         $headings = $xpath->query('.//h1 | .//h2 | .//h3', $node);
 
-        return ($paragraphs?->length ?? 0) >= 3 || ($headings?->length ?? 0) >= 1;
+        $paragraphCount = $paragraphs instanceof \DOMNodeList ? $paragraphs->length : 0;
+        $headingCount = $headings instanceof \DOMNodeList ? $headings->length : 0;
+
+        return $paragraphCount >= 3 || $headingCount >= 1;
     }
 
     private static function scoreCandidate(\DOMXPath $xpath, \DOMElement $candidate): float
@@ -277,8 +283,8 @@ final class PageProcessor
             $score += 450.0;
         }
 
-        $className = strtolower(trim((string) $candidate->getAttribute('class')));
-        $id = strtolower(trim((string) $candidate->getAttribute('id')));
+        $className = strtolower(trim($candidate->getAttribute('class')));
+        $id = strtolower(trim($candidate->getAttribute('id')));
         $hints = trim($className.' '.$id);
         if ('' !== $hints && 1 === preg_match(self::POSITIVE_HINT_RE, $hints)) {
             $score += 300.0;
@@ -298,10 +304,8 @@ final class PageProcessor
             }
         }
 
-        if ($textLen > 0) {
-            $linkDensity = $linkTextLen / $textLen;
-            $score -= min(0.9, $linkDensity) * 500.0;
-        }
+        $linkDensity = $linkTextLen / $textLen;
+        $score -= min(0.9, $linkDensity) * 500.0;
 
         return $score;
     }
@@ -318,7 +322,7 @@ final class PageProcessor
                 continue;
             }
 
-            $href = trim((string) $a->getAttribute('href'));
+            $href = trim($a->getAttribute('href'));
             if (
                 '' === $href
                 || str_starts_with($href, '#')

@@ -108,16 +108,22 @@ final readonly class OpenService
         $cacheKey = 'search_snippets.'.hash('sha256', $canonicalUrl);
 
         try {
-            $value = $this->cache->get($cacheKey, static fn (): array => []);
+            $value = $this->cache->get($cacheKey, static fn (): array => ['']);
         } catch (\Throwable) {
             return [];
         }
 
-        if (!is_array($value)) {
-            return [];
+        $snippets = [];
+        foreach ($value as $snippet) {
+            $trimmed = trim($snippet);
+            if ('' === $trimmed) {
+                continue;
+            }
+
+            $snippets[] = $trimmed;
         }
 
-        return array_values(array_filter($value, static fn (mixed $snippet): bool => is_string($snippet) && '' !== trim($snippet)));
+        return $snippets;
     }
 
     /**
@@ -192,7 +198,7 @@ final readonly class OpenService
     private function scoreSnippetAgainstLines(array $lines, string $snippet): ?array
     {
         preg_match_all('/[\p{L}\p{N}]{3,}/u', mb_strtolower($snippet), $matches);
-        $tokens = array_values(array_unique($matches[0] ?? []));
+        $tokens = array_values(array_unique($matches[0]));
         if ([] === $tokens) {
             return null;
         }

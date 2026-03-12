@@ -12,13 +12,13 @@ Architecture overview: [docs/architecture.md](docs/architecture.md)
 
 Download the binary for your platform from the latest release:
 
-- `https://github.com/ineersa/browser-mcp/releases/latest`
+- [https://github.com/ineersa/browser-mcp/releases/latest](https://github.com/ineersa/browser-mcp/releases/latest)
 
 2. Download `browser_config.yaml`
 
 Use the config from from repository root as an example:
 
-- `https://raw.githubusercontent.com/ineersa/browser-mcp/main/browser_config.yaml`
+- [https://raw.githubusercontent.com/ineersa/browser-mcp/main/browser_config.yaml](https://raw.githubusercontent.com/ineersa/browser-mcp/main/browser_config.yaml)
 
 3. Add to `mcp.json`
 
@@ -76,11 +76,11 @@ Search providers:
 
 Reader providers:
 
-| Provider       | Select value(s)   | API key               |
-| -------------- | ----------------- | --------------------- |
-| HTTP reader    | `http`            | Not required          |
-| Jina AI Reader | `jinaai` (`jina`) | `JINA_READER_TOKEN`   |
-| Tavily Reader  | `tavily`          | `TAVILY_READER_TOKEN` |
+| Provider       | Select value(s)   | API key                      |
+| -------------- | ----------------- | ---------------------------- |
+| HTTP reader    | `http`            | Not required                 |
+| Jina AI Reader | `jinaai` (`jina`) | `JINA_READER_TOKEN` optional |
+| Tavily Reader  | `tavily`          | `TAVILY_READER_TOKEN`        |
 
 ### How to configure providers in detail: [docs/providers.md](docs/providers.md).
 

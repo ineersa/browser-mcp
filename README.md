@@ -14,12 +14,7 @@ Download from the latest release:
 
 - [https://github.com/ineersa/browser-mcp/releases/latest](https://github.com/ineersa/browser-mcp/releases/latest)
 
-For HTTP mode, download both files and keep them in the same directory:
-
-- `browser-mcp` (native binary)
-- `browser-mcp.phar`
-
-Why this is required: HTTP mode starts a separate PHP worker process; that worker loads app files via `phar://...` and needs the `.phar` artifact available next to the binary.
+For HTTP mode, download `browser-mcp.phar`.
 
 IMPORTANT:
 

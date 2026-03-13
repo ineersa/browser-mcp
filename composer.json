@@ -9,7 +9,12 @@
             "email": "ineersa@gmail.com"
         }
     ],
-    "repositories": [],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/modelcontextprotocol/php-sdk.git"
+        }
+    ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
@@ -22,7 +27,7 @@
         "ext-libxml": "*",
         "helgesverre/toon": "^3.1",
         "ineersa/html2markdown": "^1.0",
-        "mcp/sdk": ">=0.4",
+        "mcp/sdk": "dev-main",
         "nyholm/psr7": "^1.8.2",
         "nyholm/psr7-server": "^1.1",
         "symfony/cache": "7.4.*",
